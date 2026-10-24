@@ -1,0 +1,20 @@
+{
+  "project": "DEAD ROAD 404",
+  "phase": 13,
+  "status": "design-proposal",
+  "year": 1992,
+  "colors": {
+    "night-ink": "#10121C",
+    "road-asphalt": "#27252B",
+    "dust-plum": "#423340",
+    "sodium-amber": "#D9954A",
+    "neon-crimson": "#B83D42",
+    "motel-cyan": "#65A6A5",
+    "phosphor-green": "#91B98A",
+    "aged-paper": "#E3D0AA",
+    "tobacco-brown": "#755A46",
+    "rust-orange": "#A85E3D",
+    "firebird-gold": "#C69B54",
+    "signal-white": "#F4EEE2"
+  }
+}
