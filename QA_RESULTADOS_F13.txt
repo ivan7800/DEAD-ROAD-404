@@ -1,0 +1,446 @@
+
+> dead-road-404@0.13.0 test
+> node --experimental-strip-types --test tests/*.test.mjs
+
+TAP version 13
+# (node:2082) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: pared de la tienda bloquea vision
+ok 1 - pared de la tienda bloquea vision
+  ---
+  duration_ms: 0.769372
+  type: 'test'
+  ...
+# Subtest: pasillo central permite vision
+ok 2 - pasillo central permite vision
+  ---
+  duration_ms: 0.114733
+  type: 'test'
+  ...
+# Subtest: enemigo no atraviesa obstaculos
+ok 3 - enemigo no atraviesa obstaculos
+  ---
+  duration_ms: 5.364409
+  type: 'test'
+  ...
+# Subtest: ataque orientado: no golpea por la espalda
+ok 4 - ataque orientado: no golpea por la espalda
+  ---
+  duration_ms: 0.416279
+  type: 'test'
+  ...
+# Subtest: retroceso aplica tiempo de aturdimiento
+ok 5 - retroceso aplica tiempo de aturdimiento
+  ---
+  duration_ms: 0.24508
+  type: 'test'
+  ...
+# (node:2083) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: cabina cerca y fuera del rango
+ok 6 - cabina cerca y fuera del rango
+  ---
+  duration_ms: 0.974872
+  type: 'test'
+  ...
+# Subtest: cabina solo se activa después de la radio
+ok 7 - cabina solo se activa después de la radio
+  ---
+  duration_ms: 0.169146
+  type: 'test'
+  ...
+# Subtest: primera llamada revela una pista, no recursos
+ok 8 - primera llamada revela una pista, no recursos
+  ---
+  duration_ms: 0.30493
+  type: 'test'
+  ...
+# Subtest: llamada anterior a la radio no desbloquea nada
+ok 9 - llamada anterior a la radio no desbloquea nada
+  ---
+  duration_ms: 0.132911
+  type: 'test'
+  ...
+# Subtest: llamada repetida no ofrece segunda pista
+ok 10 - llamada repetida no ofrece segunda pista
+  ---
+  duration_ms: 0.233273
+  type: 'test'
+  ...
+# Subtest: guardados fase 12 migran phoneHeard sin cambiar version
+ok 11 - guardados fase 12 migran phoneHeard sin cambiar version
+  ---
+  duration_ms: 0.467536
+  type: 'test'
+  ...
+# Subtest: estado de llamada persiste al cargar y rechaza tipos inválidos
+ok 12 - estado de llamada persiste al cargar y rechaza tipos inválidos
+  ---
+  duration_ms: 0.230037
+  type: 'test'
+  ...
+# Subtest: las cuatro marcas ficticias son explícitas y no se importan recursos remotos
+ok 13 - las cuatro marcas ficticias son explícitas y no se importan recursos remotos
+  ---
+  duration_ms: 1.473004
+  type: 'test'
+  ...
+# Subtest: versión y ambientación de 1992 concordantes
+ok 14 - versión y ambientación de 1992 concordantes
+  ---
+  duration_ms: 0.505172
+  type: 'test'
+  ...
+# Subtest: Fase 13 mantiene el guardado antiguo intacto
+ok 15 - Fase 13 mantiene el guardado antiguo intacto
+  ---
+  duration_ms: 1.224459
+  type: 'test'
+  ...
+# Subtest: decoración se inyecta en escena sin eliminar mundo previo
+ok 16 - decoración se inyecta en escena sin eliminar mundo previo
+  ---
+  duration_ms: 0.253503
+  type: 'test'
+  ...
+# (node:2115) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: V8 simulado aumenta su frecuencia con la velocidad
+ok 17 - V8 simulado aumenta su frecuencia con la velocidad
+  ---
+  duration_ms: 0.890254
+  type: 'test'
+  ...
+# Subtest: valores inválidos no generan frecuencias NaN
+ok 18 - valores inválidos no generan frecuencias NaN
+  ---
+  duration_ms: 0.131428
+  type: 'test'
+  ...
+# Subtest: mezcla de audio acorde al modo de juego
+ok 19 - mezcla de audio acorde al modo de juego
+  ---
+  duration_ms: 0.202896
+  type: 'test'
+  ...
+# (node:2126) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: selector recorre cuatro cámaras
+ok 20 - selector recorre cuatro cámaras
+  ---
+  duration_ms: 0.817244
+  type: 'test'
+  ...
+# Subtest: persistencia valida entradas
+ok 21 - persistencia valida entradas
+  ---
+  duration_ms: 0.131028
+  type: 'test'
+  ...
+# Subtest: cámaras tienen nombres
+ok 22 - cámaras tienen nombres
+  ---
+  duration_ms: 0.239962
+  type: 'test'
+  ...
+# (node:2127) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: enemy approaches nearby player
+ok 23 - enemy approaches nearby player
+  ---
+  duration_ms: 5.009364
+  type: 'test'
+  ...
+# Subtest: enemy does not detect distant player
+ok 24 - enemy does not detect distant player
+  ---
+  duration_ms: 0.208245
+  type: 'test'
+  ...
+# Subtest: enemy attack obeys cooldown
+ok 25 - enemy attack obeys cooldown
+  ---
+  duration_ms: 0.137487
+  type: 'test'
+  ...
+# Subtest: melee requires proximity
+ok 26 - melee requires proximity
+  ---
+  duration_ms: 0.171489
+  type: 'test'
+  ...
+# Subtest: melee defeat persists and is non-negative
+ok 27 - melee defeat persists and is non-negative
+  ---
+  duration_ms: 0.379613
+  type: 'test'
+  ...
+# Subtest: enemy update clamps frame delta
+ok 28 - enemy update clamps frame delta
+  ---
+  duration_ms: 0.127613
+  type: 'test'
+  ...
+# Subtest: health can serialize across a saved run
+ok 29 - health can serialize across a saved run
+  ---
+  duration_ms: 0.664723
+  type: 'test'
+  ...
+# (node:2148) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: encuentro se activa tras 24 km
+ok 30 - encuentro se activa tras 24 km
+  ---
+  duration_ms: 1.031587
+  type: 'test'
+  ...
+# Subtest: ayudar consume comida, cura y evita repetir premio
+ok 31 - ayudar consume comida, cura y evita repetir premio
+  ---
+  duration_ms: 0.213693
+  type: 'test'
+  ...
+# Subtest: intercambiar consume pieza y recupera gasolina
+ok 32 - intercambiar consume pieza y recupera gasolina
+  ---
+  duration_ms: 0.20565
+  type: 'test'
+  ...
+# Subtest: sin recursos no se resuelve ni cobra
+ok 33 - sin recursos no se resuelve ni cobra
+  ---
+  duration_ms: 0.29833
+  type: 'test'
+  ...
+# Subtest: huir resuelve y persiste en guardado
+ok 34 - huir resuelve y persiste en guardado
+  ---
+  duration_ms: 0.429739
+  type: 'test'
+  ...
+# Subtest: carga partidas anteriores sin campo nuevo
+ok 35 - carga partidas anteriores sin campo nuevo
+  ---
+  duration_ms: 0.195946
+  type: 'test'
+  ...
+# (node:2159) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: esprintar consume y caminar recupera resistencia
+ok 36 - esprintar consume y caminar recupera resistencia
+  ---
+  duration_ms: 0.981191
+  type: 'test'
+  ...
+# Subtest: resistencia limitada sin exceder umbrales
+ok 37 - resistencia limitada sin exceder umbrales
+  ---
+  duration_ms: 0.156105
+  type: 'test'
+  ...
+# Subtest: no permite correr sin movimiento o sin resistencia
+ok 38 - no permite correr sin movimiento o sin resistencia
+  ---
+  duration_ms: 0.207453
+  type: 'test'
+  ...
+# Subtest: velocidad y ayudas de exploración estables
+ok 39 - velocidad y ayudas de exploración estables
+  ---
+  duration_ms: 0.319312
+  type: 'test'
+  ...
+# (node:2165) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: mission sequence requires ordered interactions
+ok 40 - mission sequence requires ordered interactions
+  ---
+  duration_ms: 1.104568
+  type: 'test'
+  ...
+# Subtest: mission branches have unique choices
+ok 41 - mission branches have unique choices
+  ---
+  duration_ms: 0.211429
+  type: 'test'
+  ...
+# Subtest: completed mission cannot be farmed
+ok 42 - completed mission cannot be farmed
+  ---
+  duration_ms: 0.108674
+  type: 'test'
+  ...
+# Subtest: invalid mission data resets safely
+ok 43 - invalid mission data resets safely
+  ---
+  duration_ms: 0.127132
+  type: 'test'
+  ...
+# Subtest: older save loads with fresh quest without losing supplies
+ok 44 - older save loads with fresh quest without losing supplies
+  ---
+  duration_ms: 0.327855
+  type: 'test'
+  ...
+# Subtest: objective reflects progress
+ok 45 - objective reflects progress
+  ---
+  duration_ms: 0.173642
+  type: 'test'
+  ...
+# (node:2181) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: motel tape proximity
+ok 46 - motel tape proximity
+  ---
+  duration_ms: 1.161273
+  type: 'test'
+  ...
+# Subtest: motel has open front door but closed flank
+ok 47 - motel has open front door but closed flank
+  ---
+  duration_ms: 0.200282
+  type: 'test'
+  ...
+# Subtest: motel supplies reward once
+ok 48 - motel supplies reward once
+  ---
+  duration_ms: 0.181745
+  type: 'test'
+  ...
+# Subtest: older version 2 saves migrate with no cassette
+ok 49 - older version 2 saves migrate with no cassette
+  ---
+  duration_ms: 0.306804
+  type: 'test'
+  ...
+# Subtest: cassette persists
+ok 50 - cassette persists
+  ---
+  duration_ms: 0.184138
+  type: 'test'
+  ...
+# (node:2192) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: 60 FPS en ventana constante 16.67ms
+ok 51 - 60 FPS en ventana constante 16.67ms
+  ---
+  duration_ms: 0.95998
+  type: 'test'
+  ...
+# Subtest: ignora pausas de pestaña que distorsionan la muestra
+ok 52 - ignora pausas de pestaña que distorsionan la muestra
+  ---
+  duration_ms: 0.161805
+  type: 'test'
+  ...
+# Subtest: reset limpia FPS y número de muestras
+ok 53 - reset limpia FPS y número de muestras
+  ---
+  duration_ms: 0.123907
+  type: 'test'
+  ...
+# (node:2203) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: ajustes gráficos desconocidos no rompen la carga
+ok 54 - ajustes gráficos desconocidos no rompen la carga
+  ---
+  duration_ms: 0.92771
+  type: 'test'
+  ...
+# Subtest: selector de calidad recorre tres opciones
+ok 55 - selector de calidad recorre tres opciones
+  ---
+  duration_ms: 0.120092
+  type: 'test'
+  ...
+# Subtest: densidad de píxeles limitada en cualquier preset
+ok 56 - densidad de píxeles limitada en cualquier preset
+  ---
+  duration_ms: 0.180442
+  type: 'test'
+  ...
+# Subtest: modo rendimiento reduce coste: sombras y ratio
+ok 57 - modo rendimiento reduce coste: sombras y ratio
+  ---
+  duration_ms: 0.114443
+  type: 'test'
+  ...
+# (node:2214) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: partida inicial independiente
+ok 58 - partida inicial independiente
+  ---
+  duration_ms: 0.848651
+  type: 'test'
+  ...
+# Subtest: viajar consume comida y combustible
+ok 59 - viajar consume comida y combustible
+  ---
+  duration_ms: 0.204829
+  type: 'test'
+  ...
+# Subtest: sin combustible no hay viaje
+ok 60 - sin combustible no hay viaje
+  ---
+  duration_ms: 0.16591
+  type: 'test'
+  ...
+# Subtest: bidón solo se recoge una vez
+ok 61 - bidón solo se recoge una vez
+  ---
+  duration_ms: 0.115815
+  type: 'test'
+  ...
+# Subtest: la salud cae al viajar sin comida
+ok 62 - la salud cae al viajar sin comida
+  ---
+  duration_ms: 0.164008
+  type: 'test'
+  ...
+# Subtest: rechaza partidas incompatibles y malformadas
+ok 63 - rechaza partidas incompatibles y malformadas
+  ---
+  duration_ms: 0.26481
+  type: 'test'
+  ...
+# Subtest: recupera guardado válido y acota recursos
+ok 64 - recupera guardado válido y acota recursos
+  ---
+  duration_ms: 0.266412
+  type: 'test'
+  ...
+# Subtest: clamp acota valores
+ok 65 - clamp acota valores
+  ---
+  duration_ms: 0.086701
+  type: 'test'
+  ...
+# Subtest: interfaz no declara IDs duplicados
+ok 66 - interfaz no declara IDs duplicados
+  ---
+  duration_ms: 1.427405
+  type: 'test'
+  ...
+# Subtest: todos los controles referenciados existen en el HTML
+ok 67 - todos los controles referenciados existen en el HTML
+  ---
+  duration_ms: 1.832968
+  type: 'test'
+  ...
+# Subtest: lanzadores incluidos para ambos sistemas
+ok 68 - lanzadores incluidos para ambos sistemas
+  ---
+  duration_ms: 0.29749
+  type: 'test'
+  ...
+1..68
+# tests 68
+# suites 0
+# pass 68
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 616.37408

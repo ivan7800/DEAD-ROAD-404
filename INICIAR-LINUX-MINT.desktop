@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DEAD ROAD 404
+Comment=Lanzador para Linux Mint
+Exec=sh -c 'cd "$(dirname "$1")" && exec ./INICIAR-LINUX-MINT.sh' launcher %k
+Terminal=true
+Categories=Game;
+Icon=applications-games
