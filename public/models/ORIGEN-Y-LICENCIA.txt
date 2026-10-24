@@ -1,0 +1,6 @@
+DEAD ROAD 404 - FASE 18
+Geometría, UV, mapas y señalética original generados por scripts Python incluidos en /tools.
+Firebird: interpretación artística original de un cupé estadounidense de finales de los setenta. No es un modelo CAD licenciado ni incluye logotipos oficiales de Pontiac o General Motors.
+SUNSPUR FUEL / MILE 404 / DUSTLINE: marcas ficticias originales del juego.
+Los GLB integran sus mapas de textura. Ningún modelo, audio o textura se ha extraído de videojuegos de terceros.
+Para regenerar: python tools/generate_art_assets.py y python tools/phase18_rebuild.py.
