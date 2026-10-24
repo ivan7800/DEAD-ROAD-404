@@ -1,0 +1,115 @@
+:root{color-scheme:dark;font-family:Consolas,'Courier New',monospace;background:#100c14;color:#f3e7d0}*{box-sizing:border-box}html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none}.scan{pointer-events:none;position:absolute;inset:0;background:repeating-linear-gradient(0deg,#0001 0 2px,transparent 2px 4px);opacity:.35}header{position:absolute;top:0;left:0;right:0;padding:20px 26px;display:flex;justify-content:space-between;align-items:start;pointer-events:none;background:linear-gradient(#08050bbd,transparent)}.brand{font-size:clamp(20px,3vw,35px);font-weight:900;letter-spacing:-2px;text-shadow:2px 3px #160611}.brand span{color:#f06b4b}.brand small{display:block;color:#d0b9a0;letter-spacing:2px;font-size:10px;margin-top:2px}.status{border:1px solid #c49772;color:#e3c5a4;padding:6px 10px;font-size:11px;background:#190f19}.hud{position:absolute;top:105px;left:22px;pointer-events:none;font-size:12px;line-height:1.8;text-shadow:1px 2px #000}#stats{color:#ffe6ac}#objective{max-width:320px;color:#f9c9ba}.panel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(540px,92vw);max-height:80vh;overflow:auto;padding:30px 32px;background:#110e19ee;border:1px solid #956344;box-shadow:0 30px 100px #000d,0 0 0 6px #110c17a8}.panel.hidden{display:none}.eyebrow{color:#eaa977;font-size:11px;letter-spacing:3px}.panel h1{font-family:Georgia,serif;font-size:clamp(40px,6vw,64px);line-height:.9;margin:12px 0 18px;color:#fff3d4}.panel h1 em{color:#e98e60}.panel p{font-size:13px;line-height:1.65;color:#c7b6b3}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.actions button{font:700 12px Consolas,monospace;padding:12px;background:#452b34;color:#ffead3;border:1px solid #98684e;cursor:pointer;transition:background .15s}.actions button:hover,.actions button:focus-visible{background:#8b463d;outline:2px solid #e6b782;outline-offset:1px}.actions button:first-child{grid-column:span 2;background:#8c3c36}.hint{font-size:11px!important;color:#9d8d8b!important}.log{font-size:11px;color:#edb890;border-top:1px solid #61434c;padding-top:12px;min-height:24px}.crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#ffecc1;font-size:24px;pointer-events:none;display:none}.prompt{position:absolute;bottom:17%;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:1px;color:#fff1d3;text-shadow:0 2px 4px #000;pointer-events:none}.toast{position:absolute;bottom:9%;left:50%;transform:translateX(-50%);background:#1d131ce8;padding:10px 18px;border:1px solid #785042;color:#ffcca6;font-size:12px;max-width:90vw;opacity:0;transition:opacity .15s}.toast.show{opacity:1}footer{position:absolute;bottom:9px;right:18px;font-size:9px;color:#a58c8b;pointer-events:none}@media(max-width:600px){.panel{padding:20px;max-height:86vh}.hud{top:90px;font-size:10px}.actions button{font-size:10px;padding:11px 6px}footer{font-size:8px}}
+
+/* Fase 3: viñeta cinematográfica y jerarquía de lectura */
+#app:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 12vw 2vw #09060c9c;z-index:1}.panel,header,.hud,.crosshair,.prompt,.toast,footer{z-index:2}.brand{text-transform:uppercase}.panel{backdrop-filter:blur(9px)}.actions button:active{transform:translateY(1px)}
+
+/* Fase 4: instrumentación del vehículo */
+.camera-label{position:absolute;z-index:3;right:22px;top:105px;color:#eed6b0;background:#120e19ba;border:1px solid #77594b;padding:7px 10px;font:11px Consolas,monospace;pointer-events:none}.dashboard{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:none;z-index:3;gap:24px;padding:12px 24px;background:linear-gradient(130deg,#16151de8,#38242adf);border:1px solid #846343;box-shadow:0 0 25px #000b;border-radius:15px}.dashboard.visible{display:flex}.dial{width:100px;height:100px;border:5px solid #635449;background:radial-gradient(circle,#27212b 35%,#10121b 70%);border-radius:50%;position:relative;display:grid;place-items:center;box-shadow:inset 0 0 16px #000}.dial:after{content:'';position:absolute;inset:11px;border:1px dashed #8e8076;border-radius:50%}.dial strong{color:#eec9a2;font-size:20px;text-shadow:0 0 7px #dd7655}.dial-caption{position:absolute;bottom:15px;font-size:8px;letter-spacing:1px;color:#dab18e}.needle{position:absolute;height:40px;width:2px;background:#de5947;left:calc(50% - 1px);bottom:50%;transform-origin:bottom center;transform:rotate(-130deg);box-shadow:0 0 4px #e45f44}.dial strong{position:absolute;top:30px}@media(max-width:600px){.dashboard{bottom:26px;gap:10px;padding:7px 12px}.dial{width:75px;height:75px}.needle{height:27px}.dial strong{font-size:15px;top:20px}.dial-caption{font-size:7px;bottom:10px}.camera-label{right:8px;top:85px;font-size:9px}}
+/* Fase 5: encuentro narrativo bloqueante y accesible */
+.encounter{position:absolute;inset:0;z-index:10;display:grid;place-items:center;background:#080509d9;padding:20px;backdrop-filter:blur(8px)}.encounter.hidden{display:none}.encounter-card{width:min(610px,100%);background:linear-gradient(160deg,#24171c,#0b1018);border:1px solid #ae7653;padding:clamp(20px,5vw,42px);box-shadow:0 18px 90px #000}.encounter-card h2{font:700 clamp(26px,5vw,43px) Georgia,serif;color:#ffdcad;margin:14px 0}.encounter-card p:not(.eyebrow){line-height:1.8;color:#ddd0c4}.encounter-choices{display:grid;gap:10px;margin-top:26px}.encounter-choices button{font:700 13px Consolas,monospace;letter-spacing:1px;padding:15px;text-align:left;background:#51302d;color:#ffe5bf;border:1px solid #96684e;cursor:pointer}.encounter-choices button:hover,.encounter-choices button:focus-visible{background:#965544;outline:2px solid #f8c37f;outline-offset:2px}
+
+/* Fase 6: impacto visual contenido y HUD de supervivencia */
+body:has(.crosshair[style*="block"]) .crosshair {text-shadow:0 0 10px #f25a4b;}
+/* Fase 8: jerarquía legible en 1080p y portátiles, respetando la estética grindhouse. */
+:root{--amber:#ffc88b;--blood:#cf5047}
+#objective{margin-top:9px;padding:10px 14px;border-left:3px solid var(--amber);background:linear-gradient(90deg,#170f16e8,#170f1670);max-width:min(560px,calc(100vw - 45px));font-weight:700;font-size:13px;letter-spacing:.35px;box-shadow:0 12px 30px #0005}
+#stats{background:#120e17ad;border:1px solid #7a625155;padding:4px 12px;display:inline-block;line-height:1.8}
+.prompt{max-width:min(690px,94vw);font-weight:700;letter-spacing:1.1px;box-shadow:0 8px 38px #000a;}
+#crosshair{transition:color .2s,transform .2s}
+.encounter-card{background:linear-gradient(135deg,#24131cee,#080d18fa);border-left:5px solid #e6ae75}
+.encounter-choices button{transition:transform .1s,background .15s}
+.encounter-choices button:hover{transform:translateX(4px)}
+@media(max-width:640px){header{padding:13px 15px}.hud{left:10px;top:86px}.panel{padding:20px}.actions{grid-template-columns:1fr}.actions button:first-child{grid-column:auto}#objective{font-size:11px}.brand{font-size:22px}.brand small{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.encounter-choices button,.actions button,#crosshair{transition:none!important}}
+
+/* Fase 9: herramientas de exploración y diario con alto contraste. */
+.stamina-wrap{display:none;position:absolute;z-index:3;left:23px;bottom:25px;width:min(300px,calc(100vw - 46px));padding:10px 13px;background:#100f1bcc;border:1px solid #866149;color:#f3c89b;font-size:11px;letter-spacing:.7px}
+.stamina-wrap.visible{display:block}.stamina-wrap strong{float:right}.stamina-track{height:7px;margin:8px 0;background:#3d2831;border:1px solid #8a5d4b}.stamina-bar{height:100%;width:100%;background:linear-gradient(90deg,#b15b41,#f9ce84)}#exploration-tip{font-size:9px;color:#dfc0ad;line-height:1.6}
+.journal{position:absolute;z-index:9;right:22px;top:24%;width:min(375px,calc(100vw - 44px));padding:22px;background:#15111ef5;border:1px solid #b38a62;box-shadow:0 12px 65px #000e;color:#ebd7c0}.journal.hidden{display:none}.journal h2{font:700 27px Georgia,serif;color:#ffe3ad}.journal p{line-height:1.6}.journal small{color:#bc9f86}
+@media(max-width:640px){.stamina-wrap{bottom:38px;left:10px}.journal{right:10px}}
+
+/* Fase 12: ajustes discretos y contraste de lectura sobre luces nocturnas. */
+.graphics-label{position:absolute;z-index:4;top:78px;right:22px;padding:5px 11px;
+ color:#f7deb3;font:700 10px/1.5 Consolas,monospace;letter-spacing:1px;
+ background:#120d17c9;border:1px solid #ad856c88;pointer-events:none;}
+@media(max-width:640px){.graphics-label{right:8px;top:117px;font-size:8px;}}
+
+.perf-panel{position:absolute;z-index:5;left:22px;bottom:22px;color:#f1e0c8;
+ background:#080c11e0;border:1px solid #8b765e;padding:9px 13px;
+ font:700 11px Consolas,monospace;pointer-events:none;box-shadow:0 6px 28px #0008;}
+.perf-panel.hidden{display:none}
+@media(max-width:640px){.perf-panel{bottom:110px;left:10px;font-size:9px;max-width:85vw}}
+
+
+/* FASE 13 — AMERICANA NOCTURNA · gráfica propia (1992), sin descargar fuentes. */
+:root{
+ --night-ink:#10121c;--road-asphalt:#27252b;--dust-plum:#423340;
+ --sodium-amber:#d9954a;--neon-crimson:#b83d42;--motel-cyan:#65a6a5;
+ --phosphor-green:#91b98a;--aged-paper:#e3d0aa;--firebird-gold:#c69b54;
+ color-scheme:dark;background:var(--night-ink);color:var(--aged-paper);
+ font-family:'Trebuchet MS',Verdana,Arial,sans-serif;
+}
+#app{background:radial-gradient(ellipse at 50% 65%,#3f313b, #10121c 80%)}
+.scan{opacity:.11;background:repeating-linear-gradient(180deg,rgba(0,0,0,.26) 0 1px,transparent 1px 5px)}
+header{padding:22px 30px 25px;border-bottom:1px solid #ab75442b;background:linear-gradient(180deg,#10121cf1 0%,#10121cc4 64%,transparent 100%)}
+.brand{font-family:Impact,'Arial Narrow',Haettenschweiler,sans-serif;font-stretch:condensed;font-size:clamp(28px,4vw,52px);font-weight:900;letter-spacing:1.5px;line-height:.92;text-shadow:0 3px 20px #05060c}
+.brand span{color:var(--neon-crimson)}
+.brand small{font:700 10px 'Trebuchet MS',sans-serif;letter-spacing:3px;color:var(--sodium-amber);margin-top:10px;text-shadow:none}
+.status{background:#181920e6;border:1px solid #a37b5d;color:var(--aged-paper);letter-spacing:2px;font:bold 11px Consolas,monospace;padding:10px 15px;box-shadow:inset 0 0 0 3px #181920}
+.panel{background:linear-gradient(150deg,#242028f5 0%,#13151df4 65%,#21181df8);border:1px solid #927050;box-shadow:0 40px 110px #000e,0 0 0 6px #12121abe;padding:clamp(22px,4vw,40px);max-height:84vh}
+.panel:before{content:'SUNSPUR FUEL     ·     MILE 404 MOTEL     ·     AM RADIO 404';display:block;letter-spacing:1.8px;font:700 9px Consolas,monospace;padding:8px 0;margin-bottom:20px;border-top:1px solid #70583b;border-bottom:1px solid #70583b;color:var(--phosphor-green)}
+.panel h1{font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;font-weight:900;letter-spacing:.9px;line-height:.95;color:#f4eee2;text-shadow:2px 4px #07090d;font-size:clamp(42px,6vw,70px)}
+.panel h1 em{font-style:normal;color:var(--sodium-amber)}
+.panel p{font-size:14px;line-height:1.68;color:#e0d4c4}
+.panel .eyebrow,.eyebrow{font:bold 11px Consolas,monospace;color:var(--phosphor-green);letter-spacing:2.4px}
+.actions{gap:10px}
+.actions button,.encounter-choices button{color:#f4eee2;border:1px solid #816b56;background:linear-gradient(90deg,#373039,#30272e);font:700 12px Consolas,'Courier New',monospace;letter-spacing:.6px;text-align:left;padding:14px 15px;min-height:46px}
+.actions button:first-child{background:linear-gradient(90deg,#85443a,#592e35);border-color:#d9954a}
+.actions button:hover,.encounter-choices button:hover,.actions button:focus-visible,.encounter-choices button:focus-visible{background:#815444;outline:2px solid #e3d0aa;outline-offset:2px}
+.panel .hint{line-height:1.6;color:#b4afa5!important;font-size:11px!important}
+#stats{font:700 11px/1.8 Consolas,monospace;color:var(--aged-paper);border:1px solid #927e5c72;background:#10121cda;padding:7px 12px;letter-spacing:.15px}
+#objective{font:700 13px/1.5 'Trebuchet MS',sans-serif;background:linear-gradient(90deg,#202026ed,#202026ac);color:#f2e3c8;border-left:3px solid var(--sodium-amber);max-width:550px;padding:12px 15px}
+.prompt{padding:12px 16px;background:#16171de8;border:1px solid #8a7158;border-left:4px solid var(--phosphor-green);color:#f4eee2;letter-spacing:.5px;font:bold 12px Consolas,monospace;text-align:center;box-shadow:0 8px 30px #07090bd4}
+.toast{border-color:var(--sodium-amber);background:#131820eb;color:var(--aged-paper);font:700 12px/1.6 'Trebuchet MS',sans-serif;box-shadow:0 12px 40px #0009}
+.dashboard{background:linear-gradient(135deg,#17191ef0,#352b26ef);border:2px solid #a28a66;box-shadow:inset 0 0 0 3px #16181b,0 16px 40px #000a;border-radius:5px;padding:14px 22px}
+.dial{background:radial-gradient(circle,#21272a 5%,#13191c 75%);border:5px solid #92795d;box-shadow:inset 0 0 0 3px #1b1d23,inset 0 0 15px #000c}
+.dial strong{color:var(--phosphor-green);font:700 23px Consolas,monospace;text-shadow:0 0 8px #4e936c}
+.dial-caption{color:var(--aged-paper)}
+.needle{background:#d9954a;box-shadow:0 0 6px #d9954a80}
+.encounter-card{background:linear-gradient(135deg,#28252c,#15151f);border:1px solid #c69b54;border-left:6px solid #b83d42;box-shadow:0 30px 100px #000e}
+.encounter-card h2{font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:1px;color:var(--aged-paper)}
+.encounter-card p:not(.eyebrow){color:#eee0ca;font-size:15px}
+.journal{background:linear-gradient(155deg,#34302bfa,#211e22fa);border:2px solid #b49b78;box-shadow:inset 0 0 0 6px #2b2925,0 15px 70px #000c;color:var(--aged-paper)}
+.journal h2{color:var(--aged-paper);font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:1px}
+.stamina-wrap,.graphics-label,.camera-label,.perf-panel{background:#141921e8;border-color:#9c7959;color:var(--aged-paper)}
+.stamina-bar{background:linear-gradient(90deg,var(--neon-crimson),var(--sodium-amber))}
+footer{font:700 10px Consolas,monospace;letter-spacing:1px;color:#d6b28d;text-shadow:1px 1px #000}
+@media(max-width:640px){header{padding:13px}.brand{font-size:26px}.brand small{letter-spacing:1px}.panel:before{font-size:8px;letter-spacing:.5px}.actions button{padding:12px}.panel{padding:21px}.dashboard{padding:8px;gap:12px}.dial{width:78px;height:78px}.dial strong{font-size:17px}}
+@media(prefers-reduced-motion:reduce){.scan{opacity:0}.toast,.actions button,.encounter-choices button{transition:none!important}}
+
+/* Fase 14 — capa de cinta analógica opcional. No captura teclado ni ratón. */
+.analog-overlay{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.54;overflow:hidden;
+ background:radial-gradient(ellipse at 50% 50%,transparent 38%,#06070d63 100%)}
+.analog-overlay:before{content:'';position:absolute;inset:-20%;background:repeating-linear-gradient(0deg,transparent 0 3px,#b6ad9a12 4px 5px);animation:analog-shift 13s steps(2,end) infinite}
+.analog-overlay:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 45%,#aa70530e 60%,transparent 66%);mix-blend-mode:screen;animation:analog-float 17s linear infinite}
+.analog-overlay span{position:absolute;top:112px;color:#d2bb9d;font:700 10px Consolas,monospace;text-shadow:0 0 4px #110d12;letter-spacing:2px}
+.analog-stamp{left:22px}.analog-timecode{right:22px}
+.analog-overlay.disabled{display:none}.analog-overlay.static-only:before,.analog-overlay.static-only:after{animation:none}
+.analog-label{position:absolute;right:22px;top:102px;z-index:4;pointer-events:none;color:#c1a88b;font:700 10px Consolas,monospace;letter-spacing:1.3px}
+@keyframes analog-shift{0%,100%{transform:translateY(0)}49%{transform:translateY(-1px)}50%{transform:translateY(2px)}51%{transform:translateY(0)}}
+@keyframes analog-float{from{transform:translateX(-35%)}to{transform:translateX(35%)}}
+@media(max-width:640px){.analog-overlay span{top:145px;font-size:8px}.analog-label{right:8px;top:149px;font-size:8px}}
+@media(prefers-reduced-motion:reduce){.analog-overlay:before,.analog-overlay:after{animation:none!important}}
+
+/* Fase 15: ayuda accesible y legible en teclado, desacoplada de la simulación. */
+.show-controls{position:absolute;z-index:7;right:20px;bottom:35px;cursor:pointer;background:#201d23ed;border:1px solid #c69b54;color:#ffe9c2;font:700 11px 'Trebuchet MS',sans-serif;letter-spacing:1.5px;padding:9px 14px}
+.show-controls:hover,.show-controls:focus-visible{outline:2px solid #ffe0a6;background:#50303d}
+.controls-guide{position:absolute;inset:0;background:#090b13e8;z-index:12;display:grid;place-items:center;padding:16px;overflow-y:auto;backdrop-filter:blur(8px)}
+.controls-guide.hidden{display:none}.controls-guide-card{width:min(850px,95vw);max-height:90vh;overflow-y:auto;border:2px solid #c69b54;padding:clamp(18px,4vw,44px);background:linear-gradient(140deg,#26202a,#0d1119);box-shadow:0 30px 90px #000}
+.controls-guide h2{font:700 clamp(22px,4vw,42px) Georgia,serif;color:#ffe0a6;margin:0 0 15px}.controls-guide p{line-height:1.65;color:#e0d1b9}.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin:18px 0}.control-grid h3{color:#f6ad70;letter-spacing:2px}.controls-guide button{background:#a04b3e;color:#fff1d9;border:1px solid #da9977;padding:12px 20px;font-weight:800;cursor:pointer}
+@media(max-width:650px){.control-grid{grid-template-columns:1fr;gap:4px}.show-controls{bottom:12px;right:10px;font-size:9px}}
+
+/* FASE 16 — indicador comprobable del estado de modelos GLB. */
+.art-status{position:absolute;z-index:4;top:138px;right:22px;background:#161820de;border:1px solid #a58456;
+ padding:6px 10px;color:#f1d2a0;font:700 10px Consolas,monospace;pointer-events:none;max-width:270px;text-align:right}
+@media(max-width:640px){.art-status{top:178px;right:8px;font-size:8px;max-width:180px}}
