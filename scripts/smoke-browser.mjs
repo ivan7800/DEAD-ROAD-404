@@ -326,6 +326,9 @@ try{
  await page.locator('#objective').filter({hasText:'DOS interruptores'}).waitFor();
  const switchA=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFour);
  assert.equal(switchA.breakersMask,1,'El circuito A no se desconectó');
+ // The first switch is reachable before fully entering the breaker row.
+ // Advance along the aisle before strafing across to B (same z=39.2).
+ await page.keyboard.down('w');await sleep(460);await page.keyboard.up('w');
  await page.keyboard.down('a');
  try{await page.locator('#prompt').filter({hasText:'CONTENCIÓN B'}).waitFor({timeout:30000});}
  finally{await page.keyboard.up('a');}
