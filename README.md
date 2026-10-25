@@ -2,6 +2,21 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 30 — Medición reproducible y estabilidad (v0.21.3)
+
+La actualización reduce trabajo innecesario en el renderizado: reutiliza los vectores de linterna y localizaciones, no recalcula la proyección de cámara sin cambios, evita reescrituras idénticas de estadísticas HUD y omite la simulación de polvo cuando la calidad PSX lo oculta. **No se atribuyen mejoras de FPS sin comparaciones controladas.**
+
+Se incluyen benchmarks locales de Chromium para **Windows y Linux**, de uso voluntario, con informes JSON y Markdown en `artifacts/benchmarks/`. Los datos no se transmiten a terceros. Ejecutar tras `npm install` y `npx playwright install chromium`:
+
+- Windows: doble clic en `BENCHMARK-404-WINDOWS.cmd`.
+- Linux: `bash ./BENCHMARK-404-LINUX.sh` (o `chmod +x BENCHMARK-404-LINUX.sh` para ejecutarlo desde el explorador).
+- Comando configurable: `npm run benchmark:gpu -- --repeats=3 --seconds=10`.
+- CI de referencia **software**, no GPU: `npm run benchmark:ci`.
+
+Los informes registran navegador, SO, renderer WebGL, FPS de `requestAnimationFrame`, 1 % bajo, p95, triángulos y draw calls; **rAF no mide tiempo GPU**. Comprueba el campo `softwareRenderer`: Chrome puede usar SwiftShader incluso cuando el equipo tiene tarjeta gráfica. El parámetro `--require-hardware` detiene el informe si detecta software, pero un renderer no identificado no demuestra por sí solo aceleración física.
+
+Consulta los hallazgos y limitaciones en [FASE_30_ESTABILIDAD_GPU.md](docs/FASE_30_ESTABILIDAD_GPU.md). Queda pendiente la comparación A/B en hardware real de Windows/Linux, la auditoría visual completa y la estabilidad en partidas prolongadas.
+
 ## Fase 29 — Optimización PSX (v0.21.2)
 
 La segunda pasada de agrupación une mallas Lambert de decorados que comparten exactamente apariencia tras la cuantización PSX. No agrupa actores, objetos interactivos ni superficies transparentes o texturizadas. El nuevo control de fotogramas mantiene la frecuencia completa durante el juego, limita el redibujado de menús/diálogos/pausa y evita renderizar cuando la pestaña está oculta. El diagnóstico FPS se refiere al juego activo.
