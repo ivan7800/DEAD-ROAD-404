@@ -538,9 +538,9 @@ function interactRadio(){
  if(radioUnderground){
   if(nearRadioProp(x,z,RADIO_POSITIONS.exit,1.55)){exitRadioBunker();return;}
   if(stage==='bunker'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.5)){showRadioCipher(true);return;}
-  if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerA,2.0)){
+  if(stage==='breaker'&&(state.chapterFour.breakersMask&1)===0&&nearRadioProp(x,z,RADIO_POSITIONS.breakerA,2.0)){
    state=disableRadioBreaker(state,'A');
-  }else if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerB,2.0)){
+  }else if(stage==='breaker'&&(state.chapterFour.breakersMask&2)===0&&nearRadioProp(x,z,RADIO_POSITIONS.breakerB,2.0)){
    state=disableRadioBreaker(state,'B');
   }else if(stage==='choice'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.8)){
    showRadioDecision();return;
@@ -576,8 +576,8 @@ function radioPrompt(x:number,z:number):string{
  if(radioUnderground){
   if(nearRadioProp(x,z,RADIO_POSITIONS.exit,1.55))return '[E] SUBIR A LA EMISORA · NIVEL 0';
   if(stage==='bunker'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.5))return '[E] DESCIFRAR TERMINAL UMBRAL · 03:13';
-  if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerA,2))return '[E] APAGAR CIRCUITO DE CONTENCIÓN A';
-  if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerB,2))return '[E] APAGAR CIRCUITO DE CONTENCIÓN B';
+  if(stage==='breaker'&&(state.chapterFour.breakersMask&1)===0&&nearRadioProp(x,z,RADIO_POSITIONS.breakerA,2))return '[E] APAGAR CIRCUITO DE CONTENCIÓN A';
+  if(stage==='breaker'&&(state.chapterFour.breakersMask&2)===0&&nearRadioProp(x,z,RADIO_POSITIONS.breakerB,2))return '[E] APAGAR CIRCUITO DE CONTENCIÓN B';
   if(stage==='choice'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.8))return '[E] DECIDIR EL DESTINO DE LA TRANSMISIÓN';
   if(stage==='sentinel')return 'EL OPERADOR · '+radioOperator.health+'/150 · [F] GOLPEAR · [SHIFT] ESQUIVAR';
   return '[J] DIARIO · [M] VOLVER AL FIREBIRD';
