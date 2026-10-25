@@ -64,7 +64,7 @@ test('fin de carretera no se dispara antes del desenlace del capítulo',()=>{
  assert.equal(shouldOfferFinale({...s,chapterTwo:{...s.chapterTwo,stage:'complete'}}),false);
  assert.equal(shouldOfferFinale({...s,chapterTwo:{...s.chapterTwo,stage:'complete'},chapterThree:{...s.chapterThree,stage:'complete'}}),false);
  assert.equal(shouldOfferFinale({...s,chapterTwo:{...s.chapterTwo,stage:'complete'},chapterThree:{...s.chapterThree,stage:'complete'},chapterFour:{...s.chapterFour,stage:'complete'}}),false);
- assert.equal(shouldOfferFinale({...s,chapterTwo:{...s.chapterTwo,stage:'complete'},chapterThree:{...s.chapterThree,stage:'complete'},chapterFour:{...s.chapterFour,stage:'complete'},chapterFive:{...s.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'}}),true);
+ assert.equal(shouldOfferFinale({...s,chapterTwo:{...s.chapterTwo,stage:'complete'},chapterThree:{...s.chapterThree,stage:'complete'},chapterFour:{...s.chapterFour,stage:'complete'},chapterFive:{...s.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'},chapterSix:{...s.chapterSix,stage:'choice',doubleHealth:0}}),true);
  assert.equal(travel(s,24).chapterOne.stage,'complete');
 });
 test('guardados F20 con misión terminada mantienen el final desbloqueado',()=>{
