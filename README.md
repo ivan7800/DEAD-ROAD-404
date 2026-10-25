@@ -2,6 +2,12 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 31 — Reproducibilidad, cuatro finales y capturas responsive (v0.21.4)
+
+La fase 31 incorpora una instalación de dependencias reproducible (`package-lock.json` y `npm ci` una vez generado el lockfile legítimo), revisiones Chromium específicas para **los cuatro desenlaces** con elección desde la interfaz, comprobación del guardado tras recarga, capturas de 1280×800 y 390×844, y detección de desbordamiento horizontal. Las pruebas de finales parten de estados válidos próximos al desenlace, mientras que el smoke general conserva los recorridos físicos y combates.
+
+El resultado de CI **no** sustituye la inspección visual humana, una partida completa de varias horas ni el benchmark físico Windows/Linux. Consulta [FASE_31_CALIDAD_Y_REPRODUCIBILIDAD.md](docs/FASE_31_CALIDAD_Y_REPRODUCIBILIDAD.md).
+
 ## Fase 30 — Medición reproducible y estabilidad (v0.21.3)
 
 La actualización reduce trabajo innecesario en el renderizado: reutiliza los vectores de linterna y localizaciones, no recalcula la proyección de cámara sin cambios, evita reescrituras idénticas de estadísticas HUD y omite la simulación de polvo cuando la calidad PSX lo oculta. **No se atribuyen mejoras de FPS sin comparaciones controladas.**

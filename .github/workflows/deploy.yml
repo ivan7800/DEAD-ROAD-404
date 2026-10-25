@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install
+      - run: npm ci
       - run: npm test
       - run: npm run build
         env:
@@ -29,6 +29,15 @@ jobs:
       - run: node scripts/check-pages-build.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke
+      - run: npm run qa:finales
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f31-capturas-y-finales
+          path: |
+            artifacts/f31-*.png
+            artifacts/f31-validation.json
+          if-no-files-found: ignore
       - run: npm run benchmark:ci
       - if: always()
         uses: actions/upload-artifact@v4
