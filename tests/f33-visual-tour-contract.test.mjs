@@ -4,14 +4,15 @@ import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
-test('F33: recorrido visual mantiene los seis capítulos y dos tamaños de pantalla',()=>{
+test('F33: recorrido visual mantiene los seis capítulos y tres tamaños de pantalla',()=>{
  const script=get('scripts/qa-visual33.mjs');
  execFileSync(process.execPath,['--check',new URL('../scripts/qa-visual33.mjs',import.meta.url).pathname],{stdio:'pipe'});
  for(const id of ['last-stop','missing','nameless','dead-frequency','impossible-mile','road-end'])
   assert.match(script,new RegExp("id:'"+id+"'"));
  assert.match(script,/width:1280,height:800/);
  assert.match(script,/width:390,height:844/);
- assert.match(script,/report\.cases\.length,12/);
+ assert.match(script,/width:320,height:568/);
+ assert.match(script,/report\.cases\.length,18/);
  assert.match(script,/page\.screenshot/);
  assert.match(script,/#status/);
 });
