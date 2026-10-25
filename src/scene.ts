@@ -6,6 +6,8 @@ import {RoadsideDetail14} from './roadsideDetail14.ts';
 import {DriveDust} from './driveDust.ts';
 import {DinerScene} from './dinerScene.ts';
 import {TownScene} from './townScene.ts';
+import {RadioScene} from './radioScene.ts';
+import type {RadioStage} from './chapterFour.ts';
 import type {TownStage} from './chapterThree.ts';
 import type {DinerStage} from './chapterTwo.ts';
 import {createPSXSignage} from './psxSigns.ts';
@@ -23,10 +25,10 @@ const asphalt=createAsphalt(),sand=mat(0x51404a),wall=createPlaster(),rust=creat
 function block(parent:THREE.Object3D,w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
 function cylinder(parent:THREE.Object3D,r:number,h:number,x:number,y:number,z:number,m:THREE.Material,seg=9){let o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o;}
 export class GameWorld {
- readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();
+ readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();readonly legacyEnvironment=new THREE.Group();
  artStatus:'cargando'|'glb'|'parcial'|'reserva'|'psx'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
  readonly architecturalPass=new ArchitecturalPass();readonly americana1992=new Americana1992();readonly roadsideDetail14=new RoadsideDetail14(); readonly driveDust:DriveDust;readonly firebird=new Firebird();readonly car=this.firebird.group; readonly roadsideArt=new RoadsideArt(); readonly player=new THREE.Vector3(0,1.7,7); readonly can=new THREE.Vector3(11,0,1);
- readonly diner=new DinerScene();readonly town=new TownScene();readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private fuseVisual=new THREE.Group();private consoleVisual=new THREE.Group();private hatchVisual=new THREE.Group();readonly wardenVisual=new THREE.Group();private wardenEye:THREE.Mesh|null=null;private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
+ readonly diner=new DinerScene();readonly town=new TownScene();readonly radio=new RadioScene();readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private fuseVisual=new THREE.Group();private consoleVisual=new THREE.Group();private hatchVisual=new THREE.Group();readonly wardenVisual=new THREE.Group();private wardenEye:THREE.Mesh|null=null;private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
  constructor(canvas:HTMLCanvasElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=false;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.sky=new THREE.Color(0x10121c);this.scene.background=this.sky;this.scene.fog=new THREE.FogExp2(0x423340,.019);
@@ -37,13 +39,23 @@ export class GameWorld {
   this.flashlight.target = this.flashlightTarget;
   this.flashlight.visible=false;
   this.scene.add(this.flashlight,this.flashlightTarget);
-  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.buildChapterOneProps();this.scene.add(this.diner.group,this.town.group);this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
+  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.buildChapterOneProps();this.scene.add(this.diner.group,this.town.group,this.radio.group);this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
   // Batch only directly-owned noninteractive scenery; game actors live in groups.
   this.sceneryBatch=batchStaticModel(this.scene,{directOnly:true,cellSize:30});
-  for(const group of [this.stationFallback,this.motelFallback,this.diner.scenery,this.town.scenery]){
+  for(const group of [this.stationFallback,this.motelFallback,this.diner.scenery,this.town.scenery,this.radio.surfaceScenery,this.radio.bunkerScenery]){
    const b=batchStaticModel(group,{directOnly:true,cellSize:20});
    this.sceneryBatch.merged+=b.merged;
   }
+  // Isolate the old open-world scenery during WXR-404; the motel originally
+  // overlapped this new radio corridor (confirmed from real Chromium screenshots).
+  // Batch first, then reparent without altering transformations or draw calls.
+  this.legacyEnvironment.name='BASE_ROAD_STATION_AND_MOTEL';
+  for(const object of [...this.scene.children]){
+   if(object===this.diner.group||object===this.town.group||object===this.radio.group||
+      object===this.car||object===this.flashlightTarget||object instanceof THREE.Light)continue;
+   this.legacyEnvironment.add(object);
+  }
+  this.scene.add(this.legacyEnvironment);
   this.resize();window.addEventListener('resize',()=>this.resize());
   // Retro production intentionally never fetches the expensive detailed GLB models.
   // The old loader is kept only for future offline art inspection.
@@ -287,6 +299,10 @@ export class GameWorld {
    this.wardenEye.scale.x=telegraph?1.7:1;
   }
  }
+ setRadioVisible(visible:boolean){this.radio.group.visible=visible;this.legacyEnvironment.visible=!visible;}
+ setRadioUnderground(value:boolean){this.radio.setUnderground(value);}
+ setRadioStage(stage:RadioStage,noraMet:boolean,cacheTaken:boolean,breakersMask:number){this.radio.setStage(stage,noraMet,cacheTaken,breakersMask);}
+ setRadioOperator(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.radio.setOperator(x,z,visible,telegraph,time);}
  setTownVisible(visible:boolean){this.town.group.visible=visible;}
  setTownStage(stage:TownStage,witnessMet:boolean,cacheTaken:boolean){this.town.setStage(stage,witnessMet,cacheTaken);}
  setTownGuardian(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.town.setGuardian(x,z,visible,telegraph,time);}

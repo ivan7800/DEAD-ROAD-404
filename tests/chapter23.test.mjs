@@ -83,7 +83,7 @@ test('una sola recompensa por decidir, cuatro capítulos posteriores aún bloque
  assert.equal(seal.health,85);
  assert.equal(seal.chapterThree.decision,'seal');
  assert.equal(campaignStatus(seal.campaign,'nameless'),'completed');
- assert.equal(campaignStatus(seal.campaign,'dead-frequency'),'locked');
+ assert.equal(campaignStatus(seal.campaign,'dead-frequency'),'available');
 });
 test('caja municipal no permite farmear suministros al recargar',()=>{
  const s={...active(),health:87};
@@ -96,7 +96,7 @@ test('caja municipal no permite farmear suministros al recargar',()=>{
  assert.equal(restored?.chapterThree.cacheTaken,true);
 });
 test('el episodio no altera la salida clásica de partidas F22',()=>{
- const old=ready();old.km=120;delete old.chapterThree;
+ const old=ready();old.km=120;delete old.chapterThree;delete old.chapterFour;
  const restored=normalizeSave(old);assert.ok(restored);
  assert.equal(restored.chapterThree.stage,'locked');
  assert.equal(restored.chapterThree.legacyFinaleAllowed,true);
@@ -107,7 +107,8 @@ test('el final de carretera requiere terminar III en partidas nuevas',()=>{
  const s={...ready(),km:120};
  assert.equal(shouldOfferFinale(s),false);
  const completed=concludeTown(toChoice(),'seal');
- assert.equal(shouldOfferFinale({...completed,km:120}),true);
+ assert.equal(shouldOfferFinale({...completed,km:120}),false);
+ assert.equal(shouldOfferFinale({...completed,km:120,chapterFour:{...completed.chapterFour,stage:'complete'}}),true);
  assert.equal(travel(completed,24).chapterThree.stage,'complete');
 });
 test('guardar/cargar persiste clave errónea, Elías y guardián herido',()=>{

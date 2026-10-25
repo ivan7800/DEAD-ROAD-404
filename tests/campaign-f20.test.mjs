@@ -4,10 +4,10 @@ import {CHAPTERS,PLAYABLE_CHAPTERS,freshCampaign,recordMilestone,completeChapter
 import {fresh,normalizeSave,travel} from '../src/state.ts';
 import {resolveFinale} from '../src/roadStory.ts';
 
-test('seis capítulos distintos, los tres primeros implementados y demás bloqueados',()=>{
+test('seis capítulos distintos, los cuatro primeros implementados y demás bloqueados',()=>{
  assert.equal(CHAPTERS.length,6);
  assert.equal(new Set(CHAPTERS.map(c=>c.id)).size,6);
- assert.deepEqual([...PLAYABLE_CHAPTERS],['last-stop','missing','nameless']);
+ assert.deepEqual([...PLAYABLE_CHAPTERS],['last-stop','missing','nameless','dead-frequency']);
  assert.equal(campaignStatus(freshCampaign(),'last-stop'),'active');
  for(const chapter of CHAPTERS.slice(1))assert.equal(campaignStatus(freshCampaign(),chapter.id),'locked');
 });
@@ -32,7 +32,7 @@ test('se registran kilómetros y se guarda el progreso',()=>{
  assert.ok(normalizeSave(traveled)?.campaign.milestones.includes('road24'));
 });
 test('el desenlace completa el capítulo sin desbloquear capítulos ficticios',()=>{
- const s={...fresh(),km:120,mission:{stage:'resolved',choice:'rescue'},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},chapterTwo:{...fresh().chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'},chapterThree:{...fresh().chapterThree,stage:'complete',guardianHealth:0,decision:'seal'},fuel:44,parts:3};
+ const s={...fresh(),km:120,mission:{stage:'resolved',choice:'rescue'},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},chapterTwo:{...fresh().chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'},chapterThree:{...fresh().chapterThree,stage:'complete',guardianHealth:0,decision:'seal'},chapterFour:{...fresh().chapterFour,stage:'complete',operatorHealth:0,decision:'sever'},fuel:44,parts:3};
  const result=resolveFinale(s,'escape');
  assert.equal(result.ending,'dawn');
  assert.equal(campaignStatus(result.campaign,'last-stop'),'completed');

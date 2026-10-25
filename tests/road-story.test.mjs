@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh,normalizeSave,travel} from '../src/state.ts';
 import {roadMessage,roadObjective,shouldOfferFinale,resolveFinale,ENDINGS} from '../src/roadStory.ts';
-const ready=(choice='rescue')=>({...fresh(),mission:{stage:'resolved',choice},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},chapterTwo:{...fresh().chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'},chapterThree:{...fresh().chapterThree,stage:'complete',guardianHealth:0,decision:'seal'},km:120,fuel:40,parts:2});
+const ready=(choice='rescue')=>({...fresh(),mission:{stage:'resolved',choice},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},chapterTwo:{...fresh().chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'},chapterThree:{...fresh().chapterThree,stage:'complete',guardianHealth:0,decision:'seal'},chapterFour:{...fresh().chapterFour,stage:'complete',operatorHealth:0,decision:'sever'},km:120,fuel:40,parts:2});
 test('cinco etapas de carretera con narrativa distinta',()=>{const m=[24,48,72,96,120].map(roadMessage);assert.equal(new Set(m).size,5);});
 test('no ofrece final hasta completar misión y 120 km',()=>{
  assert.equal(shouldOfferFinale(fresh()),false);
