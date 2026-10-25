@@ -379,7 +379,11 @@ html.psx-mode .panel .actions #radio:hover:not(:disabled){background:#8a3941}
  html.psx-mode[data-pulp-mode="explore"] .camera-label,
  html.psx-mode[data-pulp-mode="drive"] .graphics-label,
  html.psx-mode[data-pulp-mode="drive"] .art-status,
- html.psx-mode[data-pulp-mode="drive"] .camera-label{display:none}
+ html.psx-mode[data-pulp-mode="drive"] .camera-label,
+ html.psx-mode[data-pulp-mode="explore"] .analog-label,
+ html.psx-mode[data-pulp-mode="drive"] .analog-label,
+ html.psx-mode[data-pulp-mode="explore"] .analog-overlay span,
+ html.psx-mode[data-pulp-mode="drive"] .analog-overlay span{display:none}
  html.psx-mode[data-pulp-mode="explore"] .stamina-wrap{
   left:9px;right:9px;width:auto;bottom:51px;
   padding:6px 9px;
