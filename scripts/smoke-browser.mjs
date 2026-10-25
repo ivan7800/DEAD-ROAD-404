@@ -198,6 +198,11 @@ try{
  assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved,
   'Cancelar debe preservar la partida anterior');
  await page.locator('#new').click();
+ await page.keyboard.press('Escape');
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved,
+  'Escape en confirmación debe conservar la partida');
+ await page.locator('#new').click();
  await page.getByRole('button',{name:'CONFIRMAR NUEVA PARTIDA'}).click();
  const f28Fresh=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
  assert.equal(f28Fresh.km,0);
