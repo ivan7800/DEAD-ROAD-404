@@ -1,8 +1,109 @@
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10121c"><title>DEAD ROAD 404 · Americana Nocturna · 1992</title></head><body><div id="app"><canvas id="scene" aria-label="Escenario 3D de Dead Road 404"></canvas><div class="scan"></div><div id="analog-overlay" class="analog-overlay" aria-hidden="true"><span class="analog-stamp">CAM 01 · OCT 1992 · 02:17</span><span class="analog-timecode">SP · PLAY ▷</span></div><span id="analog-label" class="analog-label" aria-live="polite"></span><header><div class="brand">DEAD ROAD <span>404</span><small>1992 · CARRETERA 404 · CAPÍTULOS I–III</small></div><div class="status" id="status">CARRETERA</div></header><section class="hud" aria-live="polite"><div id="stats"></div><div id="objective"></div></section><div id="stamina-wrap" class="stamina-wrap"><span>RESISTENCIA <strong id="stamina-value">100%</strong></span><div class="stamina-track"><div id="stamina-bar" class="stamina-bar"></div></div><span id="exploration-tip"></span></div><div id="journal" class="journal hidden" role="dialog" aria-modal="false" aria-label="Diario de viaje"><h2>DIARIO DE CARRETERA</h2><p class="eyebrow">1992 · CAPÍTULO I · LA ÚLTIMA PARADA</p><p id="journal-stage"></p><p id="journal-record"></p><h3>PROGRESO DE LA CAMPAÑA</h3><div id="journal-chapters" class="journal-chapters"></div><h3>PISTAS Y ACONTECIMIENTOS</h3><div id="journal-timeline" class="journal-timeline"></div><small>Pulsa [J] o [ESC] para volver al juego.</small></div><div id="inventory-panel" class="inventory-panel hidden" role="dialog" aria-modal="true" aria-labelledby="inventory-title">
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10121c"><title>DEAD ROAD 404 · Americana Nocturna · 1992</title></head><body><div id="app"><canvas id="scene" aria-label="Escenario 3D de Dead Road 404"></canvas><div class="scan"></div><div id="analog-overlay" class="analog-overlay" aria-hidden="true"><span class="analog-stamp">CAM 01 · OCT 1992 · 02:17</span><span class="analog-timecode">SP · PLAY ▷</span></div><span id="analog-label" class="analog-label" aria-live="polite"></span><header><div class="brand">DEAD ROAD <span>404</span><small>1992 · CARRETERA 404 · CAPÍTULOS I–III</small></div><button id="pulp-pause-access" type="button" hidden aria-label="Pausar el juego">II PAUSA [ESC]</button><div class="status" id="status">CARRETERA</div></header><section class="hud" aria-live="polite"><div id="stats"></div><div id="objective"></div></section><div id="stamina-wrap" class="stamina-wrap"><span>RESISTENCIA <strong id="stamina-value">100%</strong></span><div class="stamina-track"><div id="stamina-bar" class="stamina-bar"></div></div><span id="exploration-tip"></span></div><div id="journal" class="journal hidden" role="dialog" aria-modal="false" aria-label="Diario de viaje"><h2>DIARIO DE CARRETERA</h2><p class="eyebrow">1992 · CAPÍTULO I · LA ÚLTIMA PARADA</p><p id="journal-stage"></p><p id="journal-record"></p><h3>PROGRESO DE LA CAMPAÑA</h3><div id="journal-chapters" class="journal-chapters"></div><h3>PISTAS Y ACONTECIMIENTOS</h3><div id="journal-timeline" class="journal-timeline"></div><small>Pulsa [J] o [ESC] para volver al juego.</small></div><div id="inventory-panel" class="inventory-panel hidden" role="dialog" aria-modal="true" aria-labelledby="inventory-title">
  <div class="inventory-card">
   <p class="eyebrow">EQUIPO DE SUPERVIVENCIA · 1992</p><h2 id="inventory-title">MOCHILA DEL VIAJERO</h2>
   <p id="inventory-description">Objetos útiles y pistas recogidas durante la carretera.</p>
   <div id="inventory-list" class="inventory-list"></div>
   <button id="inventory-close" type="button">CERRAR INVENTARIO [I / ESC]</button>
  </div>
-</div><div id="encounter" class="encounter hidden" role="dialog" aria-modal="true" aria-labelledby="encounter-title"><div class="encounter-card"><p class="eyebrow">CAPÍTULO I · ENCUENTRO EN LA CARRETERA</p><h2 id="encounter-title"></h2><p id="encounter-text"></p><div id="encounter-choices" class="encounter-choices"></div></div></div><button id="inventory-access" class="inventory-access" type="button">MOCHILA [I]</button><button id="show-controls" class="show-controls" type="button" aria-label="Abrir guía de controles">CONTROLES [H]</button><div id="controls-guide" class="controls-guide hidden" role="dialog" aria-modal="true" aria-label="Guía de controles"><div class="controls-guide-card"><h2>MANUAL DE CARRETERA · 1992</h2><p>Los controles cambian según el modo. Pulsa H o ESC para cerrar esta guía.</p><div class="control-grid"><section><h3>FIREBIRD</h3><p>W / ↑ acelerar · S / ↓ frenar y retroceder</p><p>A / D girar · Espacio freno de mano</p><p>C cámaras · L faros · M mapa</p></section><section><h3>EXPLORACIÓN</h3><p>WASD movimiento · Clic para capturar ratón</p><p>Flechas izquierda/derecha: girar sin ratón</p><p>Shift correr · T linterna · F / Espacio golpear</p><p>E interactuar: gasolinera, restaurante y pueblo · R radio (SUNSPUR) · J diario</p></section></div><p>GENERAL: I inventario · J diario · G gráficos · V filtro VHS · F3 rendimiento · P guardar · H ayuda.</p><button id="close-controls" type="button">VOLVER AL JUEGO</button></div></div><div id="perf-panel" class="perf-panel hidden" role="status" aria-live="off"></div><div id="art-status" class="art-status" role="status" aria-live="polite">ARTE PSX: INICIANDO</div><div id="graphics-label" class="graphics-label" aria-live="polite"></div><div id="camera-label" class="camera-label" aria-live="polite"></div><div id="dashboard" class="dashboard" aria-label="Instrumentos del vehículo"><div class="dial"><span class="dial-caption">KM/H</span><div class="needle" id="speed-needle"></div><strong id="speed-number">0</strong></div><div class="dial"><span class="dial-caption">GASOLINA · L</span><div class="needle" id="fuel-needle"></div><strong id="fuel-number">44</strong></div></div><div class="crosshair" id="crosshair">+</div><div class="prompt" id="prompt"></div><div class="toast" id="toast" role="status"></div><aside class="panel" id="panel"><p class="eyebrow">1992 · CARRETERA 404 · 02:17 AM</p><h1>La Última<br><em>Parada</em></h1><p id="chapter-intro">La emisora solo reproduce estática. Investiga SUNSPUR y a Vera, descubre THE LAST LIGHT y sigue las transmisiones hasta un pueblo que no figura en ningún mapa. Los relojes siguen parados a las 03:13.</p><div class="actions"><button id="drive">CONDUCIR · 24 KM</button><button id="explore">EXPLORAR GASOLINERA</button><button id="diner" type="button" disabled>RESTAURANTE THE LAST LIGHT · DESDE KM 24</button><button id="town" type="button" disabled>EL PUEBLO SIN NOMBRE · DESDE KM 48</button><button id="inventory-open" type="button">INVENTARIO [I]</button><button id="repair" type="button">REPARAR FIREBIRD · 1 PIEZA</button><button id="save">GUARDAR PARTIDA</button><button id="load">CARGAR PARTIDA</button><button id="new">NUEVA PARTIDA</button></div><p class="hint">Pulsa [H] para ver los controles en cualquier momento. Conducir: WASD / flechas · C cámaras · L luces · ESPACIO freno mano · V filtro VHS · G gráficos · Explorar: WASD + ratón o flechas · E interactuar / cabina · R escuchar radio · Espacio/F golpear · T linterna · SHIFT correr · J diario · I inventario · G cambiar gráficos · F3 rendimiento · Escape liberar ratón · M volver al mapa · P guardar</p><div id="log" class="log"></div></aside><footer>DEAD ROAD 404 · v0.19.0 · FASE 23 · EL PUEBLO SIN NOMBRE · EDICIÓN PSX · 1992 · ARTE ORIGINAL</footer></div><script type="module" src="/src/main.ts"></script></body></html>
+</div><div id="encounter" class="encounter hidden" role="dialog" aria-modal="true" aria-labelledby="encounter-title"><div class="encounter-card"><p class="eyebrow">CAPÍTULO I · ENCUENTRO EN LA CARRETERA</p><h2 id="encounter-title"></h2><p id="encounter-text"></p><div id="encounter-choices" class="encounter-choices"></div></div></div><button id="inventory-access" class="inventory-access" type="button">MOCHILA [I]</button><button id="show-controls" class="show-controls" type="button" aria-label="Abrir guía de controles">CONTROLES [H]</button><div id="controls-guide" class="controls-guide hidden" role="dialog" aria-modal="true" aria-label="Guía de controles"><div class="controls-guide-card"><h2>MANUAL DE CARRETERA · 1992</h2><p>Los controles cambian según el modo. Pulsa H o ESC para cerrar esta guía.</p><div class="control-grid"><section><h3>FIREBIRD</h3><p>W / ↑ acelerar · S / ↓ frenar y retroceder</p><p>A / D girar · Espacio freno de mano</p><p>C cámaras · L faros · M mapa</p></section><section><h3>EXPLORACIÓN</h3><p>WASD movimiento · Clic para capturar ratón</p><p>Flechas izquierda/derecha: girar sin ratón</p><p>Shift correr · T linterna · F / Espacio golpear</p><p>E interactuar: gasolinera, restaurante y pueblo · R radio (SUNSPUR) · J diario</p></section></div><p>GENERAL: I inventario · J diario · G gráficos · V filtro VHS · F3 rendimiento · P guardar · H ayuda.</p><button id="close-controls" type="button">VOLVER AL JUEGO</button></div></div><div id="perf-panel" class="perf-panel hidden" role="status" aria-live="off"></div><div id="art-status" class="art-status" role="status" aria-live="polite">ARTE PSX: INICIANDO</div><div id="graphics-label" class="graphics-label" aria-live="polite"></div><div id="camera-label" class="camera-label" aria-live="polite"></div><div id="dashboard" class="dashboard" aria-label="Instrumentos del vehículo"><div class="dial"><span class="dial-caption">KM/H</span><div class="needle" id="speed-needle"></div><strong id="speed-number">0</strong></div><div class="dial"><span class="dial-caption">GASOLINA · L</span><div class="needle" id="fuel-needle"></div><strong id="fuel-number">44</strong></div></div><div class="crosshair" id="crosshair">+</div><div class="prompt" id="prompt"></div><div class="toast" id="toast" role="status"></div><aside class="panel" id="panel"><p class="eyebrow">IVAN 404 PRESENTA · CINTA PROHIBIDA</p>
+ <h1>DEAD ROAD <em>404</em></h1>
+ <div class="pulp-menu-strap">AMERICANA NOCTURNA · 1992 · SÓLO UNA CARRETERA</div><p id="chapter-intro">La emisora solo reproduce estática. Investiga SUNSPUR y a Vera, descubre THE LAST LIGHT y sigue las transmisiones hasta un pueblo que no figura en ningún mapa. Los relojes siguen parados a las 03:13.</p><div class="pulp-menu-strip"><span>■ LADO A · 02:17 AM</span><span>NO REBOBINAR · NO HAY SALIDA</span></div><div class="actions"><button id="drive">CONDUCIR · 24 KM</button><button id="explore">EXPLORAR GASOLINERA</button><button id="diner" type="button" disabled>RESTAURANTE THE LAST LIGHT · DESDE KM 24</button><button id="town" type="button" disabled>EL PUEBLO SIN NOMBRE · DESDE KM 48</button><button id="inventory-open" type="button">INVENTARIO [I]</button><button id="repair" type="button">REPARAR FIREBIRD · 1 PIEZA</button><button id="save">GUARDAR PARTIDA</button><button id="load">CARGAR PARTIDA</button><button id="new">NUEVA PARTIDA</button>
+ <button id="pulp-chapters-open" type="button">ARCHIVO DE CAPÍTULOS</button>
+ <button id="pulp-options-open" type="button">OPCIONES · VÍDEO Y AUDIO</button>
+ <button id="pulp-credits-open" type="button">CRÉDITOS · CINTA 404</button></div><p class="hint">Pulsa [H] para ver los controles. [ESC] pausa en conducción/exploración. Conducir: WASD / flechas · C cámaras · L luces · ESPACIO freno mano · V filtro VHS · G gráficos · Explorar: WASD + ratón o flechas · E interactuar / cabina · R escuchar radio · Espacio/F golpear · T linterna · SHIFT correr · J diario · I inventario · G cambiar gráficos · F3 rendimiento · Escape pausa/liberar ratón · M volver al mapa · P guardar</p><div id="log" class="log"></div></aside><footer>DEAD ROAD 404 · v0.19.0 · FASE 24 · EDICIÓN MIDNIGHT MOVIE · PSX · 1992 · ARTE ORIGINAL</footer>
+<div id="pulp-intro" class="pulp-intro" aria-hidden="true">
+ <div><div class="studio">404 ENTERTAINMENT · VÍDEO 1992</div>
+ <div class="headline">DEAD ROAD <span>404</span></div>
+ <div class="strip">LA CARRETERA SE COBRA LO SUYO</div>
+ <div class="late">MIDNIGHT MOTION PICTURE · UNA PELÍCULA QUE NO EXISTE</div></div>
+</div>
+<div id="pulp-transition" class="pulp-transition" aria-live="off" aria-hidden="true">
+ <div id="pulp-transition-kicker" class="kicker"></div>
+ <div id="pulp-transition-title" class="title"></div>
+ <div id="pulp-transition-subtitle" class="subtitle"></div>
+</div>
+<div id="pulp-flash" class="pulp-flash" aria-hidden="true"></div>
+<div id="pulp-pause" class="pulp-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pulp-pause-title">
+ <div class="pulp-screen"><div class="pulp-eyebrow">TRACKING HOLD · SP · OCT 1992</div>
+ <h2 id="pulp-pause-title">PAUSA DE CINTA</h2>
+ <div class="pulp-tape">II STOP · FRAME 404 · 02:17 AM</div>
+ <p>La carretera sigue ahí. La grabación puede continuar cuando vuelvas.</p>
+ <div class="pulp-controls">
+  <button id="pulp-resume" class="pulp-cta" type="button">▶ REANUDAR PARTIDA</button>
+  <button id="pulp-pause-save" type="button">■ GUARDAR PARTIDA</button>
+  <button id="pulp-pause-load" type="button">◀ CARGAR PARTIDA</button>
+  <button id="pulp-options-from-pause" type="button">⚙ OPCIONES</button>
+  <button id="pulp-menu-from-pause" type="button">▣ VOLVER AL MENÚ / MAPA</button>
+ </div><p class="pulp-eyebrow">ESC · CONTINUAR · LOS DATOS DE PARTIDA SE MANTIENEN</p></div>
+</div>
+<div id="pulp-options" class="pulp-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pulp-options-title">
+ <div class="pulp-screen">
+  <div class="pulp-eyebrow">CINTA DE SERVICIO · MENÚ TÉCNICO 1992</div>
+  <h2 id="pulp-options-title">AJUSTA LA TRANSMISIÓN</h2>
+  <div class="pulp-tape">PSX EDITION · VÍDEO / AUDIO / ACCESIBILIDAD</div>
+  <div class="pulp-option-grid">
+   <label class="pulp-option">RESOLUCIÓN INTERNA PSX
+    <small>Todas las calidades mantienen geometría PSX y sombras desactivadas.</small>
+    <select id="pulp-graphics">
+     <option value="psx">PSX · 240P · MÁS RÁPIDA</option>
+     <option value="rendimiento">PSX · 288P</option>
+     <option value="equilibrado">PSX · 360P</option>
+     <option value="cine">PSX · 450P</option>
+    </select>
+   </label>
+   <label class="pulp-option">VOLUMEN GENERAL · <output id="pulp-volume-value" for="pulp-volume">65%</output>
+    <small>Motor, ambiente, efectos y navegación. Se guarda automáticamente.</small>
+    <input id="pulp-volume" type="range" min="0" max="100" step="5" value="65"/>
+   </label>
+   <label class="pulp-option">GRANO ANALÓGICO ESTÁTICO
+    <small>Textura discreta sin animaciones ni postprocesado 3D.</small>
+    <input id="pulp-grain" type="checkbox" checked/>
+   </label>
+   <label class="pulp-option">REDUCIR MOVIMIENTO
+    <small>Elimina los cortes animados y los destellos de la interfaz.</small>
+    <input id="pulp-reduce-motion" type="checkbox"/>
+   </label>
+   <label class="pulp-option">ALTO CONTRASTE
+    <small>Aumenta la separación entre texto, botones y fondo.</small>
+    <input id="pulp-high-contrast" type="checkbox"/>
+   </label>
+   <label class="pulp-option">TEXTO AMPLIADO
+    <small>Mejora la legibilidad de menús, objetivos y diálogos.</small>
+    <input id="pulp-large-text" type="checkbox"/>
+   </label>
+  </div>
+  <div class="pulp-controls">
+   <button id="pulp-reset-settings" type="button">RESTAURAR AJUSTES</button>
+   <button id="pulp-options-close" class="pulp-cta" type="button">GUARDAR Y VOLVER [ESC]</button>
+  </div>
+  <p>Las opciones se guardan aparte de la partida. Respetamos la configuración de movimiento reducido del sistema.</p>
+ </div>
+</div>
+<div id="pulp-chapters" class="pulp-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pulp-chapters-title">
+ <div class="pulp-screen">
+  <div class="pulp-eyebrow">CARRETERA 404 · EL ARCHIVO DE LOS DESAPARECIDOS</div>
+  <h2 id="pulp-chapters-title">CINTAS DE LA CAMPAÑA</h2>
+  <div class="pulp-tape">PELÍCULA EN SEIS ROLLOS · OCTUBRE 1992</div>
+  <p>Los capítulos no terminados permanecen precintados. Este archivo muestra el progreso real de tu partida.</p>
+  <div id="pulp-chapters-list" class="pulp-chapter-list"></div>
+  <button id="pulp-chapters-close" class="pulp-back" type="button">CERRAR ARCHIVO [ESC]</button>
+ </div>
+</div>
+<div id="pulp-credits" class="pulp-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pulp-credits-title">
+ <div class="pulp-screen">
+  <div class="pulp-eyebrow">ÚLTIMOS CRÉDITOS · REBOBINAR BAJO TU RESPONSABILIDAD</div>
+  <h2 id="pulp-credits-title">DEAD ROAD 404</h2>
+  <div class="pulp-tape">AMERICANA NOCTURNA · EDICIÓN 1992</div>
+  <p>Un videojuego original de terror en carretera: neón gastado, radio imposible, hoteles vacíos y los nombres de quienes nunca regresaron.</p>
+  <ul class="pulp-credits-list">
+   <li>Proyecto original: DEAD ROAD 404</li>
+   <li>Gráficos: escenarios y personajes PSX originales</li>
+   <li>Sonido: síntesis Web Audio y ambiente de carretera</li>
+   <li>Motor: TypeScript, Three.js y Vite</li>
+   <li>Inspiración cultural: carteles pulp, videoclubs y cine de terror de medianoche</li>
+  </ul>
+  <p>No se utilizan escenas, música, logotipos ni personajes de películas comerciales.</p>
+  <button id="pulp-credits-close" class="pulp-back" type="button">VOLVER AL MENÚ [ESC]</button>
+ </div>
+</div>
+</div><script type="module" src="/src/main.ts"></script></body></html>

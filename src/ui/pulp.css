@@ -1,0 +1,264 @@
+/* DEAD ROAD 404 — F24: ORIGINAL 1992 MIDNIGHT MATINEE PRESENTATION
+   Flat layers, no heavy WebGL passes, no external fonts/assets.
+   Inspired by midnight drive-in typography, pulp movie posters and analog videotape. */
+:root{
+ --pulp-ink:#0b0b10;--pulp-red:#c94237;--pulp-oxblood:#501d28;
+ --pulp-amber:#f0ae69;--pulp-paper:#f2dfbe;--pulp-slate:#788994;
+ --pulp-screen:#1b1920;--pulp-green:#a4bba5;--pulp-text-scale:1;
+}
+html.pulp-large-text{--pulp-text-scale:1.14}
+html.pulp-high-contrast{--pulp-red:#ec604c;--pulp-amber:#ffe09b;--pulp-paper:#fff8eb}
+html.pulp-grain #app::before{
+ content:'';position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.10;
+ background:repeating-linear-gradient(0deg,#0000 0 3px,#201822 3px 4px),
+ repeating-linear-gradient(90deg,#e8cba408 0 2px,transparent 2px 5px);
+}
+html.pulp-high-contrast #app::before{opacity:0}
+html.psx-mode body{background:var(--pulp-ink);color:var(--pulp-paper)}
+html.psx-mode .panel{
+ position:absolute;left:clamp(15px,8vw,132px);top:50%;transform:translateY(-50%);
+ width:min(675px,calc(100vw - 30px));max-height:min(90vh,890px);
+ background:linear-gradient(105deg,#17171deF 0%,#15131aeF 74%,#281b23F4 100%);
+ border:2px solid #b2855a;box-shadow:10px 10px 0 #05050af2,0 32px 90px #000b;
+ border-radius:0;backdrop-filter:none;
+ padding:clamp(19px,3vw,36px);z-index:6;
+}
+html.psx-mode .panel:before{
+ content:'404 ENTERTAINMENT  /  MIDNIGHT FEATURE  /  OCTOBER 1992';
+ border-top:2px solid var(--pulp-amber);border-bottom:1px solid #735346;
+ color:#d9b68a;letter-spacing:2px;font:700 calc(9px * var(--pulp-text-scale))/1.4 Consolas,monospace;
+ padding:8px 0;margin:0 0 12px;
+}
+.panel .eyebrow{font:800 calc(11px * var(--pulp-text-scale))/1.3 Consolas,monospace;color:var(--pulp-green);letter-spacing:3px}
+html.psx-mode .panel h1{
+ margin:6px 0 0;color:var(--pulp-paper);
+ font:900 clamp(64px,9vw,117px)/.78 Impact,'Arial Narrow',sans-serif;
+ letter-spacing:-2px;transform:skewX(-3deg);
+ text-shadow:5px 5px 0 #5b1e27,9px 9px 0 #09080d;
+}
+html.psx-mode .panel h1 em{font-style:normal;color:var(--pulp-red)}
+.pulp-menu-strap{
+ margin:12px 0 5px;padding:8px 10px;max-width:max-content;
+ border:1px solid var(--pulp-amber);background:#a63c30;color:#fff1d3;
+ font:900 calc(11px * var(--pulp-text-scale)) Consolas,monospace;
+ letter-spacing:2px;transform:rotate(-1deg);
+}
+html.psx-mode .panel #chapter-intro{
+ margin:12px 0;color:#dfd0bc;font:500 calc(13px * var(--pulp-text-scale))/1.45 'Trebuchet MS',Arial,sans-serif;
+ max-width:580px;
+}
+.pulp-menu-strip{
+ display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+ border-top:1px solid #8a684d;border-bottom:1px solid #8a684d;
+ color:var(--pulp-green);font:800 10px Consolas,monospace;letter-spacing:2px;
+ padding:8px 0;margin:12px 0;
+}
+html.psx-mode .panel .actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0}
+html.psx-mode .panel .actions button{
+ border:1px solid #9e7a5b;border-left:4px solid #d69a64;
+ border-radius:0;background:#292128;color:var(--pulp-paper);
+ font:800 calc(11px * var(--pulp-text-scale))/1.3 Consolas,monospace;
+ min-height:41px;padding:10px 12px;letter-spacing:.55px;
+ box-shadow:inset 0 0 0 1px #19141b;text-shadow:none;transition:none;
+}
+html.psx-mode .panel .actions button:first-child{
+ grid-column:span 2;background:#a53f34;border-color:#f0b06d;
+ font-size:calc(13px * var(--pulp-text-scale));min-height:48px;
+}
+html.psx-mode .panel .actions button:disabled{opacity:.43;color:#c7b9a6;filter:none;cursor:not-allowed}
+html.psx-mode .panel .actions button:hover:not(:disabled),
+html.psx-mode .panel .actions button:focus-visible{
+ outline:2px solid #ffe2a6;outline-offset:1px;
+ background:#a4493c;color:#fff9e7;transform:translateX(2px);
+}
+html.psx-mode .panel .actions #pulp-options-open,
+html.psx-mode .panel .actions #pulp-chapters-open,
+html.psx-mode .panel .actions #pulp-credits-open{
+ background:#1c2830;border-left-color:#87aaac;color:#cddde0;
+}
+html.psx-mode .panel .hint{
+ color:#9e9aa0!important;font:500 calc(10px * var(--pulp-text-scale))/1.6 Consolas,monospace!important;
+ padding-top:7px;border-top:1px solid #574750;
+}
+html.psx-mode .panel .log{
+ margin-top:7px;border-top:1px solid #7b5b49;color:#efb185;font:700 11px Consolas,monospace;
+}
+html.psx-mode .brand{font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:-1px;text-shadow:3px 3px #0c090d}
+html.psx-mode .brand span{color:var(--pulp-red)}
+header{z-index:5!important}
+html.psx-mode .status{
+ font-family:Consolas,monospace;border:1px solid #cf9874;background:#18151c;
+ color:#fff0d6;border-radius:0;box-shadow:none;
+}
+#pulp-pause-access{
+ pointer-events:auto;cursor:pointer;padding:10px 13px;margin-left:auto;margin-right:14px;
+ background:#39272c;border:2px solid #d59f6c;color:#fae5bc;
+ font:900 11px Consolas,monospace;letter-spacing:1px;
+}
+#pulp-pause-access[hidden]{display:none}
+#pulp-pause-access:hover,#pulp-pause-access:focus-visible{background:#a04436;outline:2px solid #ffe0a0}
+html.psx-mode .hud{z-index:3}
+html.psx-mode #stats{
+ background:#18171fe3;border:1px solid #967961;font:700 calc(11px * var(--pulp-text-scale))/1.65 Consolas,monospace;
+ max-width:min(720px,95vw);
+}
+html.psx-mode #objective{
+ background:#18151fe8;border-left:5px solid var(--pulp-red);
+ color:#f7ddba;box-shadow:none;font-size:calc(13px * var(--pulp-text-scale));
+}
+html.psx-mode .toast{
+ border-left:6px solid var(--pulp-amber);border-radius:0;
+ background:#1f1921ed;color:#ffe4bc;box-shadow:5px 5px #080810;
+ font:700 calc(12px * var(--pulp-text-scale))/1.45 Consolas,monospace;
+}
+html.psx-mode .journal{
+ border:2px solid #c7a175;box-shadow:6px 6px 0 #07070e;
+ background:#28232bed;border-radius:0;
+}
+html.psx-mode .journal h2{font:900 32px Impact,'Arial Narrow',sans-serif;letter-spacing:2px;color:#f3dfbc}
+html.psx-mode .journal:before{content:'EXPEDIENTE  /  POLICÍA DE CARRETERAS  /  1992';
+ display:block;font:700 10px Consolas,monospace;letter-spacing:1px;
+ background:#7e302c;color:#fff0d6;padding:6px 8px;margin-bottom:12px}
+html.psx-mode .encounter{backdrop-filter:none;background:#090811ed}
+html.psx-mode .encounter-card{
+ border:2px solid #c19461;border-left:12px solid #b44235;border-radius:0;
+ box-shadow:8px 8px 0 #040409;background:#24202b;
+}
+html.psx-mode .encounter-card h2{font:900 clamp(29px,5vw,51px)/.93 Impact,'Arial Narrow',sans-serif;letter-spacing:2px}
+html.psx-mode .encounter-choices button{
+ background:#40272e;border:1px solid #c99c70;border-left:5px solid #dd7353;
+ border-radius:0;box-shadow:none;transition:none;
+}
+html.psx-mode .encounter-choices button:hover{transform:none;background:#9d4336}
+html.psx-mode .inventory-card{background:#24202b;border:3px solid var(--pulp-amber);box-shadow:8px 8px 0 #04040a}
+html.psx-mode .controls-guide{backdrop-filter:none;background:#08080de8}
+html.psx-mode .controls-guide-card{background:#211c26;border:3px solid #c99d6f;box-shadow:9px 9px #07070b}
+html.psx-mode .controls-guide h2{font-family:Impact,'Arial Narrow',sans-serif;font-size:clamp(28px,4vw,48px)}
+html.psx-mode .dashboard{box-shadow:none}
+.pulp-intro,.pulp-transition,.pulp-flash{position:absolute;pointer-events:none;inset:0}
+.pulp-intro{
+ z-index:21;display:grid;place-items:center;
+ background:linear-gradient(120deg,#07070def,#24131df7 58%,#100d13f9);
+ opacity:0;visibility:hidden;transition:opacity .38s ease;
+ text-align:center;padding:32px;
+}
+.pulp-intro.visible{visibility:visible;opacity:1}
+.pulp-intro .studio{font:800 13px Consolas,monospace;letter-spacing:6px;color:var(--pulp-amber)}
+.pulp-intro .headline{font:900 clamp(72px,14vw,190px)/.83 Impact,'Arial Narrow',sans-serif;
+ letter-spacing:-4px;color:var(--pulp-paper);text-shadow:6px 6px 0 #9e322f,12px 12px #08070a;margin:15px 0;}
+.pulp-intro .headline span{color:var(--pulp-red)}
+.pulp-intro .strip{padding:10px 23px;background:#a83b31;color:#f5dcbb;font:900 13px Consolas,monospace;letter-spacing:4px}
+.pulp-intro .late{margin-top:22px;font:800 12px Consolas,monospace;letter-spacing:4px;color:#a7b4ab}
+.pulp-transition{
+ z-index:16;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ text-align:center;background:linear-gradient(110deg,#100c15f0,#4a151ded 56%,#0a0c12f1);
+ opacity:0;visibility:hidden;transition:opacity .17s ease;
+ border-top:0 solid var(--pulp-amber);
+}
+.pulp-transition.active{opacity:1;visibility:visible;animation:pulp-cut 1.05s steps(3,end) both}
+.pulp-transition .kicker{font:800 clamp(11px,2vw,18px) Consolas,monospace;color:var(--pulp-amber);letter-spacing:5px;margin-bottom:18px}
+.pulp-transition .title{font:900 clamp(50px,9vw,140px)/.9 Impact,'Arial Narrow',sans-serif;
+ letter-spacing:1px;color:#fff0d5;text-shadow:5px 5px 0 #8b2c2e,8px 8px #07050a;max-width:90vw}
+.pulp-transition .subtitle{background:#b33d32;color:#fff4d7;padding:10px 20px;
+ letter-spacing:3px;font:900 13px Consolas,monospace;margin-top:24px}
+@keyframes pulp-cut{0%{opacity:0}9%,72%{opacity:1}100%{opacity:0}}
+.pulp-flash{
+ z-index:17;display:grid;place-items:center;opacity:0;visibility:hidden;
+ background:#e6d2a2;color:#601d27;text-align:center;letter-spacing:5px;
+ font:900 clamp(34px,5vw,70px) Impact,'Arial Narrow',sans-serif;
+}
+.pulp-flash.active{visibility:visible;animation:pulp-flash .42s steps(2,end) both}
+@keyframes pulp-flash{0%{opacity:0}13%,19%{opacity:.82}23%,100%{opacity:0}}
+/* Screen composition, 1992 tape-control typography. */
+.pulp-overlay{
+ position:absolute;inset:0;z-index:30;display:grid;place-items:center;
+ background:#090911ee;padding:14px;overflow:auto;
+}
+.pulp-overlay.hidden{display:none}
+.pulp-screen{
+ width:min(850px,97vw);max-height:95vh;overflow:auto;position:relative;
+ background:#221e28;border:3px solid #c39666;
+ box-shadow:10px 10px 0 #08060d;
+ padding:clamp(18px,4vw,42px);color:var(--pulp-paper);
+}
+.pulp-screen:before{
+ content:'DEAD ROAD VIDEO  /  OCT 1992  /  CINTA Nº 404';
+ display:block;border-bottom:2px solid var(--pulp-red);
+ padding-bottom:11px;margin-bottom:20px;color:var(--pulp-green);
+ font:800 10px Consolas,monospace;letter-spacing:2px;
+}
+.pulp-screen .pulp-eyebrow{font:900 12px Consolas,monospace;letter-spacing:3px;color:var(--pulp-amber)}
+.pulp-screen h2{font:900 clamp(36px,6vw,78px)/.9 Impact,'Arial Narrow',sans-serif;
+ margin:10px 0 14px;letter-spacing:1px;color:var(--pulp-paper);
+ text-shadow:4px 4px #702a32}
+.pulp-screen p{line-height:1.55;color:#ddcdb9;font:500 calc(14px * var(--pulp-text-scale))/1.6 'Trebuchet MS',sans-serif}
+.pulp-screen .pulp-tape{
+ display:inline-block;background:#a83d35;color:#fff4d6;font:900 12px Consolas,monospace;
+ padding:8px 12px;letter-spacing:2px;margin:7px 0 19px
+}
+.pulp-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:22px 0}
+.pulp-controls button,.pulp-screen .pulp-back,.pulp-screen .pulp-cta{
+ min-height:44px;padding:12px 13px;text-align:left;cursor:pointer;
+ background:#3c2832;border:1px solid #c9a06d;border-left:5px solid var(--pulp-red);
+ border-radius:0;color:#f6e5c9;font:900 calc(12px * var(--pulp-text-scale)) Consolas,monospace;
+}
+.pulp-controls button:hover,.pulp-controls button:focus-visible,
+.pulp-screen .pulp-back:hover,.pulp-screen .pulp-back:focus-visible,
+.pulp-screen .pulp-cta:hover,.pulp-screen .pulp-cta:focus-visible{
+ background:#aa4639;outline:2px solid #ffe3aa;outline-offset:2px
+}
+.pulp-screen .pulp-cta{background:#9f3b34}
+.pulp-option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+.pulp-option{
+ display:flex;flex-direction:column;justify-content:space-between;gap:9px;
+ background:#2d2631;border:1px solid #836653;border-left:4px solid #c19b6b;padding:15px;
+ color:#f4ddbd;font:900 calc(13px * var(--pulp-text-scale)) Consolas,monospace;
+}
+.pulp-option small{font:500 11px/1.5 Consolas,monospace;color:#c6b6a5}
+.pulp-option input[type="checkbox"]{width:22px;height:22px;accent-color:#c75340}
+.pulp-option input[type="range"]{width:100%;accent-color:#dd8453}
+.pulp-option select{width:100%;background:#18151e;border:1px solid #c19867;color:#f9e7ce;
+ padding:10px;font:700 13px Consolas,monospace}
+.pulp-chapter-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:22px 0}
+.pulp-chapter{
+ border:2px solid #bd9362;background:#292331;padding:15px;min-height:127px;
+ color:var(--pulp-paper);border-left:7px solid #a14b3b;
+}
+.pulp-chapter.locked{opacity:.58;border-color:#514350;border-left-color:#66606a}
+.pulp-chapter.completed{border-left-color:#95a78a}
+.pulp-chapter.available{border-left-color:var(--pulp-amber)}
+.pulp-chapter.active{border-left-color:#c74341}
+.pulp-chapter span{font:800 11px Consolas,monospace;color:var(--pulp-amber)}
+.pulp-chapter h3{font:900 clamp(17px,2.1vw,26px)/1.05 Impact,'Arial Narrow',sans-serif;margin:9px 0}
+.pulp-chapter small{font:700 10px/1.4 Consolas,monospace;color:#c7b9a8}
+.pulp-credits-list{font:700 14px/1.8 Consolas,monospace;color:#f0dfc9;padding-left:20px}
+html.pulp-high-contrast .pulp-overlay{background:#000}
+html.pulp-high-contrast .pulp-screen,html.pulp-high-contrast .panel{border-color:#fff5cc}
+html.pulp-high-contrast .pulp-option{background:#101014;border-color:#e1cc9b}
+html.pulp-reduce-motion .pulp-transition,
+html.pulp-reduce-motion .pulp-intro,
+html.pulp-reduce-motion .pulp-flash{animation:none!important;transition:none!important}
+html.pulp-reduce-motion .pulp-transition.active{opacity:1;visibility:visible}
+html.pulp-reduce-motion #app::before{opacity:0}
+@media(prefers-reduced-motion:reduce){
+ .pulp-transition,.pulp-intro,.pulp-flash{animation:none!important;transition:none!important}
+}
+@media(max-width:920px){
+ html.psx-mode .panel{left:50%;top:51%;transform:translate(-50%,-50%);width:min(710px,95vw)}
+ .pulp-intro .headline{text-shadow:3px 3px #9e322f}
+}
+@media(max-width:680px){
+ html.psx-mode .panel{padding:15px;max-height:78vh;top:51%}
+ html.psx-mode .panel h1{font-size:clamp(51px,13vw,82px)}
+ html.psx-mode .panel #chapter-intro{font-size:calc(12px * var(--pulp-text-scale))}
+ .pulp-menu-strip{font-size:8px}
+ html.psx-mode .panel .actions{grid-template-columns:1fr;gap:5px}
+ html.psx-mode .panel .actions button:first-child{grid-column:span 1}
+ html.psx-mode .panel .actions button{min-height:38px;padding:8px;font-size:calc(10px * var(--pulp-text-scale))}
+ #pulp-pause-access{position:absolute;right:5px;top:60px;padding:7px 9px}
+ .pulp-option-grid,.pulp-chapter-list,.pulp-controls{grid-template-columns:1fr}
+ .pulp-screen{padding:17px}
+ .pulp-transition .kicker{letter-spacing:2px}
+ .pulp-transition .subtitle{font-size:10px;letter-spacing:1px}
+ .pulp-intro .studio,.pulp-intro .late{letter-spacing:2px}
+}

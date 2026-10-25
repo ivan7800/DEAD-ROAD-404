@@ -3,12 +3,13 @@ import {engineFrequency,soundMix,type SoundMode} from './audioMath.ts';
 /** Sound synthesized locally. Started only after a click to satisfy autoplay policy. */
 export class AudioDirector {
  private ctx:AudioContext|null=null;
+ private master:GainNode|null=null;private volume=1;
  private engine:OscillatorNode|null=null;private engineOvertone:OscillatorNode|null=null;
  private engineGain:GainNode|null=null;private windGain:GainNode|null=null;private tensionGain:GainNode|null=null;
  start(){
   if(this.ctx){void this.ctx.resume();return;}
   const a=new AudioContext();this.ctx=a;
-  const master=a.createGain();master.gain.value=.42;master.connect(a.destination);
+  const master=a.createGain();master.gain.value=.42*this.volume;master.connect(a.destination);this.master=master;
   const engine=a.createOscillator();engine.type='sawtooth';engine.frequency.value=42;
   const engineFilter=a.createBiquadFilter();engineFilter.type='lowpass';engineFilter.frequency.value=210;
   const engineGain=a.createGain();engineGain.gain.value=0;
@@ -26,6 +27,12 @@ export class AudioDirector {
   const tensionGain=a.createGain();tensionGain.gain.value=0;tension.connect(tensionGain).connect(master);tension.start();
   this.engine=engine;this.engineOvertone=overtone;this.engineGain=engineGain;this.windGain=windGain;this.tensionGain=tensionGain;
  }
+ /** Master volume applies consistently to ambient layers and UI/game effects. */
+ setVolume(value:number){
+  this.volume=Number.isFinite(value)?Math.min(1,Math.max(0,value)):1;
+  if(this.ctx&&this.master)this.master.gain.setTargetAtTime(.42*this.volume,this.ctx.currentTime,.025);
+ }
+ getVolume(){return this.volume;}
  update(mode:SoundMode,speed:number){
   const a=this.ctx;if(!a)return;
   const t=a.currentTime,mix=soundMix(mode,speed),freq=engineFrequency(speed);
@@ -41,7 +48,7 @@ export class AudioDirector {
   osc.type='triangle';osc.frequency.value=Math.max(30,Math.min(2200,frequency));
   gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.048,t+.013);
   gain.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.07,duration));
-  osc.connect(gain).connect(a.destination);osc.start(t);osc.stop(t+Math.max(.07,duration)+.025);
+  osc.connect(gain).connect(this.master??a.destination);osc.start(t);osc.stop(t+Math.max(.07,duration)+.025);
   osc.onended=()=>{osc.disconnect();gain.disconnect();};
  }
 }
