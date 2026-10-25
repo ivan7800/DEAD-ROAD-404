@@ -35,12 +35,12 @@ try{
  await page.locator('#inventory-panel:not(.hidden)').waitFor();
  await page.locator('#inventory-list').filter({hasText:'BOTIQUÍN'}).waitFor();
  await page.keyboard.press('i');
- await page.locator('#inventory-panel.hidden').waitFor();
+ await page.locator('#inventory-panel:not(.hidden)').waitFor({state:'hidden'});
  await page.keyboard.press('j');
  await page.locator('#journal-chapters').filter({hasText:'LA ÚLTIMA PARADA'}).waitFor();
  await page.locator('#journal-chapters').filter({hasText:'BLOQUEADO'}).waitFor();
  await page.keyboard.press('j');
- await page.locator('#journal.hidden').waitFor();
+ await page.locator('#journal:not(.hidden)').waitFor({state:'hidden'});
  await page.locator('#drive').click();
  await page.locator('#dashboard.visible').waitFor();
  await page.keyboard.down('w');await sleep(850);await page.keyboard.up('w');
