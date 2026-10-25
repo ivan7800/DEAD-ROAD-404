@@ -22,7 +22,8 @@ const chapters=[
  {id:'road-end',control:'road-end',title:'DONDE TERMINA LA CARRETERA',status:'KM 120'}
 ];
 const sizes=[{name:'escritorio',width:1280,height:800},
- {name:'movil',width:390,height:844}];
+ {name:'movil',width:390,height:844},
+ {name:'movil-compacto',width:320,height:568}];
 const server=spawn(process.platform==='win32'?'npm.cmd':'npm',
  ['run','preview','--','--host','127.0.0.1','--port','4178','--strictPort'],
  {stdio:'pipe',shell:process.platform==='win32',detached:process.platform!=='win32',
@@ -108,6 +109,17 @@ async function screenshotScene(chapter,index,size){
    return {viewport:{width:innerWidth,height:innerHeight},
     canvas:{width:canvas.width,height:canvas.height,bounds:bounds(canvas)},
     documentWidth:root.scrollWidth,status:bounds(status),objective:bounds(objective),
+    brand:bounds(document.querySelector('header .brand')),
+    pause:bounds(document.querySelector('#pulp-pause-access')),
+    stats:bounds(document.querySelector('#stats')),
+    stamina:bounds(document.querySelector('#stamina-wrap')),
+    prompt:bounds(document.querySelector('#prompt')),
+    toast:bounds(document.querySelector('#toast')),
+    toastShown:document.getElementById('toast')?.classList.contains('show'),
+    graphicsShown:getComputedStyle(document.querySelector('.graphics-label')).display!=='none',
+    artShown:getComputedStyle(document.querySelector('.art-status')).display!=='none',
+    inventory:bounds(document.querySelector('#inventory-access')),
+    controls:bounds(document.querySelector('#show-controls')),
     objectiveText:objective?.textContent?.slice(0,180),
     statusText:status?.textContent,
     artStatus:document.getElementById('art-status')?.textContent};
@@ -121,6 +133,30 @@ async function screenshotScene(chapter,index,size){
   assert.ok(diag.documentWidth<=size.width+3,
    'Overflow horizontal '+chapter.title+': '+JSON.stringify(diag));
   assert.ok(diag.objectiveText?.trim().length>0,'Objetivo ausente: '+chapter.title);
+  if(size.width<=390){
+   const overlaps=(a,b)=>Boolean(a&&b&&
+    Math.min(a.right,b.right)-Math.max(a.left,b.left)>2&&
+    Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>2);
+   const noOverlap=(x,y,label)=>assert.equal(overlaps(diag[x],diag[y]),false,
+    'F34 solapamiento móvil '+label+' en '+chapter.title+' '+size.name+
+     ': '+JSON.stringify({[x]:diag[x],[y]:diag[y]}));
+   noOverlap('brand','stats','marca/estadísticas');
+   noOverlap('pause','stats','pausa/estadísticas');
+   noOverlap('pause','objective','pausa/objetivo');
+   noOverlap('stats','objective','estadísticas/objetivo');
+   if(size.height>=520){
+    noOverlap('prompt','stamina','instrucción/resistencia');
+    noOverlap('inventory','stamina','mochila/resistencia');
+    noOverlap('controls','stamina','manual/resistencia');
+    if(diag.toastShown){
+     noOverlap('toast','stamina','narrativa/resistencia');
+     noOverlap('toast','prompt','narrativa/instrucción');
+     noOverlap('toast','objective','narrativa/objetivo');
+    }
+   }
+   assert.equal(diag.graphicsShown,false,'Etiqueta de gráficos redundante tapa HUD móvil');
+   assert.equal(diag.artShown,false,'Etiqueta de arte redundante tapa HUD móvil');
+  }
   assert.deepEqual(errors,[],'Errores en capítulo '+chapter.title);
   const file='f33-'+String(index+1).padStart(2,'0')+'-'+size.name+'.png';
   await page.screenshot({path:resolve('artifacts',file)});
@@ -135,9 +171,9 @@ try{
  ]});
  for(let i=0;i<chapters.length;i++)
   for(const size of sizes)await screenshotScene(chapters[i],i,size);
- assert.equal(report.cases.length,12);
+ assert.equal(report.cases.length,18);
  report.passed=true;
- console.log('PASS F33: 6 capítulos × 2 viewports, 12 capturas y 0 errores JS');
+ console.log('PASS F34: 6 capítulos × 3 viewports, 18 capturas, HUD móvil sin superposiciones y 0 errores JS');
 }catch(e){
  report.passed=false;report.failure=String(e instanceof Error?e.stack:e);
  console.error('FAIL F33:',e);
