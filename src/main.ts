@@ -804,7 +804,49 @@ $('road-end').addEventListener('click',()=>{
  switchMode('explore');saveQuietly();notify(state.message);
 });
 $('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
-$('save').addEventListener('click',save);$('load').addEventListener('click',load);$('new').addEventListener('click',()=>{enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();townGuardian=freshGuardian();radioOperator=freshRadioOperator();mileHunter=freshMileHunter();roadDouble=freshRoadDouble();inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');notify('Nueva partida. Las malas decisiones todavía están por llegar.');});
+$('save').addEventListener('click',save);$('load').addEventListener('click',load);/** New-game confirmation preserves the existing save until the player commits. */
+function startNewGame(){
+ enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();
+ townGuardian=freshGuardian();radioOperator=freshRadioOperator();mileHunter=freshMileHunter();
+ roadDouble=freshRoadDouble();inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;
+ radioUnderground=false;encounterOpen=false;$('encounter').classList.add('hidden');
+ world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');
+ // Commit the reset at the source of the new session, not at a later manual save.
+ const persisted=writeSave(store,SAVE_KEY,{...state,mode:'map'});
+ notify(persisted?'NUEVA PARTIDA INICIADA · La cinta anterior ha sido reemplazada.':
+  'NUEVA PARTIDA INICIADA · No se ha podido guardar; permite almacenamiento para conservar el progreso.');
+}
+function askNewGame(){
+ if(encounterOpen)return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');choices.replaceChildren();
+ $('encounter-title').textContent='¿REBOBINAR LA CINTA 404?';
+ $('encounter-text').textContent='Empezar de nuevo reemplazará el guardado actual. Esta decisión no se podrá deshacer.';
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='CANCELAR · CONSERVAR PARTIDA';
+ cancel.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');
+  ($('new') as HTMLButtonElement).focus();});
+ const confirm=document.createElement('button');confirm.type='button';confirm.textContent='CONFIRMAR NUEVA PARTIDA';
+ confirm.addEventListener('click',startNewGame);
+ choices.append(cancel,confirm);dialog.classList.remove('hidden');cancel.focus();
+}
+$('new').addEventListener('click',askNewGame);
+/** Keep Tab navigation inside active game dialogs. Pulp overlays own their own trap. */
+window.addEventListener('keydown',e=>{
+ if(e.key!=='Tab'||pulpUi?.isPaused)return;
+ const root=encounterOpen?$('encounter'):inventoryOpen?$('inventory-panel'):
+  helpOpen?$('controls-guide'):null;
+ if(!root||root.classList.contains('hidden'))return;
+ const controls=[...root.querySelectorAll<HTMLElement>(
+  'button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled])'
+ )].filter(el=>el.getClientRects().length>0);
+ if(controls.length===0){e.preventDefault();root.tabIndex=-1;root.focus();return;}
+ const first=controls[0],last=controls[controls.length-1];
+ const current=document.activeElement as HTMLElement|null;
+ if(!current||!controls.includes(current)){
+  e.preventDefault();(e.shiftKey?last:first).focus();
+ }else if(e.shiftKey&&current===first){e.preventDefault();last.focus();}
+ else if(!e.shiftKey&&current===last){e.preventDefault();first.focus();}
+},true);
 window.addEventListener('keydown',e=>{
  const k=normalizeKey(e.key);
  const target=e.target as HTMLElement|null;
