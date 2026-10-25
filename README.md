@@ -2,6 +2,14 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 33 — Auditoría visual de los seis capítulos (v0.21.6)
+
+Se añade `npm run qa:visual`: Chromium obtiene capturas en los seis escenarios PSX, tanto en escritorio 1280×800 como en móvil 390×844. Verifica que el HUD principal y los objetivos permanezcan visibles, que el canvas tenga dimensiones válidas y que no aparezcan errores JavaScript; también fotografía las opciones de alto contraste, texto grande y movimiento reducido. Las capturas se adjuntan al CI para revisión humana.
+
+La prueba de resistencia automatizada aumenta de 18 a **65 segundos**, con cambios de modo, guardados y recargas. Puedes ejecutar una prueba local de 20 minutos con `npm run qa:stability -- --minutes=20`. Requiere `npm ci` y Chromium de Playwright.
+
+Para realizar la revisión local sin memorizar comandos, usa **QA-33-WINDOWS.cmd** en Windows o **bash QA-33-LINUX.sh** en Linux. Ambos ofrecen un menú para capturas, test prolongado, benchmark de GPU y compilación; no piden privilegios de administrador. En Linux puedes ejecutar `chmod +x QA-33-LINUX.sh` si deseas abrirlo como ejecutable desde el explorador de archivos.\n\nLos escenarios se visitan mediante checkpoints válidos y controles de juego reales; esto **no demuestra** una campaña completa desde cero ni calidad visual subjetiva. Consulta [el informe técnico F33](docs/FASE_33_REVISION_VISUAL_Y_ESTABILIDAD.md). Quedan pendientes GPU física Windows/Linux, inspección humana de capturas y pruebas largas de la historia.
+
 ## Fase 32 — Pulido de diálogos y estabilidad (v0.21.5)
 
 La revisión mejora el diario de campaña y los diálogos narrativos en pantallas reducidas: ahora tienen altura máxima y desplazamiento propio, y el diario cuenta con botón de cierre accesible por teclado o tacto que restaura el foco anterior. Los botones del menú PSX mantienen al menos 44 píxeles de altura en móvil.
