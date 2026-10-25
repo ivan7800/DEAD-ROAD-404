@@ -36,7 +36,7 @@ npm run qa:stability -- --minutes=20
 npm run benchmark:gpu -- --repeats=3 --seconds=10 --require-hardware
 ```
 
-En Windows, ejecuta los comandos anteriores desde PowerShell o CMD; en Linux Mint, desde una terminal. El parámetro `--require-hardware` rechaza renderizadores de software conocidos, pero un identificador de GPU no equivale por sí solo a una prueba de que toda la ruta gráfica esté acelerada. Un benchmark de escena quieta tampoco sustituye el estrés de combate.
+En Windows, ejecuta los comandos anteriores desde PowerShell o CMD; en Linux Mint, desde una terminal. También se incorporan lanzadores interactivos `QA-33-WINDOWS.cmd` y `QA-33-LINUX.sh` con las cinco opciones de instalación, capturas, 20 minutos de resistencia, benchmark GPU y pruebas generales. No utilizan `sudo` ni elevación automática. El parámetro `--require-hardware` rechaza renderizadores de software conocidos, pero un identificador de GPU no equivale por sí solo a una prueba de que toda la ruta gráfica esté acelerada. Un benchmark de escena quieta tampoco sustituye el estrés de combate.
 
 ## Puerta de publicación
 
