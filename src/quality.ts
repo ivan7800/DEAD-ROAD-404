@@ -16,5 +16,5 @@ export function renderPixelRatio(preset:GraphicsPreset,device:number,width=0,hei
  const base=Math.min(d*GRAPHICS[preset].pixelRatio,GRAPHICS[preset].pixelRatio);
  const pixels=Number.isFinite(width*height)&&width>0&&height>0?width*height:0;
  const areaCap=pixels?Math.sqrt(GRAPHICS[preset].pixelBudget/pixels):Infinity;
- return Math.max(.5,Math.min(1.35,base,areaCap));
+ return Math.max(pixels?.25:.5,Math.min(1.35,base,areaCap));
 }
