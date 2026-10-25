@@ -6,18 +6,18 @@ export class DriveDust {
   readonly mesh:THREE.InstancedMesh;
   private readonly dummy=new THREE.Object3D();
   private readonly particles=Array.from({length:40},()=>({x:0,y:0,z:0,age:99,life:1,size:0}));
-  private index=0;private accumulator=0;private phase=0;private preset:GraphicsPreset='equilibrado';
+  private index=0;private accumulator=0;private phase=0;private preset:GraphicsPreset='psx';
   constructor(world:THREE.Scene){
     const material=new THREE.MeshBasicMaterial({color:0xd9b6a0,transparent:true,opacity:.22,depthWrite:false,side:THREE.DoubleSide});
     this.mesh=new THREE.InstancedMesh(new THREE.CircleGeometry(.5,9),material,this.particles.length);
     this.mesh.frustumCulled=false;this.mesh.count=0;world.add(this.mesh);
   }
-  setPreset(preset:GraphicsPreset){this.preset=preset;if(preset==='rendimiento')this.mesh.count=0;}
+  setPreset(preset:GraphicsPreset){this.preset=preset;if(preset==='psx'||preset==='rendimiento')this.mesh.count=0;}
   update(dt:number,car:THREE.Object3D,speed:number,steering:number,enabled:boolean){
     const delta=Math.max(0,Math.min(.07,Number.isFinite(dt)?dt:0));
     this.phase+=delta;
     const feedback=driveFeedback(speed,steering,this.preset);
-    const active=enabled&&feedback.particlesPerSecond>0&&this.preset!=='rendimiento';
+    const active=enabled&&feedback.particlesPerSecond>0&&this.preset!=='psx'&&this.preset!=='rendimiento';
     this.accumulator=active?Math.min(2,this.accumulator+feedback.particlesPerSecond*delta):0;
     if(active){
       car.updateWorldMatrix(true,false);
@@ -32,7 +32,7 @@ export class DriveDust {
         p.y=Math.max(.12,pos.y+.02);p.age=0;p.life=.7+this.index%4*.12;p.size=.2+feedback.intensity*.24;
       }
     }
-    if(this.preset==='rendimiento'){this.mesh.count=0;return;}
+    if(this.preset==='psx'||this.preset==='rendimiento'){this.mesh.count=0;return;}
     let n=0;
     for(const p of this.particles){
       p.age+=delta;if(p.age>=p.life)continue;
