@@ -19,12 +19,14 @@ export function roadMessage(km:number):string {
  if(km>=48)return 'KM 48 · Un pueblo sin nombre figura en la carretera. El campanario marca las 03:13 y no avanza.';
  return 'KM 24 · Una señal anuncia: «La Última Parada — siempre abierta».';
 }
+/** Historical saves from chapters II–IV preserve their original KM120 finale. */
+const hasLegacyEpilogue=(s:GameState):boolean=>s.chapterTwo.legacyFinaleAllowed||s.chapterThree.legacyFinaleAllowed||s.chapterFour.legacyFinaleAllowed||s.chapterFive.legacyFinaleAllowed;
 export function shouldOfferFinale(s:GameState):boolean {
- return s.km>=120&&s.mission.stage==='resolved'&&s.chapterOne.stage==='complete'&&(s.chapterTwo.stage==='complete'||s.chapterTwo.legacyFinaleAllowed)&&(s.chapterThree.stage==='complete'||s.chapterThree.legacyFinaleAllowed)&&(s.chapterFour.stage==='complete'||s.chapterFour.legacyFinaleAllowed)&&s.ending===null&&s.health>0;
+ return s.km>=120&&s.mission.stage==='resolved'&&s.chapterOne.stage==='complete'&&(s.chapterTwo.stage==='complete'||s.chapterTwo.legacyFinaleAllowed)&&(s.chapterThree.stage==='complete'||s.chapterThree.legacyFinaleAllowed)&&(s.chapterFour.stage==='complete'||s.chapterFour.legacyFinaleAllowed)&&(s.chapterFive.stage==='complete'||hasLegacyEpilogue(s))&&s.ending===null&&s.health>0;
 }
 export function roadObjective(s:GameState):string {
  if(s.ending)return 'FINAL REGISTRADO · '+ENDINGS[s.ending].title+' · [J] DIARIO';
- if(s.mission.stage!=='resolved'||s.chapterOne.stage!=='complete'||(s.chapterTwo.stage!=='complete'&&!s.chapterTwo.legacyFinaleAllowed)||(s.chapterThree.stage!=='complete'&&!s.chapterThree.legacyFinaleAllowed)||(s.chapterFour.stage!=='complete'&&!s.chapterFour.legacyFinaleAllowed))return '';
+ if(s.mission.stage!=='resolved'||s.chapterOne.stage!=='complete'||(s.chapterTwo.stage!=='complete'&&!s.chapterTwo.legacyFinaleAllowed)||(s.chapterThree.stage!=='complete'&&!s.chapterThree.legacyFinaleAllowed)||(s.chapterFour.stage!=='complete'&&!s.chapterFour.legacyFinaleAllowed)||(s.chapterFive.stage!=='complete'&&!hasLegacyEpilogue(s)))return '';
  return s.km>=120?'El último desvío aguarda tu decisión.':'Sigue conduciendo hasta el último desvío · '+Math.max(0,120-s.km)+' km restantes';
 }
 export function resolveFinale(s:GameState,choice:FinalApproach):GameState {

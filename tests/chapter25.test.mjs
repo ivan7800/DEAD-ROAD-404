@@ -108,7 +108,7 @@ test('dos finales con recursos y progresión persistentes, sin duplicar recompen
  const severed=concludeRadio(s,'sever');
  assert.equal(severed.parts,s.parts+2);
  assert.equal(campaignStatus(severed.campaign,'dead-frequency'),'completed');
- assert.equal(campaignStatus(severed.campaign,'impossible-mile'),'locked');
+ assert.equal(campaignStatus(severed.campaign,'impossible-mile'),'available');
  assert.equal(radioObjective(severed),'');
 });
 test('el botiquín opcional no puede recogerse dos veces ni tras recargar',()=>{
@@ -131,7 +131,8 @@ test('una partida nueva debe concluir IV antes del final de KM120',()=>{
  const s={...clearedTown(),km:120};
  assert.equal(shouldOfferFinale(s),false);
  const ended=concludeRadio(toDecision(),'sever');
- assert.equal(shouldOfferFinale({...ended,km:120}),true);
+ assert.equal(shouldOfferFinale({...ended,km:120}),false);
+ assert.equal(shouldOfferFinale({...ended,km:120,chapterFive:{...ended.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'}}),true);
 });
 test('guardar y recuperar respeta Nora, dos errores y salud del Operador',()=>{
  let s=active();s=speakNora(s,'help');s=inspectRadioSign(s);s=powerRadioRelay(s);

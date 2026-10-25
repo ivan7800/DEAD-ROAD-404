@@ -1,4 +1,4 @@
-/** Progressive campaign: chapters I–IV are playable; V–VI remain locked. */
+/** Progressive campaign: chapters I–V are playable; VI remains locked. */
 import type {MissionProgress} from './mission.ts';
 import type {EndingId} from './roadStory.ts';
 
@@ -12,7 +12,7 @@ export const CHAPTERS=[
 ] as const;
 export type ChapterId=typeof CHAPTERS[number]['id'];
 /** Each new chapter unlocks only when its implementation and QA exist. */
-export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing','nameless','dead-frequency']);
+export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing','nameless','dead-frequency','impossible-mile']);
 export const MILESTONES={
  station:'Entraste en la gasolinera SUNSPUR',
  radio:'Escuchaste la frecuencia 404',
@@ -61,7 +61,16 @@ export const MILESTONES={
  radioContainment:'Apagaste ambas fuentes y liberaste al Operador',
  radioOperator:'Sobreviviste al Operador de la Frecuencia Muerta',
  radioSupplies:'Recuperaste el equipo médico de la emisora',
- radioDecision:'Decidiste el destino de la emisión de los desaparecidos'
+ radioDecision:'Decidiste el destino de la emisión de los desaparecidos',
+ mileArrival:'Entraste en el KM 96, un tramo repetido de carretera',
+ mileSign:'Leíste las señales de kilometraje imposible',
+ mileLog:'Descubriste el registrador de patrulla extraviado',
+ mileBeacon:'Activaste una baliza de distancia',
+ mileBothBeacons:'Estabilizaste ambas balizas de la carretera',
+ mileDial:'Resolviste la distancia entre KM 72 y KM 96',
+ mileHunter:'Sobreviviste al Agrimensor',
+ mileSupplies:'Recuperaste la maleta de la patrulla',
+ mileDecision:'Decidiste qué memoria dejar en el KM 96'
 } as const;
 export type MilestoneId=keyof typeof MILESTONES;
 export interface CampaignProgress {current:ChapterId;completed:ChapterId[];milestones:MilestoneId[]}
@@ -108,7 +117,8 @@ export function normalizeCampaign(data:unknown,legacy?:LegacyCampaignState):Camp
    if(raw===expected&&PLAYABLE_CHAPTERS.has(raw as ChapterId))validCompleted.push(raw as ChapterId);
   }
  }
- const normalizedCurrent=v.current==='dead-frequency'&&validCompleted.includes('nameless')?'dead-frequency':
+ const normalizedCurrent=v.current==='impossible-mile'&&validCompleted.includes('dead-frequency')?'impossible-mile':
+  v.current==='dead-frequency'&&validCompleted.includes('nameless')?'dead-frequency':
   v.current==='nameless'&&validCompleted.includes('missing')?'nameless':
   v.current==='missing'&&validCompleted.includes('last-stop')?'missing':'last-stop';
  let progress:CampaignProgress={
