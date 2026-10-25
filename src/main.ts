@@ -520,7 +520,7 @@ function showRadioDecision(){
 }
 function descendRadioBunker(){
  radioUnderground=true;world.setRadioUnderground(true);
- world.player.set(RADIO_POSITIONS.undergroundEntry.x,1.7,RADIO_POSITIONS.undergroundEntry.z+1.15);
+ world.player.set(RADIO_POSITIONS.undergroundEntry.x,1.7,RADIO_POSITIONS.undergroundEntry.z+1.7);
  yaw=Math.PI;pitch=0;input.reset();
  status.textContent='REFUGIO UMBRAL · NIVEL -1';
  pulpUi?.title('CAPÍTULO IV · SECTOR SUBTERRÁNEO','PROYECTO UMBRAL','NIVEL -1 · LA EMISIÓN SIGUE VIVA');

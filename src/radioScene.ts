@@ -28,7 +28,7 @@ export class RadioScene {
   const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
   o.position.set(x,y,z);p.add(o);return o;
  }
- private signText(parent:THREE.Group,text:string,x:number,y:number,z:number,w=3.4){
+ private signText(parent:THREE.Group,text:string,x:number,y:number,z:number,w=3.4,facePositiveZ=false){
   const c=document.createElement('canvas');c.width=128;c.height=32;
   const ctx=c.getContext('2d');if(!ctx)return;
   ctx.fillStyle='#17131b';ctx.fillRect(0,0,128,32);
@@ -38,7 +38,7 @@ export class RadioScene {
   const tex=new THREE.CanvasTexture(c);tex.magFilter=THREE.NearestFilter;
   tex.minFilter=THREE.NearestFilter;tex.colorSpace=THREE.SRGBColorSpace;
   const o=new THREE.Mesh(new THREE.PlaneGeometry(w,.55),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
-  o.position.set(x,y,z);parent.add(o);
+  o.position.set(x,y,z);if(facePositiveZ)o.rotation.y=Math.PI;parent.add(o);
  }
  constructor(){
   const b=this.box.bind(this),m=this.mat;
@@ -112,8 +112,8 @@ export class RadioScene {
   for(const z of [32.5,36.5,40.5]){
    b(this.bunkerScenery,4.8,.14,.35,-22,3.5,z,m.red);
   }
-  this.signText(this.bunkerScenery,'UMBRAL  /  NIVEL -1',-22,2.85,43.8,5.5);
-  this.signText(this.bunkerScenery,'CANAL 404 · 03:13',-22,2.45,39.8,4.5);
+  this.signText(this.bunkerScenery,'UMBRAL  /  NIVEL -1',-22,2.85,43.8,5.5,true);
+  this.signText(this.bunkerScenery,'CANAL 404 · 03:13',-22,2.45,39.8,4.5,true);
   b(this.bunkerScenery,4.4,.09,.18,-22,3.26,39.75,m.red);
   pos(this.bunkerExit,'exit');b(this.bunkerExit,2.1,2.35,.27,0,1.2,0,m.metal);
   b(this.bunkerExit,1.55,1.93,.08,0,1.18,.19,m.dark);
