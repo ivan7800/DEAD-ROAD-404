@@ -45,7 +45,7 @@ test('Elías tiene decisiones alternativas y recompensa única',()=>{
  assert.equal(believe.chapterThree.witness,'believe');
  assert.equal(doubt.chapterThree.witness,'doubt');
  assert.equal(speakWitness(believe,'doubt'),believe);
- assert.equal(speakWitness(fresh(),'believe'),fresh());
+ assert.deepEqual(speakWitness(fresh(),'believe'),fresh());
 });
 test('recorrido completo del misterio 03:13 con errores registrados',()=>{
  let s=active();
