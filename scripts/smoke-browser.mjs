@@ -316,6 +316,59 @@ try{
  await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
  await page.locator('#objective').filter({hasText:'DOS interruptores'}).waitFor();
  await page.screenshot({path:'artifacts/circuitos-umbral-f25.png'});
+ // F25 final chapter route: physically reach both distinct switches in the
+ // underground corridor, defeat the 150-HP Operator with real strikes, select a
+ // finale and prove its idempotent save/load. No source-state shortcuts.
+ await page.keyboard.down('w');await page.keyboard.down('d');
+ try{await page.locator('#prompt').filter({hasText:'CONTENCIÓN A'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');await page.keyboard.up('d');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'DOS interruptores'}).waitFor();
+ const switchA=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFour);
+ assert.equal(switchA.breakersMask,1,'El circuito A no se desconectó');
+ await page.keyboard.down('a');
+ try{await page.locator('#prompt').filter({hasText:'CONTENCIÓN B'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('a');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'EL OPERADOR'}).waitFor();
+ const both=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFour);
+ assert.equal(both.breakersMask,3,'Los dos circuitos deben estar desconectados');
+ await page.screenshot({path:'artifacts/operador-combate-f25.png'});
+ await page.keyboard.down('w');await page.keyboard.down('d');await sleep(650);
+ await page.keyboard.up('w');await page.keyboard.up('d');
+ let operatorDefeated=false;
+ for(let attempt=0;attempt<13;attempt++){
+  await page.keyboard.press('f');await sleep(560);
+  if(await page.locator('#encounter-title').filter({hasText:'ÚLTIMO CANAL'}).isVisible()){
+   operatorDefeated=true;break;
+  }
+ }
+ assert.equal(operatorDefeated,true,'El combate real no permite derrotar al Operador tras 13 ataques');
+ await page.screenshot({path:'artifacts/operador-derrotado-f25.png'});
+ await page.getByRole('button',{name:/CORTAR EL ENLACE UMBRAL/}).click();
+ await page.locator('#encounter-title').filter({hasText:'CAPÍTULO IV COMPLETADO'}).waitFor();
+ await page.getByRole('button',{name:/REGRESAR AL FIREBIRD/}).click();
+ await page.locator('#status').filter({hasText:'CARRETERA'}).waitFor();
+ const radioFinal=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(radioFinal.chapterFour.stage,'complete');
+ assert.equal(radioFinal.chapterFour.decision,'sever');
+ assert.equal(radioFinal.campaign.completed.includes('dead-frequency'),true);
+ assert.equal(radioFinal.chapterFour.operatorHealth,0);
+ await page.locator('#load').click();
+ const restoredFinal=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(restoredFinal.chapterFour.stage,'complete');
+ assert.equal(restoredFinal.chapterFour.decision,'sever');
+ assert.equal(errors.length,0,'Errores JS durante combate final: '+errors.join('; '));
+ // Reset to the saved checkpoint required by the existing bunker-puzzle
+ // assertions, which remain separately covered above.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
+  s.chapterFour={...s.chapterFour,stage:'breaker',breakersMask:0,operatorHealth:150,decision:null};
+  s.campaign.completed=['last-stop','missing','nameless'];
+  s.campaign.current='dead-frequency';
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
  await page.keyboard.press('m');
  await page.locator('#load').click();
  const radioSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
