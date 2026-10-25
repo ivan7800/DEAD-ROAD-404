@@ -56,6 +56,16 @@ export class RadioScene {
   b(this.surfaceScenery,5.2,.32,10.5,-12.3,4.34,-43,m.dark);
   this.signText(this.surfaceScenery,'WXR-404 · ON AIR',-31.2,3.75,-37.42,4.7);
   this.signText(this.surfaceScenery,'NO EMITIR · 02:17',-12.3,3.34,-37.91,4.5);
+  // A grounded hero sign that immediately identifies the station in first person.
+  b(this.surfaceScenery,4.8,1.15,.17,-22,3.25,-53,m.wood);
+  this.signText(this.surfaceScenery,'WXR-404 / ON AIR',-22,3.25,-52.85,4.5);
+  for(const z of [-33.5,-45.5]){
+   for(const x of [-28.4,-15.6]){
+    b(this.surfaceScenery,.7,.98,.7,x,.51,z,m.wood);
+    b(this.surfaceScenery,.56,.12,.57,x,1.08,z,m.metal);
+    b(this.surfaceScenery,.15,.18,.08,x+.25,1.06,z+.3,m.red);
+   }
+  }
   b(this.surfaceScenery,.4,14,.4,-16,7,-55,m.metal);
   for(const y of [4,7,10,13])b(this.surfaceScenery,5,.12,.19,-16,y,-55,m.metal);
   b(this.surfaceScenery,.85,.42,.55,-16,14.4,-55,m.red);
@@ -103,6 +113,8 @@ export class RadioScene {
    b(this.bunkerScenery,4.8,.14,.35,-22,3.5,z,m.red);
   }
   this.signText(this.bunkerScenery,'UMBRAL  /  NIVEL -1',-22,2.85,43.8,5.5);
+  this.signText(this.bunkerScenery,'CANAL 404 · 03:13',-22,2.45,39.8,4.5);
+  b(this.bunkerScenery,4.4,.09,.18,-22,3.26,39.75,m.red);
   pos(this.bunkerExit,'exit');b(this.bunkerExit,2.1,2.35,.27,0,1.2,0,m.metal);
   b(this.bunkerExit,1.55,1.93,.08,0,1.18,.19,m.dark);
   pos(this.terminal,'console');b(this.terminal,1.7,1.44,.75,0,.88,0,m.metal);
