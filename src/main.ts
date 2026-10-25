@@ -191,6 +191,108 @@ function showChapterOneDecision(){
  }
  dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
 }
+
+/** Dialogue modal uses the existing focusable PSX encounter system. */
+function showMaraDialogue(){
+ if(encounterOpen||state.chapterTwo.mara!==null)return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='MARA · LA ÚLTIMA CAMARERA';
+ $('encounter-text').textContent='«Recuerdo seis clientes y siete platos. Hay un pedido en la mesa cuatro. Si sales de aquí, ¿podrías decirle a mi hija que aún recuerdo su nombre?»';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:MaraChoice;label:string}>=[
+  {id:'trust',label:'ESCUCHAR A MARA Y PROMETER QUE BUSCARÁS A SU HIJA'},
+  {id:'avoid',label:'DESCONFIAR DE ELLA · MANTENER LAS DISTANCIAS'}
+ ];
+ for(const option of options){
+  const button=document.createElement('button');button.type='button';button.textContent=option.label;
+  button.addEventListener('click',()=>{
+   state=chooseMara(state,option.id);saveQuietly();world.setDinerStage(state.chapterTwo.stage,true);
+   encounterOpen=false;dialog.classList.add('hidden');notify(state.message);hud();
+  });choices.append(button);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showDinerCode(){
+ if(encounterOpen||state.chapterTwo.stage!=='code')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='THE LAST LIGHT · PUERTA DE COCINA';
+ $('encounter-text').textContent='La cerradura digital pide cuatro dígitos. En el pedido de la mesa cuatro pone una fecha y en el libro aparecen seis nombres tachados.';
+ choices.replaceChildren();
+ for(const code of DINER_FREQUENCIES){
+  const button=document.createElement('button');button.type='button';button.textContent=String(code);
+  button.addEventListener('click',()=>{
+   state=tryDinerCode(state,code);saveQuietly();notify(state.message);hud();beep(code/10,.16);
+   if(state.chapterTwo.stage==='freezer'){
+    encounterOpen=false;dialog.classList.add('hidden');world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);
+   }else $('encounter-text').textContent=state.message+' · INTENTOS: '+state.chapterTwo.codeAttempts;
+  });
+  choices.append(button);
+ }
+ const back=document.createElement('button');back.type='button';back.textContent='VOLVER AL RESTAURANTE';
+ back.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');});
+ choices.append(back);dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showDinerDecision(){
+ if(encounterOpen||state.chapterTwo.stage!=='choice')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='LOS QUE NO REGRESAN · ÚLTIMA MESA';
+ $('encounter-text').textContent='Entre el hielo queda una bobina: seis voces suplican que alguien las encuentre. La radio del Firebird puede emitirlas, pero la señal atraerá algo del pueblo sin nombre.';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:DinerEnding;label:string}>=[
+  {id:'broadcast',label:'EMITIR LAS VOCES · +10 L DE GASOLINA'},
+  {id:'silence',label:'ENTERRAR LA GRABACIÓN · +2 PIEZAS'}
+ ];
+ for(const option of options){
+  const button=document.createElement('button');button.type='button';button.textContent=option.label;
+  button.addEventListener('click',()=>{
+   state=concludeDiner(state,option.id);saveQuietly();hud();world.setDinerStage(state.chapterTwo.stage,true);
+   $('encounter-title').textContent='CAPÍTULO II COMPLETADO · LOS QUE NO REGRESAN';
+   $('encounter-text').textContent=state.message+' El mapa señala una carretera hacia un pueblo sin nombre. Por ahora, el Firebird es tu única salida.';
+   choices.replaceChildren();
+   const close=document.createElement('button');close.type='button';close.textContent='SALIR DEL RESTAURANTE Y REGRESAR AL FIREBIRD';
+   close.addEventListener('click',()=>{
+    encounterOpen=false;dialog.classList.add('hidden');switchMode('map');
+    if(shouldOfferFinale(state))showFinale();
+   });choices.append(close);close.focus();
+  });choices.append(button);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function interactDiner(){
+ const x=world.player.x,z=world.player.z,stage=state.chapterTwo.stage;
+ if(state.chapterTwo.mara===null&&nearDinerProp(x,z,DINER_POSITIONS.mara,1.5)){
+  showMaraDialogue();return;
+ }
+ if(stage==='arrival'&&nearDinerProp(x,z,DINER_POSITIONS.menu)){
+  state=readDinerTicket(state);
+ }else if(stage==='breaker'&&nearDinerProp(x,z,DINER_POSITIONS.breaker)){
+  state=restoreDinerNeon(state);
+ }else if(stage==='ledger'&&nearDinerProp(x,z,DINER_POSITIONS.ledger)){
+  state=readDinerLedger(state);
+ }else if(stage==='code'&&nearDinerProp(x,z,DINER_POSITIONS.keypad,2.5)){
+  showDinerCode();return;
+ }else if(stage==='freezer'&&nearDinerProp(x,z,DINER_POSITIONS.freezer,2.7)){
+  state=openDinerFreezer(state);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);
+  world.setDinerThreat(dinerThreat.x,dinerThreat.z,true,false,elapsed);
+  beep(78,.35);
+ }else{notify('No hay nada que puedas recoger aquí. Consulta [J] para seguir las pistas.');return;}
+ saveQuietly();world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);
+ notify(state.message);hud();
+}
+function dinerPrompt(x:number,z:number):string{
+ const stage=state.chapterTwo.stage;
+ if(state.chapterTwo.mara===null&&nearDinerProp(x,z,DINER_POSITIONS.mara,1.5))return '[E] HABLAR CON MARA · CAMARERA 1992';
+ if(stage==='arrival'&&nearDinerProp(x,z,DINER_POSITIONS.menu))return '[E] LEER PEDIDO · MESA CUATRO';
+ if(stage==='breaker'&&nearDinerProp(x,z,DINER_POSITIONS.breaker))return '[E] ENCENDER INTERRUPTOR DE NEÓN';
+ if(stage==='ledger'&&nearDinerProp(x,z,DINER_POSITIONS.ledger))return '[E] EXAMINAR LIBRO DE HUÉSPEDES';
+ if(stage==='code'&&nearDinerProp(x,z,DINER_POSITIONS.keypad,2.5))return '[E] INTRODUCIR CÓDIGO DE COCINA';
+ if(stage==='freezer'&&nearDinerProp(x,z,DINER_POSITIONS.freezer,2.7))return '[E] ABRIR CONGELADOR · 1992';
+ if(stage==='stalker')return 'LA CAMARERA HUECA · '+dinerThreat.health+'/90 · [F] GOLPEAR · [SHIFT] CORRER · [I] CURARSE';
+ return '[J] CONSULTA EL DIARIO · [M] REGRESAR AL FIREBIRD';
+}
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
 function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
