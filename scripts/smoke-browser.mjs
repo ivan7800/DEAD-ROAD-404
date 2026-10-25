@@ -45,6 +45,14 @@ try{
  const optionsPersisted=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-pulp-ui-v1')));
  assert.equal(optionsPersisted.volume,35);
  assert.equal(optionsPersisted.highContrast,true);
+ const optionsLayout=await page.evaluate(()=>{
+  const panel=document.querySelector('#pulp-options .pulp-screen').getBoundingClientRect();
+  const title=document.querySelector('#pulp-options h2').getBoundingClientRect();
+  const close=document.querySelector('#pulp-options-close').getBoundingClientRect();
+  return {panelTop:panel.top,panelBottom:panel.bottom,titleTop:title.top,closeBottom:close.bottom};
+ });
+ assert.ok(optionsLayout.titleTop>=optionsLayout.panelTop+30,'El título de opciones se corta: '+JSON.stringify(optionsLayout));
+ assert.ok(optionsLayout.closeBottom<=optionsLayout.panelBottom-5,'Los controles de opciones quedan recortados: '+JSON.stringify(optionsLayout));
  mkdirSync('artifacts',{recursive:true});await page.screenshot({path:'artifacts/opciones-midnight-f24.png'});
  await page.locator('#pulp-reset-settings').click();
  await page.locator('#pulp-options-close').click();
@@ -53,6 +61,14 @@ try{
  await page.locator('#pulp-chapters:not(.hidden)').waitFor();
  assert.equal(await page.locator('#pulp-chapters-list article').count(),6,'Archivo debe contener seis rollos');
  await page.locator('#pulp-chapters-list').filter({hasText:'CINTA PRECINTADA'}).waitFor();
+ const archiveLayout=await page.evaluate(()=>{
+  const panel=document.querySelector('#pulp-chapters .pulp-screen').getBoundingClientRect();
+  const title=document.querySelector('#pulp-chapters h2').getBoundingClientRect();
+  const close=document.querySelector('#pulp-chapters-close').getBoundingClientRect();
+  return {panelTop:panel.top,panelBottom:panel.bottom,titleTop:title.top,closeBottom:close.bottom};
+ });
+ assert.ok(archiveLayout.titleTop>=archiveLayout.panelTop+30,'El título del archivo se corta: '+JSON.stringify(archiveLayout));
+ assert.ok(archiveLayout.closeBottom<=archiveLayout.panelBottom-5,'El botón cerrar del archivo no cabe: '+JSON.stringify(archiveLayout));
  await page.screenshot({path:'artifacts/archivo-capitulos-f24.png'});
  await page.keyboard.press('Escape');
  await page.locator('#pulp-chapters:not(.hidden)').waitFor({state:'hidden'});
@@ -60,6 +76,16 @@ try{
  await page.locator('#pulp-credits:not(.hidden)').waitFor();
  await page.locator('#pulp-credits-close').click();
  await page.locator('#pulp-credits:not(.hidden)').waitFor({state:'hidden'});
+ const poster=await page.evaluate(()=>{
+  const panel=document.querySelector('#panel').getBoundingClientRect();
+  const title=document.querySelector('#panel h1').getBoundingClientRect();
+  const footer=document.querySelector('#pulp-credits-open').getBoundingClientRect();
+  return {panelTop:panel.top,panelRight:panel.right,panelBottom:panel.bottom,
+   titleTop:title.top,titleRight:title.right,buttonBottom:footer.bottom};
+ });
+ assert.ok(poster.titleTop>=poster.panelTop,'El logotipo principal se corta por arriba: '+JSON.stringify(poster));
+ assert.ok(poster.titleRight<=poster.panelRight-10,'El logotipo principal sale del cartel: '+JSON.stringify(poster));
+ assert.ok(poster.buttonBottom<=poster.panelBottom-5,'Botones recortados en el cartel: '+JSON.stringify(poster));
  await page.screenshot({path:'artifacts/portada-midnight-f24.png'});
  await page.keyboard.press('F3');
  await page.locator('#perf-panel').filter({hasText:'draw calls'}).waitFor({timeout:10000});
