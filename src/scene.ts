@@ -13,6 +13,7 @@ import {Firebird} from './vehicle.ts';
 import {RoadsideArt,createAsphalt,createPlaster,createRust} from './artDirection.ts';
 import {GRAPHICS,renderPixelRatio,type GraphicsPreset} from './quality.ts';
 import type {MissionStage} from './mission.ts';
+import {FUSE_POSITION,CONSOLE_POSITION,HATCH_POSITION,type ChapterOneStage} from './chapterOne.ts';
 const mat=(c:number,roughness=1)=>new THREE.MeshStandardMaterial({color:c,roughness,flatShading:true});
 const asphalt=createAsphalt(),sand=mat(0x51404a),wall=createPlaster(),rust=createRust(),gold=mat(0xc2a169),black=mat(0x100f17,.45),glass=new THREE.MeshStandardMaterial({color:0x342d42,metalness:.25,roughness:.2,transparent:true,opacity:.85});
 function block(parent:THREE.Object3D,w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
@@ -21,7 +22,7 @@ export class GameWorld {
  readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();
  artStatus:'cargando'|'glb'|'parcial'|'reserva'|'psx'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
  readonly architecturalPass=new ArchitecturalPass();readonly americana1992=new Americana1992();readonly roadsideDetail14=new RoadsideDetail14(); readonly driveDust:DriveDust;readonly firebird=new Firebird();readonly car=this.firebird.group; readonly roadsideArt=new RoadsideArt(); readonly player=new THREE.Vector3(0,1.7,7); readonly can=new THREE.Vector3(11,0,1);
- readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
+ readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private fuseVisual=new THREE.Group();private consoleVisual=new THREE.Group();private hatchVisual=new THREE.Group();readonly wardenVisual=new THREE.Group();private wardenEye:THREE.Mesh|null=null;private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
  constructor(canvas:HTMLCanvasElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=false;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.sky=new THREE.Color(0x10121c);this.scene.background=this.sky;this.scene.fog=new THREE.FogExp2(0x423340,.019);
@@ -32,7 +33,7 @@ export class GameWorld {
   this.flashlight.target = this.flashlightTarget;
   this.flashlight.visible=false;
   this.scene.add(this.flashlight,this.flashlightTarget);
-  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
+  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.buildChapterOneProps();this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
   // Batch only directly-owned noninteractive scenery; game actors live in groups.
   this.sceneryBatch=batchStaticModel(this.scene,{directOnly:true,cellSize:30});
   for(const group of [this.stationFallback,this.motelFallback]){
@@ -223,6 +224,63 @@ export class GameWorld {
   }
   for(let i=0;i<14;i++){const x=8.7+(i%5)*2.9,z=11.5+Math.floor(i/5)*2.5;
     const crate=block(this.scene,.55,.4,.7,x,.26,z,mat(i%3===0?0x756047:0x4b4641));crate.rotation.y=i*.6;
+  }
+ }
+ private buildChapterOneProps(){
+  // PSX props live in their own groups: they can change visibility without touching baked scenery.
+  const rust=new THREE.MeshLambertMaterial({color:0x59483d,flatShading:true});
+  const metal=new THREE.MeshLambertMaterial({color:0x97837a,flatShading:true});
+  const amber=new THREE.MeshBasicMaterial({color:0xf0bb7b});
+  const scarlet=new THREE.MeshBasicMaterial({color:0xe84951});
+  const dark=new THREE.MeshLambertMaterial({color:0x23202b,flatShading:true});
+  // Fuse box standing east of the SUNSPUR forecourt.
+  block(this.fuseVisual,.75,.74,.65,0,.55,0,rust);
+  block(this.fuseVisual,.62,.09,.61,0,.96,0,amber);
+  block(this.fuseVisual,.19,.23,.16,.0,1.14,0,metal);
+  this.fuseVisual.position.set(FUSE_POSITION.x,0,FUSE_POSITION.z);
+  this.scene.add(this.fuseVisual);
+  // Radio relay: glowing vertical dial that can be approached from the front of the station.
+  block(this.consoleVisual,1.26,1.56,.45,0,1.0,0,rust);
+  block(this.consoleVisual,.9,.58,.08,0,1.3,.27,amber);
+  for(let i=0;i<3;i++)block(this.consoleVisual,.18,.14,.1,-.31+i*.31,.66,.3,scarlet);
+  this.consoleVisual.position.set(CONSOLE_POSITION.x,0,CONSOLE_POSITION.z);
+  this.scene.add(this.consoleVisual);
+  // The motel's concrete service hatch and an unlit open shaft.
+  block(this.hatchVisual,2.0,.24,1.5,0,.18,0,metal);
+  block(this.hatchVisual,1.53,.04,1.1,0,.325,0,dark);
+  block(this.hatchVisual,1.45,.09,.12,0,.4,.0,amber);
+  this.hatchVisual.position.set(HATCH_POSITION.x,0,HATCH_POSITION.z);
+  this.scene.add(this.hatchVisual);
+  // The Celador is an original, visibly different mini-boss: overlong neck, cracked
+  // face, oil-slick cloak and flickering one-eye telegraph, only ~12 simple meshes.
+  block(this.wardenVisual,1.15,1.4,.84,0,1.3,0,dark);
+  block(this.wardenVisual,.85,1.2,.7,0,2.3,0,metal);
+  block(this.wardenVisual,1.8,.18,1.25,0,2.8,0,rust);
+  block(this.wardenVisual,.78,.62,.66,0,3.05,0,dark);
+  const eye=block(this.wardenVisual,.36,.18,.11,0,3.14,-.36,scarlet);
+  this.wardenEye=eye;
+  for(const x of [-.9,.9]){
+   block(this.wardenVisual,.22,1.6,.2,x,1.62,0,metal);
+   block(this.wardenVisual,.25,1.0,.32,x*.44,.5,0,rust);
+  }
+  this.wardenVisual.visible=false;
+  this.scene.add(this.wardenVisual);
+ }
+ setChapterOneStage(stage:ChapterOneStage){
+  this.fuseVisual.visible=stage==='fuse';
+  this.consoleVisual.visible=stage==='panel'||stage==='tuning';
+  this.hatchVisual.visible=stage==='hatch'||stage==='fight'||stage==='choice'||stage==='complete';
+  this.wardenVisual.visible=stage==='fight';
+ }
+ setWarden(x:number,z:number,visible:boolean,telegraph:boolean,time:number){
+  this.wardenVisual.visible=visible;
+  if(!visible)return;
+  this.wardenVisual.position.set(x,Math.sin(time*3)*.05,z);
+  this.wardenVisual.rotation.y=Math.atan2(this.player.x-x,-(this.player.z-z));
+  if(this.wardenEye){
+   const material=this.wardenEye.material as THREE.MeshBasicMaterial;
+   material.color.setHex(telegraph?0xffff77:0xe84951);
+   this.wardenEye.scale.x=telegraph?1.7:1;
   }
  }
  setTapeVisible(visible:boolean){this.motelTapeVisual.visible=visible;}
