@@ -30,6 +30,15 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke
       - run: npm run qa:finales
+      - run: npm run qa:stability -- --seconds=18
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f32-accesibilidad-estabilidad
+          path: |
+            artifacts/f32-*.png
+            artifacts/f32-stability.json
+          if-no-files-found: ignore
       - if: always()
         uses: actions/upload-artifact@v4
         with:
