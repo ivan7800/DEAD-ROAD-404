@@ -65,6 +65,9 @@ try{
   await page.evaluate(({key,ending})=>{
    const s=JSON.parse(localStorage.getItem(key));
    s.km=120;s.health=100;s.ending=null;s.fuel=30;s.parts=4;
+   // El encuentro del viajero del KM24 se ofrece antes que el final en load().
+   // El checkpoint final debe indicar que ese evento previo ya quedó resuelto.
+   s.encounterResolved=true;
    s.mission={stage:'resolved',choice:ending.mission};
    for(const chapter of ['chapterOne','chapterTwo','chapterThree','chapterFour','chapterFive'])
     s[chapter]={...s[chapter],stage:'complete'};
@@ -78,7 +81,9 @@ try{
    localStorage.setItem(key,JSON.stringify(s));
   },{key,ending});
   await page.locator('#load').click();
-  await page.locator('#encounter-title').filter({hasText:'ÚLTIMO DESVÍO'}).waitFor({timeout:15000});
+  await page.locator('#encounter-title').waitFor({timeout:15000});
+  assert.match(await page.locator('#encounter-title').innerText(),/ÚLTIMO DESVÍO/,
+   'La carga mostró un encuentro anterior en vez del final: '+ending.id);
   await page.getByRole('button',{name:new RegExp(ending.choice)}).click();
   await page.locator('#encounter-title').filter({hasText:ending.title}).waitFor();
   const state=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
