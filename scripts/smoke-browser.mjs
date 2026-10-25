@@ -13,6 +13,28 @@ try{
  await waitForServer();
  browser=await chromium.launch({headless:true,args:['--enable-webgl','--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader']});
  const page=await browser.newPage({viewport:{width:1280,height:800}});
+ // Use the opt-in F3 position readout; all movement still uses real keyboard input.
+ async function walkTo(targetX,targetZ,tolerance=1.3,timeout=45000){
+  const deadline=Date.now()+timeout;let lastPos='';
+  while(Date.now()<deadline){
+   const p=await page.locator('#perf-panel').evaluate(el=>({
+    x:Number(el.dataset.playerX),z:Number(el.dataset.playerZ)
+   }));
+   if(!Number.isFinite(p.x)||!Number.isFinite(p.z))throw new Error('F3 no expone coordenadas válidas');
+   lastPos=JSON.stringify(p);
+   if(Math.abs(targetX-p.x)<tolerance&&Math.abs(targetZ-p.z)<tolerance)return;
+   const dx=targetX-p.x,dz=targetZ-p.z;
+   const side=Math.abs(dx)>tolerance?(dx>0?'d':'a'):null;
+   const forward=Math.abs(dz)>tolerance?(dz<0?'w':'s'):null;
+   if(side)await page.keyboard.down(side);
+   if(forward)await page.keyboard.down(forward);
+   await sleep(155);
+   if(side)await page.keyboard.up(side);
+   if(forward)await page.keyboard.up(forward);
+   await sleep(65);
+  }
+  throw new Error('Ruta física no alcanzada '+targetX+','+targetZ+'; posición '+lastPos);
+ }
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  const missing=[];page.on('requestfailed',request=>missing.push(request.url()+': '+request.failure()?.errorText));
  const response=await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -408,24 +430,19 @@ try{
  finally{await page.keyboard.up('w');}
  await page.keyboard.press('e');
  await page.locator('#objective').filter({hasText:'DOS balizas'}).waitFor();
- await page.keyboard.down('w');await sleep(2700);await page.keyboard.up('w');
- await page.keyboard.down('a');
- try{await page.locator('#prompt').filter({hasText:'BALIZA A'}).waitFor({timeout:15000});}
- finally{await page.keyboard.up('a');}
+ await walkTo(-6,-31,1.3);
+ await page.locator('#prompt').filter({hasText:'BALIZA A'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  const a=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFive);
  assert.equal(a.beaconsMask,1,'No se activó la baliza A');
- await page.keyboard.down('d');
- try{await page.locator('#prompt').filter({hasText:'BALIZA B'}).waitFor({timeout:15000});}
- finally{await page.keyboard.up('d');}
+ await walkTo(6,-31,1.3);
+ await page.locator('#prompt').filter({hasText:'BALIZA B'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  await page.locator('#objective').filter({hasText:'combinación'}).waitFor();
  const beacons=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFive);
  assert.equal(beacons.beaconsMask,3,'No se activaron ambas balizas');
- await page.keyboard.down('a');await sleep(950);await page.keyboard.up('a');
- await page.keyboard.down('w');
- try{await page.locator('#prompt').filter({hasText:'DESCIFRAR MARCADOR'}).waitFor({timeout:30000});}
- finally{await page.keyboard.up('w');}
+ await walkTo(0,-42,1.3);
+ await page.locator('#prompt').filter({hasText:'DESCIFRAR MARCADOR'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  await page.locator('#encounter-title').filter({hasText:'MARCADOR DE DISTANCIA'}).waitFor();
  await page.getByRole('button',{name:'0404',exact:true}).click();
@@ -489,24 +506,19 @@ try{
  finally{await page.keyboard.up('w');}
  await page.keyboard.press('e');
  await page.locator('#objective').filter({hasText:'DOS relés'}).waitFor();
- await page.keyboard.down('w');await sleep(2650);await page.keyboard.up('w');
- await page.keyboard.down('a');
- try{await page.locator('#prompt').filter({hasText:'RELÉ A'}).waitFor({timeout:15000});}
- finally{await page.keyboard.up('a');}
+ await walkTo(-6,-30,1.3);
+ await page.locator('#prompt').filter({hasText:'RELÉ A'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  const f27First=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
  assert.equal(f27First.relaysMask,1,'La interacción real no activa el primer relé');
- await page.keyboard.down('d');
- try{await page.locator('#prompt').filter({hasText:'RELÉ B'}).waitFor({timeout:15000});}
- finally{await page.keyboard.up('d');}
+ await walkTo(6,-30,1.3);
+ await page.locator('#prompt').filter({hasText:'RELÉ B'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  await page.locator('#objective').filter({hasText:'barrera'}).waitFor();
  const f27Both=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
  assert.equal(f27Both.relaysMask,3,'Ambos relés deben estar activos');
- await page.keyboard.down('a');await sleep(1400);await page.keyboard.up('a');
- await page.keyboard.down('w');
- try{await page.locator('#prompt').filter({hasText:'ABRIR BARRERA'}).waitFor({timeout:30000});}
- finally{await page.keyboard.up('w');}
+ await walkTo(0,-42,1.3);
+ await page.locator('#prompt').filter({hasText:'ABRIR BARRERA'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  await page.locator('#encounter-title').filter({hasText:'ÚLTIMA BARRERA'}).waitFor();
  await page.getByRole('button',{name:'0217',exact:true}).click();
