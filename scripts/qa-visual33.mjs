@@ -52,6 +52,18 @@ async function screenshotScene(chapter,index,size){
   const response=await page.goto(base,{waitUntil:'domcontentloaded'});
   assert.equal(response?.status(),200);
   await page.locator('#art-status').filter({hasText:'ARTE PSX'}).waitFor({timeout:22000});
+  if(index===0){
+   await page.locator('#pulp-options-open').click();
+   await page.locator('#pulp-options:not(.hidden)').waitFor();
+   await page.locator('#pulp-high-contrast').check();
+   await page.locator('#pulp-large-text').check();
+   await page.locator('#pulp-reduce-motion').check();
+   assert.equal(await page.locator('html.pulp-high-contrast.pulp-large-text.pulp-reduce-motion').count(),1,
+    'Preferencias de accesibilidad no aplicadas');
+   const prefShot='f33-accesibilidad-'+size.name+'.png';
+   await page.screenshot({path:resolve('artifacts',prefShot)});
+   await page.locator('#pulp-options-close').click();
+  }
   await page.locator('#save').click();
   await page.evaluate(({key,index,chapters})=>{
    const s=JSON.parse(localStorage.getItem(key));
