@@ -15,11 +15,11 @@ export class RadioScene {
  readonly bunkerExit=new THREE.Group();readonly operator=new THREE.Group();
  private eye:THREE.Mesh;
  private readonly mat={
-  floor:new THREE.MeshLambertMaterial({color:0x29252b,flatShading:true}),
-  wall:new THREE.MeshLambertMaterial({color:0x50444d,flatShading:true}),
-  metal:new THREE.MeshLambertMaterial({color:0x797278,flatShading:true}),
-  wood:new THREE.MeshLambertMaterial({color:0x40343d,flatShading:true}),
-  dark:new THREE.MeshLambertMaterial({color:0x141921,flatShading:true}),
+  floor:new THREE.MeshBasicMaterial({color:0x49404b}),
+  wall:new THREE.MeshBasicMaterial({color:0x75646a}),
+  metal:new THREE.MeshBasicMaterial({color:0x989198}),
+  wood:new THREE.MeshBasicMaterial({color:0x66545b}),
+  dark:new THREE.MeshBasicMaterial({color:0x2f333f}),
   red:new THREE.MeshBasicMaterial({color:0xb94b51}),
   amber:new THREE.MeshBasicMaterial({color:0xdfa872}),
   screen:new THREE.MeshBasicMaterial({color:0x97b9ae})

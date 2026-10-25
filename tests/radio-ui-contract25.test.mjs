@@ -13,6 +13,7 @@ test('WXR-404 es una localización PSX original, con superficie y subsuelo',()=>
  assert.match(scene,/readonly radio=new RadioScene\(\)/);
  assert.match(radio,/UMBRA_UNDERGROUND|UMBRAL_UNDERGROUND/);
  assert.match(scene,/setRadioUnderground\(value:boolean\)/);
+ assert.match(scene,/legacyEnvironment\.visible=!visible/);
  assert.doesNotMatch(radio,/GLTFLoader|\.glb/);
 });
 test('las interacciones físicas y la IA no se mezclan con el pueblo',()=>{
