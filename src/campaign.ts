@@ -67,7 +67,7 @@ export const MILESTONES={
  mileLog:'Descubriste el registrador de patrulla extraviado',
  mileBeacon:'Activaste una baliza de distancia',
  mileBothBeacons:'Estabilizaste ambas balizas de la carretera',
- mileDial:'Resolvistes la distancia entre KM 72 y KM 96',
+ mileDial:'Resolviste la distancia entre KM 72 y KM 96',
  mileHunter:'Sobreviviste al Agrimensor',
  mileSupplies:'Recuperaste la maleta de la patrulla',
  mileDecision:'Decidiste qué memoria dejar en el KM 96'
