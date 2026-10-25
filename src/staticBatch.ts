@@ -11,7 +11,7 @@ export function batchStaticModel(root:THREE.Object3D):{before:number;after:numbe
  const invRoot=root.matrixWorld.clone().invert();
  const groups=new Map<string,THREE.Mesh[]>();
  for(const mesh of beforeMeshes){
-  if(mesh instanceof THREE.SkinnedMesh||mesh.isInstancedMesh||Array.isArray(mesh.material)||mesh.material.transparent||
+  if(mesh instanceof THREE.SkinnedMesh||mesh instanceof THREE.InstancedMesh||Array.isArray(mesh.material)||mesh.material.transparent||
      !mesh.visible||!mesh.parent||Object.keys(mesh.geometry.morphAttributes).some(k=>mesh.geometry.morphAttributes[k].length>0))continue;
   const geometry=mesh.geometry;
   if(!geometry.attributes.position||geometry.groups.length>1)continue;
