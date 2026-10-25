@@ -601,6 +601,95 @@ function radioPrompt(x:number,z:number):string{
  if(['hatch','bunker','breaker','sentinel','choice'].includes(stage)&&nearRadioProp(x,z,RADIO_POSITIONS.hatch,2.7))return '[E] DESCENDER AL REFUGIO UMBRAL';
  return '[J] CONSULTAR DIARIO · [M] REGRESAR AL FIREBIRD';
 }
+/** F26 — interactive PSX chapter V. No jumps in game state for scene interactions. */
+function syncMileView(){
+ world.setMileStage(state.chapterFive.stage,state.chapterFive.beaconsMask,state.chapterFive.cacheTaken);
+ hud();
+}
+function showMileCipher(){
+ if(encounterOpen||state.chapterFive.stage!=='dial')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='EL KILÓMETRO IMPOSIBLE · MARCADOR DE DISTANCIA';
+ $('encounter-text').textContent='La cinta de la patrulla: «KM 72 → KM 96: 24. El espejo devuelve 96». Introduce los cuatro números que faltan.';
+ choices.replaceChildren();
+ for(const code of MILE_CODES){
+  const button=document.createElement('button');button.type='button';button.textContent=code;
+  button.addEventListener('click',()=>{
+   state=tuneMileDial(state,code);saveQuietly();syncMileView();notify(state.message);
+   if(state.chapterFive.stage==='hunter'){
+    encounterOpen=false;dialog.classList.add('hidden');
+    mileHunter=freshMileHunter(state.chapterFive.hunterHealth);
+    world.setMileHunter(mileHunter.x,mileHunter.z,true,false,elapsed);
+    const dx=mileHunter.x-world.player.x,dz=mileHunter.z-world.player.z;
+    yaw=Math.atan2(dx,-dz);pitch=0;
+    pulpUi?.title('CAPÍTULO V · SIN CAMINO DE REGRESO','EL AGRIMENSOR','CADA DISTANCIA EXIGE UNA DEUDA');
+    beep(68,.32);
+   }else $('encounter-text').textContent=state.message+' · INTENTOS: '+state.chapterFive.dialAttempts;
+  });choices.append(button);
+ }
+ const back=document.createElement('button');back.type='button';back.textContent='ABANDONAR MARCADOR · VOLVER A LA CARRETERA';
+ back.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');});choices.append(back);
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showMileDecision(){
+ if(encounterOpen||state.chapterFive.stage!=='choice')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='KM 96 · EL MAPA QUE NO EXISTE';
+ $('encounter-text').textContent='El Agrimensor dibujaba nombres en lugar de carreteras. Vera reconoce el suyo al otro lado del mapa. Puedes conservar el recuerdo — y atraer la señal — o enterrarlo para siempre.';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:MileDecision;label:string}>=[
+  {id:'remember',label:'GUARDAR EL MAPA Y SUS NOMBRES · +12 L DE GASOLINA'},
+  {id:'forget',label:'ENTERRAR EL MAPA · +3 PIEZAS'}
+ ];
+ for(const option of options){
+  const button=document.createElement('button');button.type='button';button.textContent=option.label;
+  button.addEventListener('click',()=>{
+   state=concludeMile(state,option.id);saveQuietly();syncMileView();notify(state.message);
+   $('encounter-title').textContent='CAPÍTULO V COMPLETADO · EL KILÓMETRO IMPOSIBLE';
+   $('encounter-text').textContent=state.message+' El cartel señala KM 120, donde termina la carretera. El último capítulo aún está precintado.';
+   choices.replaceChildren();
+   const leave=document.createElement('button');leave.type='button';leave.textContent='REGRESAR AL FIREBIRD · ARCHIVAR CINTA V';
+   leave.addEventListener('click',()=>{
+    encounterOpen=false;dialog.classList.add('hidden');switchMode('map');
+    if(shouldOfferFinale(state))showFinale();
+   });choices.append(leave);leave.focus();
+  });choices.append(button);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function interactMile(){
+ const x=world.player.x,z=world.player.z,stage=state.chapterFive.stage;
+ if(!state.chapterFive.cacheTaken&&nearMile(x,z,MILE_POSITIONS.supplies,2.3)){
+  state=takeMileSupplies(state);
+ }else if(stage==='arrival'&&nearMile(x,z,MILE_POSITIONS.sign,2.7)){
+  state=inspectMileSign(state);
+ }else if(stage==='log'&&nearMile(x,z,MILE_POSITIONS.log,2.7)){
+  state=inspectMileLog(state);
+ }else if(stage==='beacons'&&(state.chapterFive.beaconsMask&1)===0&&nearMile(x,z,MILE_POSITIONS.beaconA,2.3)){
+  state=activateMileBeacon(state,'A');
+ }else if(stage==='beacons'&&(state.chapterFive.beaconsMask&2)===0&&nearMile(x,z,MILE_POSITIONS.beaconB,2.3)){
+  state=activateMileBeacon(state,'B');
+ }else if(stage==='dial'&&nearMile(x,z,MILE_POSITIONS.dial,3)){
+  showMileCipher();return;
+ }else if(stage==='choice'){
+  showMileDecision();return;
+ }else{notify('El camino se repite. Sigue la pista del diario [J].');return;}
+ saveQuietly();syncMileView();notify(state.message);
+}
+function milePrompt(x:number,z:number):string{
+ const stage=state.chapterFive.stage;
+ if(!state.chapterFive.cacheTaken&&nearMile(x,z,MILE_POSITIONS.supplies,2.3))return '[E] RECOGER MALETA DE PATRULLA';
+ if(stage==='arrival'&&nearMile(x,z,MILE_POSITIONS.sign,2.7))return '[E] LEER POSTE KILOMÉTRICO';
+ if(stage==='log'&&nearMile(x,z,MILE_POSITIONS.log,2.7))return '[E] INSPECCIONAR REGISTRADOR DE PATRULLA';
+ if(stage==='beacons'&&(state.chapterFive.beaconsMask&1)===0&&nearMile(x,z,MILE_POSITIONS.beaconA,2.3))return '[E] ACTIVAR BALIZA A';
+ if(stage==='beacons'&&(state.chapterFive.beaconsMask&2)===0&&nearMile(x,z,MILE_POSITIONS.beaconB,2.3))return '[E] ACTIVAR BALIZA B';
+ if(stage==='dial'&&nearMile(x,z,MILE_POSITIONS.dial,3))return '[E] DESCIFRAR MARCADOR 72 → 96';
+ if(stage==='hunter')return 'EL AGRIMENSOR · '+mileHunter.health+'/120 · [F] GOLPEAR · [SHIFT] ESQUIVAR';
+ if(stage==='choice')return '[E] DECIDIR DESTINO DEL MAPA';
+ return '[J] DIARIO · [M] REGRESAR AL FIREBIRD';
+}
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
 function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);mileHunter=freshMileHunter(state.chapterFive.hunterHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
