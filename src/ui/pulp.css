@@ -311,3 +311,8 @@ html[data-pulp-mode="map"] .hud{opacity:0}
 /* F25 · fourth chapter access uses existing video-store style, not generic web controls. */
 html.psx-mode .panel .actions #radio:not(:disabled){background:#3a2b35;border-left-color:#cbb18b;color:#ffebc5}
 html.psx-mode .panel .actions #radio:hover:not(:disabled){background:#8a3941}
+
+/* F32: minimum touch target size even in compact 320px PSX menus. */
+@media(max-width:680px){
+ html.psx-mode .panel .actions button{min-height:44px}
+}
