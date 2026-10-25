@@ -27,4 +27,8 @@ npm run smoke
 ```
 El smoke Chromium debe atravesar físicamente el nivel, fallar y acertar el código, derrotar al Doble con golpes reales, elegir final, guardar/cargar y comprobar la ausencia de excepciones JS.
 
+**CI Chromium aprobado:** [ejecución 40220104885](https://github.com/ivan7800/DEAD-ROAD-404/actions/runs/40220104885). Node: 259/259; Vite/TypeScript build correcto; smoke: ambos relés, panel 1204 con error previo, combate real, final I y persistencia tras recargar. Los finales II–IV están probados a nivel de lógica, no aún mediante rutas completas en navegador.
+
+**Observación de rendimiento del runner:** media móvil 42,1 FPS y 1 % bajo de 6 FPS, medidos bajo SwiftShader; no equivale a la velocidad de una GPU real y sugiere que aún hace falta una auditoría de rendimiento.
+
 Que los capítulos I–VI sean jugables no demuestra por sí solo que el juego alcance una puntuación 9,5/10 ni sustituye las pruebas manuales en Windows y Linux. Resta hacer una auditoría visual, de rendimiento y accesibilidad por dispositivo.
