@@ -35,6 +35,7 @@ jobs:
       - run: node scripts/check-pages-build.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke
+      - run: npm run qa:finales
       - run: npm run benchmark:ci
       - if: always()
         uses: actions/upload-artifact@v4
