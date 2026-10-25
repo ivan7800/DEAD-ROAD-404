@@ -21,7 +21,7 @@ export class GameWorld {
  readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();
  artStatus:'cargando'|'glb'|'parcial'|'reserva'|'psx'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
  readonly architecturalPass=new ArchitecturalPass();readonly americana1992=new Americana1992();readonly roadsideDetail14=new RoadsideDetail14(); readonly driveDust:DriveDust;readonly firebird=new Firebird();readonly car=this.firebird.group; readonly roadsideArt=new RoadsideArt(); readonly player=new THREE.Vector3(0,1.7,7); readonly can=new THREE.Vector3(11,0,1);
- readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
+ readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
  constructor(canvas:HTMLCanvasElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=false;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.sky=new THREE.Color(0x10121c);this.scene.background=this.sky;this.scene.fog=new THREE.FogExp2(0x423340,.019);
@@ -177,6 +177,14 @@ export class GameWorld {
   for(let i=0;i<10;i++){let z=2.2+i*.43;block(this.stationFallback,.12,.02,.19,8.1,.13,z,rust);}
  }
  private buildStoryProps(){
+  // Visible original low-poly supply cache: one-time reward tied to persistent inventory.
+  const cacheWood=new THREE.MeshLambertMaterial({color:0x584532,flatShading:true});
+  const cacheMark=new THREE.MeshBasicMaterial({color:0xe0ad70});
+  block(this.supplyCacheVisual,1.15,.58,.78,0,.34,0,cacheWood);
+  block(this.supplyCacheVisual,1.21,.09,.84,0,.67,0,cacheMark);
+  block(this.supplyCacheVisual,.68,.055,.08,0,.71,.16,cacheWood);
+  this.supplyCacheVisual.position.set(9,.04,5.4);
+  this.scene.add(this.supplyCacheVisual);
   const skin=mat(0xa58b74),jacket=mat(0x88613f),boots=mat(0x26212b),marker=mat(0xe3bd6e);
   // Vera stands at the motel entrance: distinct silhouette and readable location.
   cylinder(this.vera,.37,1.25,0,1.17,0,jacket,7);
@@ -218,6 +226,7 @@ export class GameWorld {
   }
  }
  setTapeVisible(visible:boolean){this.motelTapeVisual.visible=visible;}
+ setCacheVisible(visible:boolean){this.supplyCacheVisual.visible=visible;}
  setMissionStage(stage:MissionStage){this.missionKey.visible=stage==='signal';this.vera.visible=stage==='key'||stage==='resolved';}
  private buildEnemy(){
   const body=mat(0x494453),head=mat(0x9a8e80),eyes=new THREE.MeshBasicMaterial({color:0xf26452});
