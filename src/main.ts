@@ -302,6 +302,113 @@ function dinerPrompt(x:number,z:number):string{
  if(stage==='stalker')return 'LA CAMARERA HUECA · '+dinerThreat.health+'/90 · [F] GOLPEAR · [SHIFT] CORRER · [I] CURARSE';
  return '[J] CONSULTA EL DIARIO · [M] REGRESAR AL FIREBIRD';
 }
+
+/** Chapter III: accessible, keyboard-driven conversations and town keypad. */
+function showEliasDialogue(){
+ if(encounterOpen||state.chapterThree.witness!==null)return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='ELÍAS · EL ÚLTIMO TESTIGO';
+ $('encounter-text').textContent='«No tengo nombre en las listas. Me lo borraron cuando tocaron trece veces. Si escuchas voces en el archivo, quizá ya estés en la lista». ¿Confías en este hombre?';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:WitnessChoice;label:string}>=[
+  {id:'believe',label:'ESCUCHAR A ELÍAS · +2 RACIONES'},
+  {id:'doubt',label:'MANTENER LAS DISTANCIAS · +1 PIEZA'}
+ ];
+ for(const option of options){
+  const b=document.createElement('button');b.type='button';b.textContent=option.label;
+  b.addEventListener('click',()=>{
+   state=speakWitness(state,option.id);saveQuietly();
+   world.setTownStage(state.chapterThree.stage,true,state.chapterThree.cacheTaken);
+   encounterOpen=false;dialog.classList.add('hidden');notify(state.message);hud();
+  });choices.append(b);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showTownCode(){
+ if(encounterOpen||state.chapterThree.stage!=='frequency')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='PUEBLO SIN NOMBRE · RELOJ DEL CAMPANARIO';
+ $('encounter-text').textContent='Todas las esferas están detenidas a las 03:13. El panel municipal pide cuatro cifras. Las voces repiten: «Tres campanadas. Trece nombres».';
+ choices.replaceChildren();
+ for(const code of TOWN_CODES){
+  const b=document.createElement('button');b.type='button';b.textContent=code;
+  b.addEventListener('click',()=>{
+   state=enterTownCode(state,code);saveQuietly();notify(state.message);hud();beep(110+Number(code.slice(-2))*7,.12);
+   if(state.chapterThree.stage==='chapel'){
+    encounterOpen=false;dialog.classList.add('hidden');
+    world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);
+   }else $('encounter-text').textContent=state.message+' · INTENTOS: '+state.chapterThree.attempts;
+  });choices.append(b);
+ }
+ const back=document.createElement('button');back.type='button';back.textContent='VOLVER AL PUEBLO';
+ back.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');});
+ choices.append(back);dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showTownDecision(){
+ if(encounterOpen||state.chapterThree.stage!=='choice')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='CAPÍTULO III · LOS NOMBRES OLVIDADOS';
+ $('encounter-text').textContent='El Campanero se ha desvanecido. En su campana hay un registro con todos los nombres que dejó de pronunciar el pueblo. ¿Qué hacer con la memoria de los desaparecidos?';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:TownDecision;label:string}>=[
+  {id:'transmit',label:'TRANSMITIR LOS NOMBRES POR RADIO · +12 L'},
+  {id:'seal',label:'SELLAR EL REGISTRO BAJO EL CAMPANARIO · +25 SALUD'}
+ ];
+ for(const option of options){
+  const b=document.createElement('button');b.type='button';b.textContent=option.label;
+  b.addEventListener('click',()=>{
+   state=concludeTown(state,option.id);saveQuietly();hud();
+   world.setTownStage(state.chapterThree.stage,true,state.chapterThree.cacheTaken);
+   $('encounter-title').textContent='CAPÍTULO III COMPLETADO · EL PUEBLO SIN NOMBRE';
+   $('encounter-text').textContent=state.message+' Más allá de la niebla una nueva señal indica: FRECUENCIA MUERTA. De momento, la carretera sigue.';
+   choices.replaceChildren();
+   const leave=document.createElement('button');leave.type='button';leave.textContent='REGRESAR AL FIREBIRD';
+   leave.addEventListener('click',()=>{
+    encounterOpen=false;dialog.classList.add('hidden');switchMode('map');
+    if(shouldOfferFinale(state))showFinale();
+   });choices.append(leave);leave.focus();
+  });choices.append(b);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function interactTown(){
+ const x=world.player.x,z=world.player.z,stage=state.chapterThree.stage;
+ if(!state.chapterThree.cacheTaken&&nearTownObject(x,z,TOWN_LOCATIONS.supplies,2.3)){
+  state=takeTownSupplies(state);
+ }else if(state.chapterThree.witness===null&&nearTownObject(x,z,TOWN_LOCATIONS.witness,1.6)){
+  showEliasDialogue();return;
+ }else if(stage==='arrival'&&nearTownObject(x,z,TOWN_LOCATIONS.memorial)){
+  state=readMemorial(state);
+ }else if(stage==='generator'&&nearTownObject(x,z,TOWN_LOCATIONS.generator)){
+  state=restoreTownPower(state);
+ }else if(stage==='archive'&&nearTownObject(x,z,TOWN_LOCATIONS.archive)){
+  state=readTownArchive(state);
+ }else if(stage==='frequency'&&nearTownObject(x,z,TOWN_LOCATIONS.frequency,2.6)){
+  showTownCode();return;
+ }else if(stage==='chapel'&&nearTownObject(x,z,TOWN_LOCATIONS.chapel,2.8)){
+  state=openTownChapel(state);townGuardian=freshGuardian(state.chapterThree.guardianHealth);beep(76,.34);
+ }else if(stage==='choice'&&nearTownObject(x,z,TOWN_LOCATIONS.chapel,3)){
+  showTownDecision();return;
+ }else {notify('Aquí solo queda polvo. Busca pistas en el diario [J] o junto a los edificios.');return;}
+ saveQuietly();world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);
+ notify(state.message);hud();
+}
+function townPrompt(x:number,z:number):string{
+ const stage=state.chapterThree.stage;
+ if(!state.chapterThree.cacheTaken&&nearTownObject(x,z,TOWN_LOCATIONS.supplies,2.3))return '[E] ABRIR CAJA DE SUMINISTROS MUNICIPALES';
+ if(state.chapterThree.witness===null&&nearTownObject(x,z,TOWN_LOCATIONS.witness,1.6))return '[E] HABLAR CON ELÍAS · TESTIGO';
+ if(stage==='arrival'&&nearTownObject(x,z,TOWN_LOCATIONS.memorial))return '[E] LEER MONUMENTO DE DESAPARECIDOS';
+ if(stage==='generator'&&nearTownObject(x,z,TOWN_LOCATIONS.generator))return '[E] ENCENDER GENERADOR MUNICIPAL';
+ if(stage==='archive'&&nearTownObject(x,z,TOWN_LOCATIONS.archive))return '[E] EXAMINAR ARCHIVO MUNICIPAL';
+ if(stage==='frequency'&&nearTownObject(x,z,TOWN_LOCATIONS.frequency,2.6))return '[E] INTRODUCIR HORA DEL CAMPANARIO';
+ if(stage==='chapel'&&nearTownObject(x,z,TOWN_LOCATIONS.chapel,2.8))return '[E] ABRIR CAMPANARIO · 03:13';
+ if(stage==='choice'&&nearTownObject(x,z,TOWN_LOCATIONS.chapel,3))return '[E] DECIDIR DESTINO DEL REGISTRO';
+ if(stage==='guardian')return 'EL CAMPANERO · '+townGuardian.health+'/120 · [F] GOLPEAR · [SHIFT] ESQUIVAR · [I] CURARSE';
+ return '[J] CONSULTAR DIARIO · [M] VOLVER AL FIREBIRD';
+}
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
 function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
@@ -312,6 +419,13 @@ $('diner').addEventListener('click',()=>{
  if(!dinerAvailable(state)){notify('Completa La Última Parada y conduce hasta el KM 24.');return;}
  if(state.chapterTwo.stage==='complete'){notify('El capítulo del restaurante ya ha terminado.');return;}
  state=beginDiner(state);inTown=false;inDiner=true;dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);
+ switchMode('explore');saveQuietly();notify(state.message);
+});
+$('town').addEventListener('click',()=>{
+ try{soundscape.start();}catch{}
+ if(!canEnterTown(state)){notify('Completa LOS QUE NO REGRESAN y conduce hasta el KM 48.');return;}
+ if(state.chapterThree.stage==='complete'){notify('El capítulo del pueblo ya ha terminado.');return;}
+ state=beginTown(state);inDiner=false;inTown=true;townGuardian=freshGuardian(state.chapterThree.guardianHealth);
  switchMode('explore');saveQuietly();notify(state.message);
 });
 $('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
