@@ -15,7 +15,9 @@ export function batchStaticModel(root:THREE.Object3D,options:{directOnly?:boolea
   if(mesh instanceof THREE.SkinnedMesh||mesh instanceof THREE.InstancedMesh||Array.isArray(mesh.material)||mesh.material.transparent||
      !mesh.visible||!mesh.parent||Object.values(mesh.geometry.morphAttributes).some(attributes=>attributes.length>0))continue;
   const geometry=mesh.geometry;
-  if(!geometry.attributes.position||geometry.groups.length>1)continue;
+  // BufferGeometry groups (e.g. six faces of a BoxGeometry) do not imply
+  // multiple materials. Array.isArray(mesh.material) above already excludes them.
+  if(!geometry.attributes.position)continue;
   const attributes=Object.keys(geometry.attributes).sort().map(k=>{
    const a=geometry.getAttribute(k);return k+':'+a.itemSize+':'+a.array.constructor.name+':'+a.normalized;
   }).join('|');
@@ -50,7 +52,11 @@ export function batchStaticModel(root:THREE.Object3D,options:{directOnly?:boolea
   if(meshes.length<2)continue;
   const copies:THREE.BufferGeometry[]=[];
   try{
-   for(const mesh of meshes)copies.push(mesh.geometry.clone().applyMatrix4(invRoot.clone().multiply(mesh.matrixWorld)));
+   for(const mesh of meshes){
+    const copy=mesh.geometry.clone().applyMatrix4(invRoot.clone().multiply(mesh.matrixWorld));
+    // All faces use one material. Drop per-face groups only on private copies.
+    copy.clearGroups();copies.push(copy);
+   }
    const combined=mergeGeometries(copies,false);
    if(!combined)continue;
    combined.computeBoundingSphere();
