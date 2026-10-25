@@ -52,3 +52,20 @@ La opción `--require-hardware` produce un error cuando el renderer está identi
 Las mejoras anteriores son reducciones justificables de trabajo de CPU/DOM por inspección; su efecto en FPS y estabilidad **no se afirma** hasta una prueba A/B real. El test de navegador permite verificar que los seis capítulos, decisiones, controles, persistencia y cuatro finales no se ven afectados, aunque solo cubre la ruta completa de algunos finales. No se acredita calidad 9,5/10, GPU real ni una campaña completa de horas sin errores.
 
 Quedan pendientes lockfile de dependencias con `npm ci`, auditoría visual Windows/Linux, benchmark de combates con movimiento y cuatro finales completos en navegador.
+
+## Evidencia automatizada de la rama F30
+
+CI de la revisión F30: https://github.com/ivan7800/DEAD-ROAD-404/actions/runs/40227719238, resultado **success**.
+
+- `npm test`: **271 pruebas aprobadas, 0 errores**.
+- Build TypeScript/Vite y chequeo de GitHub Pages: aprobados.
+- Smoke Chromium: controles, guardados, combate y recorrido de los capítulos V–VI aprobados.
+- Benchmark `npm run benchmark:ci` ejecutado y guardado como artefacto `f30-benchmark-json`.
+- Renderer detectado: **ANGLE Vulkan 1.3 / SwiftShader Device (Subzero)**, aceleración GPU física **no verificada**.
+
+| Escena / ejecución corta de CI | FPS rAF medios | 1 % bajo | p95 intervalo | Draw calls |
+| --- | ---: | ---: | ---: | ---: |
+| Conducción quieta · 3 s | 24,53 | 8,57 | 83,20 ms | 115 |
+| Exploración quieta · 3 s | 27,36 | 14,97 | 66,60 ms | 17 |
+
+El mismo smoke informó durante una exploración diferente **34,2 FPS móviles / 10,0 FPS en el 1 % bajo**. No hay benchmark A/B equivalente anterior ni un entorno de GPU física; por tanto **no se atribuye una mejora de FPS** a los cambios. Las desviaciones entre escenas y ejecuciones ilustran precisamente la necesidad de una metodología repetible.
