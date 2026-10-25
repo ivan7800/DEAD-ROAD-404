@@ -851,7 +851,7 @@ window.addEventListener('keydown',e=>{
 },true);
 window.addEventListener('keydown',e=>{
  const k=normalizeKey(e.key);
- const target=e.target as HTMLElement|null;
+ const target=e.target instanceof HTMLElement?e.target:null;
  if(target?.matches('input,textarea,select,[contenteditable="true"]'))return;
  // Dialogs and journal own their keyboard: allow native scrolling and focus.
  if(!encounterOpen&&!inventoryOpen&&!helpOpen&&!journalOpen&&capturesGameKey(k,mode)&&!target?.closest('button'))e.preventDefault();
