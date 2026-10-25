@@ -9,9 +9,9 @@ test('las cuatro marcas ficticias son explícitas y no se importan recursos remo
  assert.doesNotMatch(art,/https?:\/\//i);
 });
 test('versión y ambientación de 1992 concordantes',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.21.5');
+ assert.equal(JSON.parse(read('package.json')).version,'0.21.6');
  assert.match(read('index.html'),/1992/);
- assert.match(read('index.html'),/v0\.21\.5/);
+ assert.match(read('index.html'),/v0\.21\.6/);
 });
 test('Fase 17 no pisa guardados de versiones anteriores',()=>{
  const main=read('src/main.ts');
