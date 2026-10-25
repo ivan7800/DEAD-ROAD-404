@@ -2,6 +2,14 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 32 — Pulido de diálogos y estabilidad (v0.21.5)
+
+La revisión mejora el diario de campaña y los diálogos narrativos en pantallas reducidas: ahora tienen altura máxima y desplazamiento propio, y el diario cuenta con botón de cierre accesible por teclado o tacto que restaura el foco anterior. Los botones del menú PSX mantienen al menos 44 píxeles de altura en móvil.
+
+Nueva prueba `npm run qa:stability`: comprueba móviles 320×568 y 568×320 horizontal, escritorio 1280×800, foco y desplazamiento del diario, opciones de cierre y ciclos de conducción/exploración con guardado, recarga y vigilancia de errores. El CI utiliza 18 segundos de ciclos; para una prueba local más larga ejecuta `npm run qa:stability -- --minutes=10`. Solo usa un perfil de Chromium temporal y genera capturas e informe en `artifacts/`.
+
+Consulta el [informe de la fase 32](docs/FASE_32_PULIDO_VISUAL_ACCESIBILIDAD_ESTABILIDAD.md). Se mantienen las seis escenas narrativas y los cuatro finales. El objetivo 9,5/10 sigue pendiente de una revisión visual humana y de pruebas prolongadas en GPU Windows/Linux.
+
 ## Fase 31 — Reproducibilidad, cuatro finales y capturas responsive (v0.21.4)
 
 La fase 31 incorpora una instalación de dependencias reproducible (`package-lock.json` y `npm ci` una vez generado el lockfile legítimo), revisiones Chromium específicas para **los cuatro desenlaces** con elección desde la interfaz, comprobación del guardado tras recarga, capturas de 1280×800 y 390×844, y detección de desbordamiento horizontal. Las pruebas de finales parten de estados válidos próximos al desenlace, mientras que el smoke general conserva los recorridos físicos y combates.
