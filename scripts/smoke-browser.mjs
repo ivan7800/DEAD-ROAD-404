@@ -383,6 +383,83 @@ try{
  assert.equal(radioSave.chapterFour.subcodeAttempts,1);
  assert.equal(radioSave.campaign.current,'dead-frequency');
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
+ // F26 production smoke: navigate KM96 with real controls after a valid F25 checkpoint.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
+  s.km=96;s.ending=null;s.health=100;s.fuel=65;
+  s.chapterFour={...s.chapterFour,stage:'complete',operatorHealth:0,breakersMask:3,decision:'sever'};
+  s.chapterFive={stage:'locked',beaconsMask:0,dialAttempts:0,hunterHealth:120,cacheTaken:false,decision:null,legacyFinaleAllowed:false};
+  s.campaign.completed=['last-stop','missing','nameless','dead-frequency'];
+  s.campaign.current='dead-frequency';
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ assert.equal(await page.locator('#mile').isEnabled(),true,'El KM96 no se desbloquea tras IV');
+ await page.locator('#mile').click();
+ await page.locator('#status').filter({hasText:'KM 96'}).waitFor({timeout:12000});
+ await page.screenshot({path:'artifacts/km96-f26.png'});
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'LEER POSTE KILOMÉTRICO'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'registrador'}).waitFor();
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'INSPECCIONAR REGISTRADOR'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'DOS balizas'}).waitFor();
+ await page.keyboard.down('w');await sleep(2700);await page.keyboard.up('w');
+ await page.keyboard.down('a');
+ try{await page.locator('#prompt').filter({hasText:'BALIZA A'}).waitFor({timeout:15000});}
+ finally{await page.keyboard.up('a');}
+ await page.keyboard.press('e');
+ const a=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFive);
+ assert.equal(a.beaconsMask,1,'No se activó la baliza A');
+ await page.keyboard.down('d');
+ try{await page.locator('#prompt').filter({hasText:'BALIZA B'}).waitFor({timeout:15000});}
+ finally{await page.keyboard.up('d');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'combinación'}).waitFor();
+ const beacons=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFive);
+ assert.equal(beacons.beaconsMask,3,'No se activaron ambas balizas');
+ await page.keyboard.down('a');await sleep(950);await page.keyboard.up('a');
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'DESCIFRAR MARCADOR'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#encounter-title').filter({hasText:'MARCADOR DE DISTANCIA'}).waitFor();
+ await page.getByRole('button',{name:'0404',exact:true}).click();
+ await page.locator('#encounter-text').filter({hasText:'COMBINACIÓN INCORRECTA'}).waitFor();
+ await page.getByRole('button',{name:'2496',exact:true}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'EL AGRIMENSOR'}).waitFor();
+ await page.screenshot({path:'artifacts/agrimensor-km96-f26.png'});
+ let surveyorDefeated=false;
+ for(let attempt=0;attempt<34;attempt++){
+  await page.keyboard.press('f');await sleep(560);
+  if(await page.locator('#encounter-title').filter({hasText:'EL MAPA QUE NO EXISTE'}).isVisible()){
+   surveyorDefeated=true;break;
+  }
+ }
+ const hp=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFive.hunterHealth);
+ assert.equal(surveyorDefeated,true,'No concluye el combate del Agrimensor; HP='+hp);
+ await page.screenshot({path:'artifacts/agrimensor-derrotado-f26.png'});
+ await page.getByRole('button',{name:/GUARDAR EL MAPA Y SUS NOMBRES/}).click();
+ await page.locator('#encounter-title').filter({hasText:'CAPÍTULO V COMPLETADO'}).waitFor();
+ await page.getByRole('button',{name:/REGRESAR AL FIREBIRD/}).click();
+ await page.locator('#status').filter({hasText:'CARRETERA'}).waitFor();
+ const complete=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(complete.chapterFive.stage,'complete');
+ assert.equal(complete.chapterFive.decision,'remember');
+ assert.equal(complete.chapterFive.hunterHealth,0);
+ assert.equal(complete.campaign.completed.includes('impossible-mile'),true);
+ assert.equal(complete.chapterFive.dialAttempts,1);
+ await page.locator('#load').click();
+ const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(restored.chapterFive.stage,'complete');
+ assert.equal(restored.chapterFive.decision,'remember');
+ assert.equal(errors.length,0,'Errores JavaScript del KM96: '+errors.join('; '));
+ console.log('PASS Chromium F26: KM96 real, registrador, balizas, código, Agrimensor, decisión y guardado.');
  console.log('PASS Chromium F25: emisora WXR-404, bunker UMBRAL, dos codigos y persistencia, portada pulp, opciones, capítulos, pausa real, PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
