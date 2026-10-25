@@ -698,6 +698,68 @@ function milePrompt(x:number,z:number):string{
  if(stage==='choice')return '[E] DECIDIR DESTINO DEL MAPA';
  return '[J] DIARIO · [M] REGRESAR AL FIREBIRD';
 }
+/** F27 — playable final toll-road with physical triggers and four real endings. */
+function syncRoadEndView(){
+ world.setRoadEndStage(state.chapterSix.stage,state.chapterSix.relaysMask,state.chapterSix.suppliesTaken);
+ hud();
+}
+function showRoadEndCipher(){
+ if(encounterOpen||state.chapterSix.stage!=='cipher')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='PEAJE 404 · PANEL DE LA ÚLTIMA BARRERA';
+ $('encounter-text').textContent='El cartel decía: «KM 120 / CARRETERA 404». Toma las tres cifras del kilómetro y la primera del número de carretera.';
+ choices.replaceChildren();
+ for(const code of END_CODES){
+  const button=document.createElement('button');button.type='button';button.textContent=code;
+  button.addEventListener('click',()=>{
+   state=enterEndCode(state,code);saveQuietly();syncRoadEndView();notify(state.message);
+   if(state.chapterSix.stage==='double'){
+    encounterOpen=false;dialog.classList.add('hidden');
+    roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);
+    world.setRoadDouble(roadDouble.x,roadDouble.z,true,false,elapsed);
+    yaw=Math.atan2(roadDouble.x-world.player.x,-(roadDouble.z-world.player.z));pitch=0;
+    pulpUi?.title('CAPÍTULO VI · ÚLTIMA PROYECCIÓN','EL DOBLE','YA ESTUVISTE AQUÍ · TE ESTABAS ESPERANDO');
+    beep(61,.35);
+   }else $('encounter-text').textContent=state.message+' · INTENTOS: '+state.chapterSix.codeAttempts;
+  });choices.append(button);
+ }
+ const back=document.createElement('button');back.type='button';back.textContent='ABANDONAR EL PANEL';
+ back.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');});
+ choices.append(back);
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function interactRoadEnd(){
+ const x=world.player.x,z=world.player.z,stage=state.chapterSix.stage;
+ if(!state.chapterSix.suppliesTaken&&nearRoadEnd(x,z,END_POSITIONS.supplies,2.4)){
+  state=takeEndSupplies(state);
+ }else if(stage==='arrival'&&nearRoadEnd(x,z,END_POSITIONS.sign,2.7)){
+  state=readEndSign(state);
+ }else if(stage==='ledger'&&nearRoadEnd(x,z,END_POSITIONS.ledger,2.8)){
+  state=readEndLedger(state);
+ }else if(stage==='relays'&&(state.chapterSix.relaysMask&1)===0&&nearRoadEnd(x,z,END_POSITIONS.relayA,2.5)){
+  state=enableEndRelay(state,'A');
+ }else if(stage==='relays'&&(state.chapterSix.relaysMask&2)===0&&nearRoadEnd(x,z,END_POSITIONS.relayB,2.5)){
+  state=enableEndRelay(state,'B');
+ }else if(stage==='cipher'&&nearRoadEnd(x,z,END_POSITIONS.console,3)){
+  showRoadEndCipher();return;
+ }else if(stage==='choice'){
+  showFinale();return;
+ }else{notify('La señal no responde. Consulta las pistas del diario [J].');return;}
+ saveQuietly();syncRoadEndView();notify(state.message);
+}
+function roadEndPrompt(x:number,z:number):string{
+ const stage=state.chapterSix.stage;
+ if(!state.chapterSix.suppliesTaken&&nearRoadEnd(x,z,END_POSITIONS.supplies,2.4))return '[E] RECOGER BOTIQUÍN DE PEAJE';
+ if(stage==='arrival'&&nearRoadEnd(x,z,END_POSITIONS.sign,2.7))return '[E] LEER ÚLTIMA SEÑAL KM 120';
+ if(stage==='ledger'&&nearRoadEnd(x,z,END_POSITIONS.ledger,2.8))return '[E] LEER REGISTRO DE PEAJES';
+ if(stage==='relays'&&(state.chapterSix.relaysMask&1)===0&&nearRoadEnd(x,z,END_POSITIONS.relayA,2.5))return '[E] ACTIVAR RELÉ A';
+ if(stage==='relays'&&(state.chapterSix.relaysMask&2)===0&&nearRoadEnd(x,z,END_POSITIONS.relayB,2.5))return '[E] ACTIVAR RELÉ B';
+ if(stage==='cipher'&&nearRoadEnd(x,z,END_POSITIONS.console,3))return '[E] ABRIR BARRERA DEL PEAJE';
+ if(stage==='double')return 'EL DOBLE · '+roadDouble.health+'/140 · [F] GOLPEAR · [SHIFT] ESQUIVAR';
+ if(stage==='choice')return '[E] DECIDIR DESTINO DEFINITIVO · O CONTINÚA LA ESCENA';
+ return '[J] DIARIO · [M] REGRESAR AL FIREBIRD';
+}
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
 function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);mileHunter=freshMileHunter(state.chapterFive.hunterHealth);roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
