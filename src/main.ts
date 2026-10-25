@@ -44,6 +44,7 @@ import {GameWorld} from './scene.ts';
 import {graphicsPreset,nextGraphicsPreset,GRAPHICS,type GraphicsPreset} from './quality.ts';
 import {AudioDirector} from './audioDirector.ts';
 import {FrameMetrics} from './performance.ts';
+import {RenderPacer} from './renderPacer.ts';
 import {AdaptiveQuality} from './adaptiveQuality.ts';
 import {advanceMission,missionObjective,MISSION_CHOICES,type MissionChoice} from './mission.ts';
 import {createEnemy,updateEnemy,strike,type EnemyState} from './combat.ts';
@@ -59,10 +60,10 @@ let graphics:GraphicsPreset=graphicsPreset(readPreference(store,'dead-road-404-p
 let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let warden=freshWarden();let dinerThreat=freshDinerThreat();let townGuardian=freshGuardian();let radioOperator=freshRadioOperator();let mileHunter=freshMileHunter();let roadDouble=freshRoadDouble();let inRoadEnd=false;let inMile=false;let inDiner=false;let inTown=false;let inRadio=false;let radioUnderground=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
 let cameraMode:CameraMode=validCamera(readPreference(store,'dead-road-404-camera'));
 let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film-look'));
-let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;let lastPauseDraw=0;
+let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;
 function applyFilmLook(){document.documentElement.classList.toggle('perf-mode',true);document.documentElement.classList.add('psx-mode');const overlay=$('analog-overlay');const enabled=filmLook==='suave'&&graphics!=='psx';overlay.classList.toggle('disabled',!enabled);overlay.classList.toggle('static-only',!allowAnalogMotion(enabled,window.matchMedia('(prefers-reduced-motion: reduce)').matches||graphics==='rendimiento'));$('analog-label').textContent='ESTÉTICA PSX · 1992';}
 applyFilmLook();
-const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let newGameConfirmationOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
+const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();const renderPacer=new RenderPacer(12);let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let newGameConfirmationOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
 const keyPosition=new THREE.Vector3(17.2,1.7,-8.4),veraPosition=new THREE.Vector3(-20,1.7,-40.5),radioPosition=new THREE.Vector3(14.4,1.7,-2.4);
 const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('status'),prompt=$('prompt'),cross=$('crosshair');
 const addLog=(message:string)=>{$('log').textContent=message;};
@@ -1087,10 +1088,16 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  !state.supplyCacheTaken&&Math.hypot(world.player.x-CACHE_POSITION.x,world.player.z-CACHE_POSITION.z)<2.2?'[E] REGISTRAR CAJA DE SUMINISTROS SUNSPUR':isAtPhone(world.player.x,world.player.z)?'[E] CABINA TELEFÓNICA · 1992':!state.motelTape&&isNearTape(world.player.x,world.player.z)?'[E] RECOGER CINTA DEL MOTEL':world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'?'[E] HABLAR CON VERA':world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'?'[E] RECOGER LLAVE 404':world.player.distanceTo(radioPosition)<4&&state.mission.stage==='arrival'?'[R] ESCUCHAR TRANSMISIÓN':world.player.distanceTo(new THREE.Vector3(11,1.7,1))<3&&!state.hasCan?'[E] RECOGER BIDÓN DE GASOLINA':state.hasCan?'Bidón recogido · [ESPACIO] ATACAR · [M] FIREBIRD':'[CLICK] MIRAR · [ESPACIO] GOLPEAR · [R] RADIO · [M] FIREBIRD';}
  if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);world.camera.fov=73;world.camera.updateProjectionMatrix();world.camera.position.lerp(new THREE.Vector3(28,19,32),Math.min(1,dt*2));world.camera.lookAt(8,0,0);}if(performance.now()>toastUntil)$('toast').classList.remove('show');}
 function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;
- if(!pulpUi?.isPaused){
-  metrics.add(frameMs);update(dt);world.setAtmosphere(now/1000);world.render();
- }else if(now-lastPauseDraw>100){lastPauseDraw=now;world.render();}
-const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!document.hidden&&!pulpUi?.isPaused&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&mode==='explore'){const debug=$('perf-panel');debug.dataset.playerX=world.player.x.toFixed(3);debug.dataset.playerZ=world.player.z.toFixed(3);}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
+ const visible=!document.hidden,paused=Boolean(pulpUi?.isPaused);
+ const interactive=visible&&!paused&&mode!=='map'&&!encounterOpen&&!journalOpen&&!helpOpen&&!inventoryOpen;
+ const draw=renderPacer.shouldRender(now,visible,interactive);
+ // Advance static menu/overlay animations only on their redraws; never simulate
+ // or render the hidden tab. Gameplay retains a full-rate requestAnimationFrame.
+ if(visible&&!paused&&(interactive||draw))update(dt);
+ if(draw){world.setAtmosphere(now/1000);world.render();}
+ if(interactive)metrics.add(frameMs);
+ else metrics.reset();
+const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),interactive&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&mode==='explore'){const debug=$('perf-panel');debug.dataset.playerX=world.player.x.toFixed(3);debug.dataset.playerZ=world.player.z.toFixed(3);}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
  storage:store,
  onSave:()=>save(),
  onLoad:()=>load(),
