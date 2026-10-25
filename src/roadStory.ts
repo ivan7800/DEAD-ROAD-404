@@ -28,7 +28,7 @@ export function shouldOfferFinale(s:GameState):boolean {
 export function roadObjective(s:GameState):string {
  if(s.ending)return 'FINAL REGISTRADO · '+ENDINGS[s.ending].title+' · [J] DIARIO';
  if(s.mission.stage!=='resolved'||s.chapterOne.stage!=='complete'||(s.chapterTwo.stage!=='complete'&&!s.chapterTwo.legacyFinaleAllowed)||(s.chapterThree.stage!=='complete'&&!s.chapterThree.legacyFinaleAllowed)||(s.chapterFour.stage!=='complete'&&!s.chapterFour.legacyFinaleAllowed)||(s.chapterFive.stage!=='complete'&&!hasLegacyEpilogue(s)))return '';
- if(s.chapterSix.stage==='choice')return 'CAPÍTULO VI · La última decisión te espera tras la barrera.';
+ if(s.chapterSix.stage==='choice')return 'CAPÍTULO VI · La última decisión del desvío te espera tras la barrera.';
  if(s.chapterSix.stage==='complete')return '';
  return s.km>=120?(hasLegacyEpilogue(s)?'El último desvío aguarda tu decisión.':'Entra en el último desvío para terminar la campaña.'):'Sigue conduciendo hasta el último desvío · '+Math.max(0,120-s.km)+' km restantes';
 }
