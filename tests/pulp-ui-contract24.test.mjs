@@ -22,7 +22,7 @@ test('botones reales tienen listeners y navegación por teclado',()=>{
  assert.match(ui,/stopImmediatePropagation/);
 });
 test('escenas se congelan al pausar y el modo rendimiento sigue PSX',()=>{
- assert.match(main,/if\(!pulpUi\?\.isPaused\)/);
+ assert.match(main,/if\(visible&&!paused&&\(interactive\|\|draw\)\)update\(dt\)/);
  assert.match(main,/pulpUi\?\.togglePause\(\)/);
  assert.match(main,/!pulpUi\?\.isPaused&&world\.artStatus/);
  assert.match(main,/world\.setGraphics\(preset\)/);
