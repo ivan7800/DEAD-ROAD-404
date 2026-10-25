@@ -29,7 +29,7 @@ test('F19: recursos offline, versiones y guardado migrable',()=>{
  for(const name of ['firebird_77','sunspur_station','mile404_motel']){
   const d=glb(name);assert.ok(d.images.every(x=>!x.uri||!/^https?:\/\//.test(x.uri)),name);
  }
- assert.equal(JSON.parse(txt('package.json')).version,'0.20.0');
+ assert.equal(JSON.parse(txt('package.json')).version,'0.21.0');
  const main=txt('src/main.ts');assert.match(main,/const SAVE_KEY='dead-road-404-f19-v2'/);
  assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE18_SAVE_KEY/);
  assert.doesNotMatch(main,/localStorage\.setItem\(PHASE18_SAVE_KEY/);
