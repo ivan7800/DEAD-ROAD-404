@@ -18,6 +18,12 @@ try{
   // Reloading the page resets F3; enable telemetry before reading the player.
   const f3Hidden=await page.locator('#perf-panel').evaluate(el=>el.classList.contains('hidden'));
   if(f3Hidden)await page.keyboard.press('F3');
+  // Keydown toggles F3 synchronously, but player coordinates appear on the next rAF.
+  await page.waitForFunction(()=>{
+   const el=document.getElementById('perf-panel');
+   return el&&!el.classList.contains('hidden')&&
+    Number.isFinite(Number(el.dataset.playerX))&&Number.isFinite(Number(el.dataset.playerZ));
+  },null,{timeout:8000});
   const deadline=Date.now()+timeout;let lastPos='';
   while(Date.now()<deadline){
    const p=await page.locator('#perf-panel').evaluate(el=>({
