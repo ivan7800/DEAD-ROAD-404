@@ -1,15 +1,17 @@
 import {INITIAL_MISSION,normalizeMission,type MissionProgress} from './mission.ts';
 import {roadMessage,type EndingId} from './roadStory.ts';
+import {freshCampaign,normalizeCampaign,recordMilestone,type CampaignProgress} from './campaign.ts';
+import {freshInventory,normalizeInventory,type Inventory} from './inventory.ts';
 export type Mode = 'map' | 'drive' | 'explore';
-export interface GameState { version:2; mode:Mode; km:number; fuel:number; food:number; health:number; parts:number; hasCan:boolean; visited:boolean; carX:number; carZ:number; carCondition:number; message:string; encounterResolved:boolean; enemyHealth:number; motelTape:boolean; phoneHeard:boolean; mission:MissionProgress; ending:EndingId|null; }
-export const INITIAL:GameState = {version:2,mode:'map',km:0,fuel:44,food:14,health:100,parts:1,hasCan:false,visited:false,carX:0,carZ:19,carCondition:100,message:'La radio repite: «No recojas a nadie en el kilómetro 404».',encounterResolved:false,enemyHealth:75,motelTape:false,phoneHeard:false,mission:{...INITIAL_MISSION},ending:null};
+export interface GameState { version:2; mode:Mode; km:number; fuel:number; food:number; health:number; parts:number; hasCan:boolean; visited:boolean; carX:number; carZ:number; carCondition:number; message:string; encounterResolved:boolean; enemyHealth:number; motelTape:boolean; phoneHeard:boolean; mission:MissionProgress; ending:EndingId|null; inventory:Inventory; campaign:CampaignProgress; supplyCacheTaken:boolean; }
+export const INITIAL:GameState = {version:2,mode:'map',km:0,fuel:44,food:14,health:100,parts:1,hasCan:false,visited:false,carX:0,carZ:19,carCondition:100,message:'La radio repite: «No recojas a nadie en el kilómetro 404».',encounterResolved:false,enemyHealth:75,motelTape:false,phoneHeard:false,mission:{...INITIAL_MISSION},ending:null,inventory:freshInventory(),campaign:freshCampaign(),supplyCacheTaken:false};
 export const MAX_FUEL=80;
 export const clamp=(n:number,a:number,b:number):number=>Math.min(b,Math.max(a,n));
-export const fresh=():GameState=>({...INITIAL,mission:{...INITIAL_MISSION}});
+export const fresh=():GameState=>({...INITIAL,mission:{...INITIAL_MISSION},inventory:freshInventory(),campaign:freshCampaign()});
 export function travel(s:GameState,km=24):GameState {
  if(s.fuel<km*.34)return {...s,message:'No queda combustible suficiente. Busca el bidón de la gasolinera.'};
  const nextKm=s.km+km;
- return {...s,km:nextKm,fuel:clamp(s.fuel-km*.34,0,MAX_FUEL),food:Math.max(0,s.food-1),health:s.food>0?s.health:Math.max(0,s.health-4),mode:'map',message:roadMessage(nextKm)};
+ return {...s,campaign:nextKm>=24?recordMilestone(s.campaign,'road24'):s.campaign,km:nextKm,fuel:clamp(s.fuel-km*.34,0,MAX_FUEL),food:Math.max(0,s.food-1),health:s.food>0?s.health:Math.max(0,s.health-4),mode:'map',message:roadMessage(nextKm)};
 }
 export function pickFuel(s:GameState):GameState {
  if(s.hasCan)return {...s,message:'El bidón está vacío. Lo que queda aquí ya es tuyo.'};
@@ -24,8 +26,16 @@ export function normalizeSave(data:unknown):GameState|null {
  if(v.encounterResolved!==undefined&&typeof v.encounterResolved!=='boolean')return null;
  if(v.motelTape!==undefined&&typeof v.motelTape!=='boolean')return null;
  if(v.phoneHeard!==undefined&&typeof v.phoneHeard!=='boolean')return null;
+ if(v.supplyCacheTaken!==undefined&&typeof v.supplyCacheTaken!=='boolean')return null;
  if(v.carCondition!==undefined&&(typeof v.carCondition!=='number'||!Number.isFinite(v.carCondition)))return null;
  if(v.ending!==undefined&&v.ending!==null&&!['dawn','toll','loop'].includes(v.ending))return null;
  if(v.enemyHealth!==undefined&&(!Number.isFinite(v.enemyHealth)||typeof v.enemyHealth!=='number'))return null;
- return {...fresh(),...v,km:clamp(v.km!,0,100000),fuel:clamp(v.fuel!,0,MAX_FUEL),food:clamp(v.food!,0,999),health:clamp(v.health!,0,100),parts:clamp(v.parts!,0,999),carX:clamp(v.carX!,-3.7,3.7),carZ:clamp(v.carZ!,-150,24),carCondition:clamp(v.carCondition??100,0,100),enemyHealth:clamp(v.enemyHealth??75,0,75),motelTape:v.motelTape??false,phoneHeard:v.phoneHeard??false,mission:normalizeMission(v.mission),ending:v.ending??null};
+ const mission=normalizeMission(v.mission),motelTape=v.motelTape??false,phoneHeard=v.phoneHeard??false;
+ const supplyCacheTaken=v.supplyCacheTaken??false;
+ const inventory=normalizeInventory(v.inventory,{mission,motelTape});
+ const campaign=normalizeCampaign(v.campaign,{
+  mission,ending:v.ending??null,visited:v.visited!,phoneHeard,motelTape,
+  encounterResolved:v.encounterResolved??false,km:v.km!,supplyCacheTaken
+ });
+ return {...fresh(),...v,inventory,campaign,supplyCacheTaken,km:clamp(v.km!,0,100000),fuel:clamp(v.fuel!,0,MAX_FUEL),food:clamp(v.food!,0,999),health:clamp(v.health!,0,100),parts:clamp(v.parts!,0,999),carX:clamp(v.carX!,-3.7,3.7),carZ:clamp(v.carZ!,-150,24),carCondition:clamp(v.carCondition??100,0,100),enemyHealth:clamp(v.enemyHealth??75,0,75),motelTape,phoneHeard,mission,ending:v.ending??null};
 }
