@@ -337,8 +337,9 @@ try{
  const both=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFour);
  assert.equal(both.breakersMask,3,'Los dos circuitos deben estar desconectados');
  await page.screenshot({path:'artifacts/operador-combate-f25.png'});
- await page.keyboard.down('w');await page.keyboard.down('d');await sleep(650);
- await page.keyboard.up('w');await page.keyboard.up('d');
+ // The game now presents the Operator by turning the camera towards it.
+ // Move forward *towards the boss* instead of blindly strafing at the wall.
+ await page.keyboard.down('w');await sleep(540);await page.keyboard.up('w');
  let operatorDefeated=false;
  for(let attempt=0;attempt<13;attempt++){
   await page.keyboard.press('f');await sleep(560);
@@ -346,7 +347,9 @@ try{
    operatorDefeated=true;break;
   }
  }
- assert.equal(operatorDefeated,true,'El combate real no permite derrotar al Operador tras 13 ataques');
+ const operatorHealthAtEnd=(await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFour.operatorHealth));
+ assert.equal(operatorDefeated,true,'El combate real no termina tras 13 ataques; HP restantes='+operatorHealthAtEnd+
+  ' · prompt='+await page.locator('#prompt').innerText());
  await page.screenshot({path:'artifacts/operador-derrotado-f25.png'});
  await page.getByRole('button',{name:/CORTAR EL ENLACE UMBRAL/}).click();
  await page.locator('#encounter-title').filter({hasText:'CAPÍTULO IV COMPLETADO'}).waitFor();

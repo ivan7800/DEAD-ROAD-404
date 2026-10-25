@@ -548,6 +548,11 @@ function interactRadio(){
   if(state.chapterFour.stage==='sentinel'){
    radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);
    world.setRadioOperator(radioOperator.x,radioOperator.z,true,false,elapsed);
+   // The last breaker is offset to the right of the boss arena. Face the
+   // reveal rather than leaving players staring at the far bunker wall.
+   const dx=radioOperator.x-world.player.x,dz=radioOperator.z-world.player.z;
+   yaw=Math.atan2(dx,-dz);pitch=0;
+   pulpUi?.title('PROYECTO UMBRAL · CINTA FINAL','EL OPERADOR','NO CORTÉIS LA EMISIÓN');
    beep(65,.35);
   }
  }else{
