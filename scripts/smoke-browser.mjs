@@ -130,6 +130,9 @@ try{
  await page.locator('#perf-panel').filter({hasText:'draw calls'}).waitFor({timeout:10000});
  const monitor=await page.locator('#perf-panel').innerText();
  assert.match(monitor,/DPR [0-9.]+/,'No se muestran datos de resolución real');
+ const f29MenuCalls=Number(monitor.match(/(\d+) draw calls/)?.[1]);
+ assert.ok(Number.isFinite(f29MenuCalls)&&f29MenuCalls<=180,
+  'Regresión de lotes PSX: llamadas de dibujo en portada='+f29MenuCalls);
  const pixels=await page.evaluate(()=>{const c=document.querySelector('#scene');return c.width*c.height;});
  assert.ok(pixels<=110_000,'PSX 240p supera presupuesto de pixeles: '+pixels);
  console.log('RENDER DIAGNOSTIC · '+monitor);
@@ -169,6 +172,11 @@ try{
  await page.locator('#explore').click();
  await page.locator('#status').filter({hasText:'EXPLORACIÓN'}).waitFor();
  await page.screenshot({path:'artifacts/exploracion.png'});
+ await sleep(1350);
+ const f29PlayMetrics=await page.locator('#perf-panel').innerText();
+ const f29ActiveFps=Number(f29PlayMetrics.match(/^([0-9.]+) FPS/)?.[1]);
+ assert.ok(f29ActiveFps>0,'El contador debe medir FPS durante exploración activa');
+ console.log('F29 EXPLORACION ACTIVA · '+f29PlayMetrics);
  // Journal must not swallow native arrow-key scrolling when playing with keyboard.
  await page.keyboard.press('j');
  await page.locator('#journal:not(.hidden)').waitFor();

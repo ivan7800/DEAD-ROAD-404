@@ -15,17 +15,32 @@ export function batchStaticModel(root:THREE.Object3D,options:{directOnly?:boolea
   if(mesh instanceof THREE.SkinnedMesh||mesh instanceof THREE.InstancedMesh||Array.isArray(mesh.material)||mesh.material.transparent||
      !mesh.visible||!mesh.parent||Object.values(mesh.geometry.morphAttributes).some(attributes=>attributes.length>0))continue;
   const geometry=mesh.geometry;
-  if(!geometry.attributes.position||geometry.groups.length>1)continue;
+  // BufferGeometry groups (e.g. six faces of a BoxGeometry) do not imply
+  // multiple materials. Array.isArray(mesh.material) above already excludes them.
+  if(!geometry.attributes.position)continue;
   const attributes=Object.keys(geometry.attributes).sort().map(k=>{
    const a=geometry.getAttribute(k);return k+':'+a.itemSize+':'+a.array.constructor.name+':'+a.normalized;
   }).join('|');
   const material=mesh.material;
   // Canonicalize ONLY plain, untextured factory materials; repeated posts share draw calls.
-  const plain=material instanceof THREE.MeshStandardMaterial && !material.map&&!material.normalMap&&!material.alphaMap&&!material.aoMap&&!material.emissiveMap&&!material.roughnessMap&&!material.metalnessMap&&!material.envMap;
-  const sameLook=plain?
+  const plainStandard=material instanceof THREE.MeshStandardMaterial &&
+    !material.map&&!material.normalMap&&!material.alphaMap&&!material.aoMap&&!material.emissiveMap&&
+    !material.roughnessMap&&!material.metalnessMap&&!material.envMap&&!material.lightMap;
+  // After applyPSXMaterials the same objects become untextured Lambert meshes.
+  // Rebatch by palette-equivalent appearance, never by color alone or on interactive groups.
+  const plainLambert=material instanceof THREE.MeshLambertMaterial &&
+    !material.map&&!material.normalMap&&!material.alphaMap&&!material.aoMap&&!material.emissiveMap&&
+    !material.lightMap&&!material.envMap&&!material.vertexColors&&!material.transparent&&!material.wireframe;
+  const sameLook=plainStandard?
     [material.type,material.color.getHexString(),material.roughness,material.metalness,
      material.emissive.getHexString(),material.emissiveIntensity,material.side,
-     material.flatShading,material.vertexColors,material.opacity,material.depthWrite].join(':'):
+     material.flatShading,material.vertexColors,material.opacity,material.depthWrite,
+     material.depthTest,material.alphaTest,material.blending,material.wireframe].join(':'):
+    plainLambert?
+    [material.type,material.color.getHexString(),material.emissive.getHexString(),
+     material.emissiveIntensity,material.side,material.flatShading,material.opacity,
+     material.depthWrite,material.depthTest,material.alphaTest,material.blending,
+     material.fog,material.toneMapped].join(':'):
     material.uuid;
   const center=mesh.getWorldPosition(new THREE.Vector3());
   const cell=options.cellSize&&options.cellSize>0?Math.floor(center.x/options.cellSize)+','+Math.floor(center.z/options.cellSize):'all';
@@ -37,7 +52,11 @@ export function batchStaticModel(root:THREE.Object3D,options:{directOnly?:boolea
   if(meshes.length<2)continue;
   const copies:THREE.BufferGeometry[]=[];
   try{
-   for(const mesh of meshes)copies.push(mesh.geometry.clone().applyMatrix4(invRoot.clone().multiply(mesh.matrixWorld)));
+   for(const mesh of meshes){
+    const copy=mesh.geometry.clone().applyMatrix4(invRoot.clone().multiply(mesh.matrixWorld));
+    // All faces use one material. Drop per-face groups only on private copies.
+    copy.clearGroups();copies.push(copy);
+   }
    const combined=mergeGeometries(copies,false);
    if(!combined)continue;
    combined.computeBoundingSphere();
