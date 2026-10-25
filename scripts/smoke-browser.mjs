@@ -30,6 +30,17 @@ try{
  const pixels=await page.evaluate(()=>{const c=document.querySelector('#scene');return c.width*c.height;});
  assert.ok(pixels<=110_000,'PSX 240p supera presupuesto de pixeles: '+pixels);
  console.log('RENDER DIAGNOSTIC · '+monitor);
+ // Validate a real clickable inventory modal and campaign journal before gameplay.
+ await page.locator('#inventory-open').click();
+ await page.locator('#inventory-panel:not(.hidden)').waitFor();
+ await page.locator('#inventory-list').filter({hasText:'BOTIQUÍN'}).waitFor();
+ await page.keyboard.press('i');
+ await page.locator('#inventory-panel.hidden').waitFor();
+ await page.keyboard.press('j');
+ await page.locator('#journal-chapters').filter({hasText:'LA ÚLTIMA PARADA'}).waitFor();
+ await page.locator('#journal-chapters').filter({hasText:'BLOQUEADO'}).waitFor();
+ await page.keyboard.press('j');
+ await page.locator('#journal.hidden').waitFor();
  await page.locator('#drive').click();
  await page.locator('#dashboard.visible').waitFor();
  await page.keyboard.down('w');await sleep(850);await page.keyboard.up('w');
@@ -47,7 +58,23 @@ try{
  await page.locator('#new').click();
  await page.locator('#load').click();
  await page.locator('#toast').filter({hasText:'Partida recuperada'}).waitFor();
+ // Consumption and save/load must be functional from actual UI, not only pure tests.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2';
+  const data=JSON.parse(localStorage.getItem(key));
+  data.health=60;data.inventory={medkit:2,ration:0,repair:0,key404:0,motelTape:0};
+  localStorage.setItem(key,JSON.stringify(data));
+ });
+ await page.locator('#load').click();
+ await page.locator('#inventory-open').click();
+ const useMedkit=page.locator('#inventory-list .inventory-item').filter({hasText:'BOTIQUÍN'}).locator('button');
+ await useMedkit.click();
+ await page.locator('#stats').filter({hasText:'♥ 95'}).waitFor();
+ await page.locator('#inventory-list').filter({hasText:'BOTIQUÍN ×1'}).waitFor();
+ await page.locator('#inventory-close').click();
+ await page.locator('#load').click();
+ await page.locator('#stats').filter({hasText:'♥ 95'}).waitFor();
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
- console.log('PASS Chromium: inicio, modelos, conducción '+velocity+' km/h, exploración, guardado y carga.');
+ console.log('PASS Chromium F20: PSX, diario de seis capítulos, inventario utilizable, conducción '+velocity+' km/h, exploración y guardado/carga.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
