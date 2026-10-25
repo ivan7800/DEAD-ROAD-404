@@ -84,7 +84,22 @@ export class GameWorld {
   this.camera.far=88;this.camera.updateProjectionMatrix();
   this.sky.setHex(0x171523);this.scene.fog=new THREE.FogExp2(0x211b2c,.039);
   this.scene.traverse(o=>{if(o instanceof THREE.PointLight)o.visible=false;});
-  if(!this.psxMaterialReady){applyPSXMaterials(this.scene);this.psxMaterialReady=true;}
+  if(!this.psxMaterialReady){
+   applyPSXMaterials(this.scene);
+   // The second static pass merges Lambert meshes which now share a quantized palette.
+   // Only immediate static scenery children are eligible: no quest items, actors,
+   // doors or boss meshes enter this list. Build once, never inside requestAnimationFrame.
+   const staticScenery=[
+    this.legacyEnvironment,this.stationFallback,this.motelFallback,
+    this.diner.scenery,this.town.scenery,this.radio.surfaceScenery,
+    this.radio.bunkerScenery,this.mile.scenery,this.roadEnd.scenery
+   ];
+   for(const group of staticScenery){
+    const result=batchStaticModel(group,{directOnly:true,cellSize:20});
+    this.sceneryBatch.merged+=result.merged;
+   }
+   this.psxMaterialReady=true;
+  }
   this.lighting17.setGraphics(preset);const settings=GRAPHICS[preset];this.driveDust.setPreset(preset);this.renderer.shadowMap.enabled=settings.shadows;this.moonLight.castShadow=settings.shadows;this.moonLight.shadow.mapSize.set(settings.shadowSize,settings.shadowSize);this.moonLight.shadow.map?.dispose();this.moonLight.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;this.renderer.toneMappingExposure=settings.exposure;this.resize();}
  resize(){const w=this.renderer.domElement.clientWidth||innerWidth,h=this.renderer.domElement.clientHeight||innerHeight;this.renderer.setPixelRatio(renderPixelRatio(this.graphicsPreset,window.devicePixelRatio||1,w,h));this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
  private buildLandscape(){block(this.scene,250,.15,250,0,-.15,0,sand);block(this.scene,9,.03,230,0,-.04,-15,asphalt);for(let z=-113;z<104;z+=9){block(this.scene,.15,.01,3,0,-.018,z,mat(0xbda27f));}for(let z=-110;z<105;z+=12){for(const side of [-1,1]){const x=side*(15+(Math.sin(z*4.2)+1)*8);const s=1+Math.abs(Math.sin(z*.42))*3;const stone=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),mat(0x42353e));stone.position.set(x,s*.25,z);stone.scale.set(1,.38,1.1);this.scene.add(stone);}}for(let i=0;i<15;i++){let z=-108+i*14;let x=i%2===0?-31:33;let cactus=mat(0x374737);cylinder(this.scene,.3,3.3,x,1.3,z,cactus,6);block(this.scene,.26,1.7,.26,x+.8,1.2,z,cactus);block(this.scene,.8,.25,.25,x+.5,1.55,z,cactus);} }
