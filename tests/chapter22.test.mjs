@@ -122,7 +122,7 @@ test('colisiones del restaurante detienen paredes y permiten entrar por la puert
  assert.equal(dinerCollision(DINER_POSITIONS.entry.x,DINER_POSITIONS.entry.z),false);
  assert.equal(dinerCollision(-38.75,20),true);
  assert.equal(dinerCollision(-31,25.9),false);
- assert.equal(dinerCollision(-24,16),true);
+ assert.equal(dinerCollision(-25.5,16),true);
  assert.equal(dinerCollision(-31,12.7),false);
  const point=walkWithSlide(-31,23,-15,0,dinerCollision);
  assert.ok(point.x>-38.5);

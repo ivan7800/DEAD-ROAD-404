@@ -1,6 +1,6 @@
 import {INITIAL_MISSION,normalizeMission,type MissionProgress} from './mission.ts';
 import {roadMessage,type EndingId} from './roadStory.ts';
-import {freshCampaign,normalizeCampaign,recordMilestone,type CampaignProgress} from './campaign.ts';
+import {freshCampaign,normalizeCampaign,recordMilestone,completeChapter,type CampaignProgress} from './campaign.ts';
 import {freshInventory,normalizeInventory,type Inventory} from './inventory.ts';
 import {freshChapterOne,normalizeChapterOne,type ChapterOneProgress} from './chapterOne.ts';
 import {freshChapterTwo,normalizeChapterTwo,type ChapterTwoProgress} from './chapterTwo.ts';
@@ -37,9 +37,12 @@ export function normalizeSave(data:unknown):GameState|null {
  const inventory=normalizeInventory(v.inventory,{mission,motelTape});
  const chapterOne=normalizeChapterOne(v.chapterOne,mission.stage==='resolved');
  const chapterTwo=normalizeChapterTwo(v.chapterTwo,mission.stage==='resolved'&&chapterOne.stage==='complete');
- const campaign=normalizeCampaign(v.campaign,{
+ let campaign=normalizeCampaign(v.campaign,{
   mission,ending:v.ending??null,visited:v.visited!,phoneHeard,motelTape,
   encounterResolved:v.encounterResolved??false,km:v.km!,supplyCacheTaken
  });
+ // Pre-F21 saves with Vera already resolved bypassed the new Celador encounter.
+ // Treat their original chapter as finished without marking chapter II completed.
+ if(v.chapterOne===undefined&&mission.stage==='resolved')campaign=completeChapter(campaign,'last-stop');
  return {...fresh(),...v,inventory,campaign,supplyCacheTaken,chapterOne,chapterTwo,km:clamp(v.km!,0,100000),fuel:clamp(v.fuel!,0,MAX_FUEL),food:clamp(v.food!,0,999),health:clamp(v.health!,0,100),parts:clamp(v.parts!,0,999),carX:clamp(v.carX!,-3.7,3.7),carZ:clamp(v.carZ!,-150,24),carCondition:clamp(v.carCondition??100,0,100),enemyHealth:clamp(v.enemyHealth??75,0,75),motelTape,phoneHeard,mission,ending:v.ending??null};
 }
