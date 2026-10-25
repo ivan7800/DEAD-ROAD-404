@@ -459,7 +459,7 @@ try{
  assert.equal(restored.chapterFive.stage,'complete');
  assert.equal(restored.chapterFive.decision,'remember');
  assert.equal(errors.length,0,'Errores JavaScript del KM96: '+errors.join('; '));
- // F27 real-browser narrative closure: valid completion of I–V, physical VI and saved ending.
+ // F27 real-browser narrative closure: valid completion of I–V, physical VI and f27Saved ending.
  await page.evaluate(()=>{
   const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
   s.km=120;s.health=100;s.fuel=55;s.parts=5;s.ending=null;
@@ -494,15 +494,15 @@ try{
  try{await page.locator('#prompt').filter({hasText:'RELÉ A'}).waitFor({timeout:15000});}
  finally{await page.keyboard.up('a');}
  await page.keyboard.press('e');
- const first=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
- assert.equal(first.relaysMask,1,'La interacción real no activa el primer relé');
+ const f27First=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
+ assert.equal(f27First.relaysMask,1,'La interacción real no activa el primer relé');
  await page.keyboard.down('d');
  try{await page.locator('#prompt').filter({hasText:'RELÉ B'}).waitFor({timeout:15000});}
  finally{await page.keyboard.up('d');}
  await page.keyboard.press('e');
  await page.locator('#objective').filter({hasText:'barrera'}).waitFor();
- const both=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
- assert.equal(both.relaysMask,3,'Ambos relés deben estar activos');
+ const f27Both=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
+ assert.equal(f27Both.relaysMask,3,'Ambos relés deben estar activos');
  await page.keyboard.down('a');await sleep(1400);await page.keyboard.up('a');
  await page.keyboard.down('w');
  try{await page.locator('#prompt').filter({hasText:'ABRIR BARRERA'}).waitFor({timeout:30000});}
@@ -516,31 +516,31 @@ try{
  await page.locator('#objective').filter({hasText:'EL DOBLE'}).waitFor();
  await page.screenshot({path:'artifacts/f27-el-doble.png'});
  await page.keyboard.down('w');await sleep(1750);await page.keyboard.up('w');
- let vanquished=false;
+ let f27Vanquished=false;
  for(let n=0;n<28;n++){
   await page.keyboard.press('f');await sleep(560);
   if(await page.locator('#encounter-title').filter({hasText:'ÚLTIMO DESVÍO'}).isVisible()){
-   vanquished=true;break;
+   f27Vanquished=true;break;
   }
  }
- const hp=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix.doubleHealth);
- assert.equal(vanquished,true,'El combate físico no permite derrotar al Doble; HP='+hp+'; '+await page.locator('#prompt').innerText());
+ const f27Hp=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix.doubleHealth);
+ assert.equal(f27Vanquished,true,'El combate físico no permite derrotar al Doble; HP='+f27Hp+'; '+await page.locator('#prompt').innerText());
  await page.screenshot({path:'artifacts/f27-doble-derrotado.png'});
  await page.getByRole('button',{name:/ABANDONAR LA CARRETERA/}).click();
  await page.locator('#encounter-title').filter({hasText:'AMANECER PRESTADO'}).waitFor();
  await page.getByRole('button',{name:/GUARDAR FINAL Y REGRESAR/}).click();
  await page.locator('#status').filter({hasText:'CARRETERA'}).waitFor();
- const done=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
- assert.equal(done.chapterSix.stage,'complete');
- assert.equal(done.chapterSix.relaysMask,3);
- assert.equal(done.chapterSix.codeAttempts,1);
- assert.equal(done.chapterSix.doubleHealth,0);
- assert.equal(done.ending,'dawn');
- assert.equal(done.campaign.completed.includes('road-end'),true);
+ const f27Done=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f27Done.chapterSix.stage,'complete');
+ assert.equal(f27Done.chapterSix.relaysMask,3);
+ assert.equal(f27Done.chapterSix.codeAttempts,1);
+ assert.equal(f27Done.chapterSix.doubleHealth,0);
+ assert.equal(f27Done.ending,'dawn');
+ assert.equal(f27Done.campaign.completed.includes('road-end'),true);
  await page.locator('#load').click();
- const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
- assert.equal(saved.ending,'dawn');
- assert.equal(saved.chapterSix.stage,'complete');
+ const f27Saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f27Saved.ending,'dawn');
+ assert.equal(f27Saved.chapterSix.stage,'complete');
  assert.equal(await page.locator('#road-end').isEnabled(),false,'Final registrado debe bloquear el capítulo');
  assert.equal(errors.length,0,'Errores JS en final F27: '+errors.join('; '));
  console.log('PASS Chromium F27: KM120, peaje PSX, ambos relés, panel 1204, Doble, Amanecer Prestado y recuperación.');
