@@ -46,6 +46,10 @@ npm run qa:stability -- --minutes=20
 
 Fusionar solo cuando el último SHA tenga CI completo verde. Verificar después despliegue `main` y que los artefactos visuales permitan comparar **antes/después**.
 
+### Revisión visual de las primeras capturas corregidas
+
+Se descargó el artefacto intermedio de la PR F34 (`40236586403`) y se abrió el PNG del capítulo IV a 390×844 y el del capítulo III a 320×568. A diferencia de las capturas F33, los avisos, objetivo, resistencia y botones ya ocupan zonas diferenciadas. **Quedaba un rótulo analógico decorativo** cruzando la línea de estadísticas: se ha ocultado solo su texto durante exploración/conducción móvil, dejando intacta la textura VHS. El test comprueba también esa ausencia.
+
 ### Desbordamiento virtual oculto en 320 px
 
 La primera pasada F34 del capítulo IV en 320×568 informó `document.documentElement.scrollWidth=354` frente a `innerWidth=320`. Se amplió el diagnóstico: `overflowElements=[]` al inspeccionar todos los elementos **visibles** con rectángulos fuera del viewport, y los rectángulos individuales de cabecera, pausa, estadísticas, objetivo, narrativa, resistencia y controles permanecían dentro del ancho disponible, sin superposición. Por tanto, la señal parece derivar de decoración oculta/posicionamiento no visible y no prueba por sí misma que una pieza de interfaz se salga de la pantalla. El documento ya está configurado con `overflow:hidden` de raíz.
