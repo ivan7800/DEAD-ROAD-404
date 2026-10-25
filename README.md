@@ -1,39 +1,33 @@
-# DEAD ROAD 404 — Fase 19 · Taller de arte 3D
+# DEAD ROAD 404 — Edición retro PSX
 
-**v0.19.0 — Americana Nocturna / 1992.** Código TypeScript + Three.js + Vite. Fase 19 construida sobre una copia independiente de F18, sin modificar la anterior.
+Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
-## Novedades
+## Edición PSX, 25 de octubre de 2026
 
-- **Firebird:** nueva topología de carrocería de 53 perfiles longitudinales, techo y cristales reconstruidos, pintura texturizada, grafismo original en capó, reflejos y detalles de interiores. Sigue siendo un modelo retro de autoría procedural, no un modelo profesional acabado en Blender.
-- **SUNSPUR FUEL:** cubierta con perfil más trabajado, escaparates ilustrados, surtidores con mangueras y nuevos detalles de época.
-- **MILE 404:** porche con cubierta, ventanas, señal y máquina expendedora.
-- GLB autónomos y offline con un sistema de reserva si alguno no carga.
-- **Partidas:** nueva clave `dead-road-404-f19-v2`, con lectura compatible de F18, F17 y versiones anteriores. No sobrescribe las claves antiguas.
+**PSX 240p es el modo predeterminado** para todos los usuarios, independientemente de ajustes gráficos antiguos. La versión original y las partidas guardadas permanecen intactas.
 
-## Windows 11
+- Límite de resolución interna de unos **426×240 píxeles a 16:9**, con escalado mediante vecinos próximos y adaptación a la relación de aspecto.
+- G alterna PSX 240p, 288p, 360p y 450p. El mundo es low-poly en **todos** los niveles y no usa sombras en tiempo real.
+- Firebird original con nueva geometría low-poly de coste reducido; estación, motel, carretera y enemigos usan geometría procedural retro.
+- Las mallas GLB detalladas de F19 se conservan para edición artística, pero **no se descargan al abrir el juego**.
+- Niebla corta, materiales Lambert económicos, texturas pixeladas, carteles originales de 128×48 píxeles, sin desenfoques pesados ni VHS animado.
+- Batching para decorado estático, luz ambiental simplificada, distancia de visión reducida.
 
-Descomprimir en `C:\Juegos\DEAD-ROAD-404-FASE-19\DEAD-ROAD-404` y ejecutar **`INICIAR-WINDOWS.bat`**. Requiere Node.js y npm instalados; en el primer arranque utiliza Internet para descargar dependencias si faltan. Evitar instalar `node_modules` dentro de carpetas sincronizadas con Google Drive.
+**Controles:** G calidad PSX · F3 FPS/draw calls y DPR · H manual. WASD conducción y exploración, C cámaras, E interacción, J diario, P guardar.
 
-## Linux Mint
-
-```bash
-chmod +x INICIAR-LINUX-MINT.sh
-./INICIAR-LINUX-MINT.sh
-```
-
-## Comprobación del proyecto
+## QA
 
 ```bash
 npm install
 npm test
 npm run build
-npm run dev
+npm run smoke
 ```
 
-Los GLB están incluidos; no necesitas Python ni Blender para **jugar**. Para **editar** o inspeccionar modelos, consulta `FASE_19_ESTUDIO_3D.md`. Los renders en `previews/` no son capturas del juego ejecutado en un navegador.
+Chromium de GitHub Actions debe verificar el arranque, no descargar GLB, respetar el límite 240p y permitir conducir, explorar, guardar y recuperar una partida.
 
-## Estado de calidad
+## Plataformas
 
-107 pruebas Node superadas, comprobación geométrica y de huecos de acceso superada, modelos renderizados con VTK. **No** se ha verificado la compilación completa ni la ejecución Three.js en este entorno por un fallo de red del registro npm. El resultado debe validarse en Windows/Linux real antes de darlo por estable.
+GitHub Pages, Windows 11 y Linux Mint. Los lanzadores locales de F19 siguen incluidos.
 
-REA no se ha ejecutado en esta fase. La Fase 18 original se conserva independiente.
+**Limitación de rendimiento:** la medición de FPS con SwiftShader en GitHub Actions no representa tu GPU. La mejora de fluidez se verifica en el PC real con F3; no garantizamos 60 FPS sin medirlo. El cambio de arte no elimina las misiones, encuentros, guardados ni finales.

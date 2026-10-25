@@ -118,3 +118,13 @@ footer{font:700 10px Consolas,monospace;letter-spacing:1px;color:#d6b28d;text-sh
 html.perf-mode .scan{display:none}
 html.perf-mode .analog-overlay:before,html.perf-mode .analog-overlay:after{animation:none}
 html.perf-mode .panel,html.perf-mode .controls-guide,html.perf-mode .encounter{backdrop-filter:none}
+
+/* Full-game PSX visual identity: cheap UI compositing and clear pixel scaling. */
+html.psx-mode #scene{image-rendering:pixelated;image-rendering:crisp-edges}
+html.psx-mode .scan{display:none}
+html.psx-mode .analog-overlay{opacity:.18;mix-blend-mode:normal;filter:none;background:repeating-linear-gradient(0deg,#0000001a 0 1px,transparent 1px 4px)}
+html.psx-mode .analog-overlay:before,html.psx-mode .analog-overlay:after{content:none;animation:none}
+html.psx-mode .brand,html.psx-mode .panel h1{font-family:Consolas,'Courier New',monospace;letter-spacing:-1px;text-shadow:2px 2px #000}
+html.psx-mode .panel,html.psx-mode .dashboard,html.psx-mode .encounter-card,html.psx-mode .journal{background:#171320f0;box-shadow:4px 4px 0 #080810;border-radius:0;backdrop-filter:none}
+html.psx-mode .controls-guide{backdrop-filter:none}
+html.psx-mode .actions button,html.psx-mode .encounter-choices button{transition:none;border-radius:0;box-shadow:none}

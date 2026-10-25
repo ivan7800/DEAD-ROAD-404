@@ -4,6 +4,7 @@ import {ArchitecturalPass} from './architecturalPass.ts';
 import {Americana1992} from './americana1992.ts';
 import {RoadsideDetail14} from './roadsideDetail14.ts';
 import {DriveDust} from './driveDust.ts';
+import {createPSXSignage} from './psxSigns.ts';
 import {applyPSXMaterials} from './psxMaterials.ts';
 import {batchStaticModel} from './staticBatch.ts';
 import * as THREE from 'three';
@@ -31,7 +32,7 @@ export class GameWorld {
   this.flashlight.target = this.flashlightTarget;
   this.flashlight.visible=false;
   this.scene.add(this.flashlight,this.flashlightTarget);
-  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
+  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
   // Batch only directly-owned noninteractive scenery; game actors live in groups.
   this.sceneryBatch=batchStaticModel(this.scene,{directOnly:true,cellSize:30});
   for(const group of [this.stationFallback,this.motelFallback]){
