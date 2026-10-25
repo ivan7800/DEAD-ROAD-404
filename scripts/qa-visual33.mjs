@@ -118,6 +118,8 @@ async function screenshotScene(chapter,index,size){
     toastShown:document.getElementById('toast')?.classList.contains('show'),
     graphicsShown:getComputedStyle(document.querySelector('.graphics-label')).display!=='none',
     artShown:getComputedStyle(document.querySelector('.art-status')).display!=='none',
+    analogShown:getComputedStyle(document.querySelector('.analog-label')).display!=='none',
+    tapeCaptionShown:getComputedStyle(document.querySelector('.analog-overlay span')).display!=='none',
     inventory:bounds(document.querySelector('#inventory-access')),
     controls:bounds(document.querySelector('#show-controls')),
     objectiveText:objective?.textContent?.slice(0,180),
@@ -170,6 +172,8 @@ async function screenshotScene(chapter,index,size){
    }
    assert.equal(diag.graphicsShown,false,'Etiqueta de gráficos redundante tapa HUD móvil');
    assert.equal(diag.artShown,false,'Etiqueta de arte redundante tapa HUD móvil');
+   assert.equal(diag.analogShown,false,'Rótulo analógico invade las estadísticas');
+   assert.equal(diag.tapeCaptionShown,false,'Texto decorativo VHS invade las estadísticas');
   }
   assert.deepEqual(errors,[],'Errores en capítulo '+chapter.title);
   const file='f33-'+String(index+1).padStart(2,'0')+'-'+size.name+'.png';
