@@ -134,9 +134,12 @@ try{
  await page.locator('#diner').click();
  await page.locator('#status').filter({hasText:'THE LAST LIGHT'}).waitFor({timeout:10000});
  await page.screenshot({path:'artifacts/restaurante-f22.png'});
- await page.keyboard.down('w');await sleep(1150);await page.keyboard.up('w');
- await page.keyboard.down('d');await sleep(600);await page.keyboard.up('d');
- await page.locator('#prompt').filter({hasText:'INTRODUCIR CÓDIGO DE COCINA'}).waitFor({timeout:12000});
+ // Navigate along the diner aisle using the on-screen prompt as the stop signal.
+ // Timed key presses were flaky on CI machines where software WebGL varies in FPS.
+ await page.keyboard.down('d');await sleep(750);await page.keyboard.up('d');
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'INTRODUCIR CÓDIGO DE COCINA'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
  await page.keyboard.press('e');
  await page.locator('#encounter-title').filter({hasText:'PUERTA DE COCINA'}).waitFor();
  await page.screenshot({path:'artifacts/codigo-restaurante-f22.png'});
