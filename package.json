@@ -1,7 +1,7 @@
 {
   "name": "dead-road-404",
   "private": true,
-  "version": "0.21.4",
+  "version": "0.21.5",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -11,6 +11,7 @@
     "check": "npm run test && npm run build",
     "smoke": "node scripts/smoke-browser.mjs",
     "qa:finales": "node scripts/qa-finales31.mjs",
+    "qa:stability": "node scripts/qa-stability32.mjs",
     "benchmark:gpu": "npm run build && node scripts/benchmark-gpu.mjs",
     "benchmark:ci": "node scripts/benchmark-gpu.mjs --headless --swiftshader --seconds=3 --repeats=1"
   },
