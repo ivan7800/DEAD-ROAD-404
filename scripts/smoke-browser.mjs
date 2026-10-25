@@ -85,7 +85,37 @@ try{
  await page.locator('#inventory-close').click();
  await page.locator('#load').click();
  await page.locator('#stats').filter({hasText:'♥ 95'}).waitFor();
+ // Chapter-I sequence must work in the actual rendered production bundle.
+ // Load a valid checkpoint immediately after Vera to avoid a many-minute path in CI.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',data=JSON.parse(localStorage.getItem(key));
+  data.mission={stage:'resolved',choice:'rescue'};
+  data.chapterOne={stage:'tuning',attempts:0,wardenHealth:120,decision:null};
+  data.encounterResolved=true;data.km=0;
+  localStorage.setItem(key,JSON.stringify(data));
+ });
+ await page.locator('#load').click();
+ await page.locator('#objective').filter({hasText:'Sintoniza el cuadro de radio'}).waitFor();
+ await page.locator('#explore').click();
+ // Spawn at (6,6), facing east: approach relay console at (14,5) on foot.
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'SINTONIZAR RADIO 02:17'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#encounter:not(.hidden)').waitFor();
+ await page.locator('#encounter-title').filter({hasText:'FRECUENCIA'}).waitFor();
+ await page.screenshot({path:'artifacts/puzle-radio-f21.png'});
+ await page.getByRole('button',{name:'404 kHz'}).click();
+ await page.locator('#encounter-text').filter({hasText:'No es un kilómetro'}).waitFor();
+ await page.getByRole('button',{name:'217 kHz'}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'registro frente al motel'}).waitFor();
+ await page.keyboard.press('m');await page.locator('#load').click();
+ await page.locator('#objective').filter({hasText:'registro frente al motel'}).waitFor();
+ const storySave=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(storySave.chapterOne.stage,'hatch');
+ assert.equal(storySave.chapterOne.attempts,1);
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
- console.log('PASS Chromium F20: PSX, capítulos, caja SUNSPUR recogida a pie, mochila, curación, conducción '+velocity+' km/h, exploración y guardado/carga.');
+ console.log('PASS Chromium F21: PSX, inventario, conducción '+velocity+' km/h, recogida SUNSPUR, progresión radio 404→217, persistencia y capítulo I.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
