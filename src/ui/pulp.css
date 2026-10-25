@@ -307,3 +307,7 @@ html[data-pulp-mode="map"] .hud{opacity:0}
  #pulp-options .pulp-screen h2,#pulp-chapters .pulp-screen h2{font-size:40px}
  #pulp-options .pulp-option-grid,#pulp-chapters .pulp-chapter-list{gap:8px}
 }
+
+/* F25 · fourth chapter access uses existing video-store style, not generic web controls. */
+html.psx-mode .panel .actions #radio:not(:disabled){background:#3a2b35;border-left-color:#cbb18b;color:#ffebc5}
+html.psx-mode .panel .actions #radio:hover:not(:disabled){background:#8a3941}
