@@ -48,3 +48,14 @@ Toda la ruta conserva el aspecto PSX 240p y el guardado `dead-road-404-f19-v2`. 
 **La campaña completa no está acabada:** capítulos II–VI y su contenido todavía requieren las fases 22–27. La Fase 21 es una ampliación con recorrido, puzle y enfrentamiento verificables, no una calificación automática de 9,5/10.
 
 Detalles: [docs/FASE_21_LA_ULTIMA_PARADA.md](docs/FASE_21_LA_ULTIMA_PARADA.md).
+
+
+## Fase 23 — El pueblo sin nombre (PSX)
+
+Se desbloquea tras terminar el restaurante THE LAST LIGHT y avanzar al **KM 48**. Desde el mapa, el botón **ENTRAR EN EL PUEBLO SIN NOMBRE** abre una localización nueva con cine, hotel, archivo, calle y campanario, construidos con geometría 3D original de bajo coste.
+
+**Progresión:** monumento de desaparecidos → generador municipal → archivo → panel horario **0313** → campanario → jefe **EL CAMPANERO** (120 PV, dos ritmos y ataque anunciado) → decisión final. El NPC **Elías** ofrece una decisión con consecuencias, y hay suministros opcionales de recogida única.
+
+Esta actualización conserva la estética PSX 240p, todos los sistemas anteriores y los guardados existentes. Las partidas de F22 sin objeto `chapterThree` mantienen el epílogo anterior de KM120 sin desbloquear falsamente el capítulo III. Los capítulos IV–VI siguen pendientes; **no es aún una versión 1.0**.
+
+Detalles, instrucciones y limitaciones: [Fase 23](docs/FASE_23_EL_PUEBLO_SIN_NOMBRE.md).

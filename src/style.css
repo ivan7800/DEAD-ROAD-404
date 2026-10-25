@@ -166,3 +166,9 @@ html.psx-mode .actions button,html.psx-mode .encounter-choices button{transition
 #diner:not(:disabled):hover,#diner:not(:disabled):focus-visible{
  outline:2px solid #f7cc8b;background:#663e4b}
 #diner:disabled{opacity:.48;cursor:not-allowed;filter:grayscale(.55)}
+
+/* F23 - town map control: keyboard accessible, true game-state gate. */
+#town{border:2px solid #b7ac82;background:#33313f;color:#eee0b9;
+ text-shadow:1px 1px #100d16;font-weight:800;letter-spacing:.035em}
+#town:not(:disabled):hover,#town:not(:disabled):focus-visible{outline:2px solid #efdbac;background:#4e4252}
+#town:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.55)}

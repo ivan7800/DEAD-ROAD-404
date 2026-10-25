@@ -151,7 +151,43 @@ try{
  assert.equal(dinerSave.chapterTwo.stage,'freezer');
  assert.equal(dinerSave.chapterTwo.codeAttempts,1);
  assert.equal(dinerSave.campaign.current,'missing');
+
+ // F23: actual Chromium/WebGL exploration in a distinct original PSX town.
+ // A legitimate chapter-II-complete save is injected to keep CI deterministic;
+ // the navigation, UI, physics and code buttons remain fully interactive.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
+  s.km=48;s.ending=null;s.encounterResolved=true;
+  s.mission={stage:'resolved',choice:'rescue'};
+  s.chapterOne={stage:'complete',attempts:0,wardenHealth:0,decision:'destroy'};
+  s.chapterTwo={stage:'complete',codeAttempts:1,stalkerHealth:0,mara:'avoid',ending:'silence',legacyFinaleAllowed:false};
+  s.campaign.completed=['last-stop','missing'];s.campaign.current='missing';
+  s.chapterThree={stage:'frequency',witness:'doubt',attempts:0,guardianHealth:120,cacheTaken:false,decision:null,legacyFinaleAllowed:false};
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ await page.locator('#objective').filter({hasText:'hora congelada del campanario'}).waitFor({timeout:12000});
+ assert.equal(await page.locator('#town').isEnabled(),true,'El capítulo III sigue bloqueado tras completar II y KM48');
+ await page.locator('#town').click();
+ await page.locator('#status').filter({hasText:'EL PUEBLO SIN NOMBRE'}).waitFor({timeout:10000});
+ await page.screenshot({path:'artifacts/pueblo-sin-nombre-f23.png'});
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'INTRODUCIR HORA DEL CAMPANARIO'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#encounter-title').filter({hasText:'RELOJ DEL CAMPANARIO'}).waitFor();
+ await page.screenshot({path:'artifacts/reloj-0313-f23.png'});
+ await page.getByRole('button',{name:'0404',exact:true}).click();
+ await page.locator('#encounter-text').filter({hasText:'CÓDIGO 0404 INCORRECTO'}).waitFor();
+ await page.getByRole('button',{name:'0313',exact:true}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'Entra al campanario'}).waitFor();
+ await page.keyboard.press('m');await page.locator('#load').click();
+ const townSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(townSave.chapterThree.stage,'chapel');
+ assert.equal(townSave.chapterThree.attempts,1);
+ assert.equal(townSave.campaign.current,'nameless');
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
- console.log('PASS Chromium F22: PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II.');
+ console.log('PASS Chromium F23: PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
