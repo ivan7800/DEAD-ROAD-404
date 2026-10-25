@@ -60,7 +60,7 @@ let graphics:GraphicsPreset=graphicsPreset(readPreference(store,'dead-road-404-p
 let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let warden=freshWarden();let dinerThreat=freshDinerThreat();let townGuardian=freshGuardian();let radioOperator=freshRadioOperator();let mileHunter=freshMileHunter();let roadDouble=freshRoadDouble();let inRoadEnd=false;let inMile=false;let inDiner=false;let inTown=false;let inRadio=false;let radioUnderground=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
 let cameraMode:CameraMode=validCamera(readPreference(store,'dead-road-404-camera'));
 let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film-look'));
-let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;
+let journalReturnFocus:HTMLElement|null=null;let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;
 function applyFilmLook(){document.documentElement.classList.toggle('perf-mode',true);document.documentElement.classList.add('psx-mode');const overlay=$('analog-overlay');const enabled=filmLook==='suave'&&graphics!=='psx';overlay.classList.toggle('disabled',!enabled);overlay.classList.toggle('static-only',!allowAnalogMotion(enabled,window.matchMedia('(prefers-reduced-motion: reduce)').matches||graphics==='rendimiento'));$('analog-label').textContent='ESTÉTICA PSX · 1992';}
 applyFilmLook();
 const MAP_CAMERA_POSITION=new THREE.Vector3(28,19,32);
@@ -127,8 +127,16 @@ function toggleJournal(){
    const item=document.createElement('p');item.textContent='▸ '+MILESTONES[id];timeline.append(item);
   }
  }
- if(journalOpen){keys.clear();document.exitPointerLock?.();}
+ if(journalOpen){
+  journalReturnFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  journal.tabIndex=-1;journal.focus({preventScroll:true});
+  keys.clear();document.exitPointerLock?.();
+ }else{
+  journalReturnFocus?.focus({preventScroll:true});
+  journalReturnFocus=null;
+ }
 }
+$('journal-close').addEventListener('click',()=>{if(journalOpen)toggleJournal();});
 
 function renderInventory(){
  const list=$('inventory-list');list.replaceChildren();
