@@ -29,9 +29,10 @@ export function shouldAnimatePulp(userReduced:boolean,systemReduced:boolean):boo
 export type PulpScreen='pause'|'options'|'chapters'|'credits';
 export const PULP_SCREENS:ReadonlyArray<PulpScreen>=['pause','options','chapters','credits'];
 /** Separates the visual card from active game transitions. */
-export function titleForLocation(mode:'map'|'drive'|'explore',place:'town'|'diner'|'station'|'radio'|'mile'='station'):
+export function titleForLocation(mode:'map'|'drive'|'explore',place:'town'|'diner'|'station'|'radio'|'mile'|'road-end'='station'):
  {eyebrow:string;title:string;subtitle:string}{
  if(mode==='drive')return {eyebrow:'CARRETERA 404 · LADO A',title:'EL ASFALTO NO OLVIDA',subtitle:'NOCHE CERRADA · OCTUBRE 1992'};
+ if(mode==='explore'&&place==='road-end')return {eyebrow:'CAPÍTULO VI · KM 120',title:'DONDE TERMINA LA CARRETERA',subtitle:'LA ÚLTIMA BARRERA · 02:17'};
  if(mode==='explore'&&place==='mile')return {eyebrow:'CAPÍTULO V · KM 96',title:'EL KILÓMETRO IMPOSIBLE',subtitle:'NO TODAS LAS DISTANCIAS SON REALES'};
  if(mode==='explore'&&place==='radio')return {eyebrow:'CAPÍTULO IV · KM 72',title:'FRECUENCIA MUERTA',subtitle:'EMISORA WXR-404 · PROYECTO UMBRAL'};
  if(mode==='explore'&&place==='town')return {eyebrow:'CAPÍTULO III · 03:13 AM',title:'EL PUEBLO SIN NOMBRE',subtitle:'NO FIGURA EN NINGÚN MAPA'};
