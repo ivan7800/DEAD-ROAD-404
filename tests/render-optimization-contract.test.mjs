@@ -23,3 +23,5 @@ test('el paisaje se agrupa por zonas sin tocar objetos jugables',()=>{
  assert.match(script,/if\(options\.directOnly\)/);
  assert.match(script,/Math\.floor\(center\.x\/options\.cellSize\)/);
 });
+
+test('modo rendimiento limita también efectos CSS de composición',()=>{const m=read('src/main.ts'),css=read('src/style.css');assert.match(m,/classList\.toggle\('perf-mode'/);assert.match(css,/html\.perf-mode \.panel/);});
