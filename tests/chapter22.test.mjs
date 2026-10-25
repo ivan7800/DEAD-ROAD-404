@@ -91,7 +91,8 @@ test('el final de la carretera requiere completar II en partidas nuevas',()=>{
  const conclusion=concludeDiner(toChoice(),'broadcast');
  assert.equal(shouldOfferFinale({...conclusion,km:120}),false);
  assert.equal(shouldOfferFinale({...conclusion,km:120,chapterThree:{...conclusion.chapterThree,stage:'complete'}}),false);
- assert.equal(shouldOfferFinale({...conclusion,km:120,chapterThree:{...conclusion.chapterThree,stage:'complete'},chapterFour:{...conclusion.chapterFour,stage:'complete'}}),true);
+ assert.equal(shouldOfferFinale({...conclusion,km:120,chapterThree:{...conclusion.chapterThree,stage:'complete'},chapterFour:{...conclusion.chapterFour,stage:'complete'}}),false);
+ assert.equal(shouldOfferFinale({...conclusion,km:120,chapterThree:{...conclusion.chapterThree,stage:'complete'},chapterFour:{...conclusion.chapterFour,stage:'complete'},chapterFive:{...conclusion.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'}}),true);
 });
 test('guardar/cargar conserva intentos, salud enemiga, Mara y pista',()=>{
  let s=started();s=chooseMara(s,'trust');s=readDinerTicket(s);
