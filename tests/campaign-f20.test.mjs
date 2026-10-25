@@ -32,7 +32,7 @@ test('se registran kilómetros y se guarda el progreso',()=>{
  assert.ok(normalizeSave(traveled)?.campaign.milestones.includes('road24'));
 });
 test('el desenlace completa el capítulo sin desbloquear capítulos ficticios',()=>{
- const s={...fresh(),km:120,mission:{stage:'resolved',choice:'rescue'},fuel:44,parts:3};
+ const s={...fresh(),km:120,mission:{stage:'resolved',choice:'rescue'},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},fuel:44,parts:3};
  const result=resolveFinale(s,'escape');
  assert.equal(result.ending,'dawn');
  assert.equal(campaignStatus(result.campaign,'last-stop'),'completed');
