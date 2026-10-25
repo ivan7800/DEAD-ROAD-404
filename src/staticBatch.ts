@@ -12,7 +12,7 @@ export function batchStaticModel(root:THREE.Object3D):{before:number;after:numbe
  const groups=new Map<string,THREE.Mesh[]>();
  for(const mesh of beforeMeshes){
   if(mesh instanceof THREE.SkinnedMesh||mesh instanceof THREE.InstancedMesh||Array.isArray(mesh.material)||mesh.material.transparent||
-     !mesh.visible||!mesh.parent||Object.keys(mesh.geometry.morphAttributes).some(k=>mesh.geometry.morphAttributes[k].length>0))continue;
+     !mesh.visible||!mesh.parent||Object.values(mesh.geometry.morphAttributes).some(attributes=>attributes.length>0))continue;
   const geometry=mesh.geometry;
   if(!geometry.attributes.position||geometry.groups.length>1)continue;
   const attributes=Object.keys(geometry.attributes).sort().map(k=>{
