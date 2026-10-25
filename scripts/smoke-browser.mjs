@@ -18,9 +18,14 @@ try{
  const response=await page.goto(base,{waitUntil:'domcontentloaded'});
  assert.equal(response?.status(),200,'La página del juego no responde');
  await page.locator('#objective').filter({hasText:'Investiga'}).waitFor({timeout:20000});
- await page.locator('#art-status').filter({hasText:/MODELOS F19 CARGADOS|MODO DE RESERVA/}).waitFor({timeout:30000});
+ await page.locator('#art-status').filter({hasText:'3/3 MODELOS F19 CARGADOS'}).waitFor({timeout:30000});
  assert.equal(errors.length,0,'Errores JS al iniciar: '+errors.join('; '));
  assert.equal(missing.length,0,'Recursos que no cargaron: '+missing.join('; '));
+ await page.keyboard.press('F3');
+ await page.locator('#perf-panel').filter({hasText:'draw calls'}).waitFor({timeout:10000});
+ const monitor=await page.locator('#perf-panel').innerText();
+ assert.match(monitor,/DPR [0-9.]+/,'No se muestran datos de resolución real');
+ console.log('RENDER DIAGNOSTIC · '+monitor);
  await page.locator('#drive').click();
  await page.locator('#dashboard.visible').waitFor();
  await page.keyboard.down('w');await sleep(850);await page.keyboard.up('w');

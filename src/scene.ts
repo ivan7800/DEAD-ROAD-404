@@ -4,6 +4,7 @@ import {ArchitecturalPass} from './architecturalPass.ts';
 import {Americana1992} from './americana1992.ts';
 import {RoadsideDetail14} from './roadsideDetail14.ts';
 import {DriveDust} from './driveDust.ts';
+import {batchStaticModel} from './staticBatch.ts';
 import * as THREE from 'three';
 import type {Mode} from './state.ts';
 import {Firebird} from './vehicle.ts';
@@ -18,7 +19,7 @@ export class GameWorld {
  readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();
  artStatus:'cargando'|'glb'|'parcial'|'reserva'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
  readonly architecturalPass=new ArchitecturalPass();readonly americana1992=new Americana1992();readonly roadsideDetail14=new RoadsideDetail14(); readonly driveDust:DriveDust;readonly firebird=new Firebird();readonly car=this.firebird.group; readonly roadsideArt=new RoadsideArt(); readonly player=new THREE.Vector3(0,1.7,7); readonly can=new THREE.Vector3(11,0,1);
- private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
+ readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='equilibrado';private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
  constructor(canvas:HTMLCanvasElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.sky=new THREE.Color(0x10121c);this.scene.background=this.sky;this.scene.fog=new THREE.FogExp2(0x423340,.019);
@@ -30,6 +31,8 @@ export class GameWorld {
   this.flashlight.visible=false;
   this.scene.add(this.flashlight,this.flashlightTarget);
   this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
+  // Batch only directly-owned noninteractive scenery; game actors live in groups.
+  this.sceneryBatch=batchStaticModel(this.scene,{directOnly:true,cellSize:30});
   this.resize();window.addEventListener('resize',()=>this.resize());
   void this.initArtAssets();
  }
@@ -41,8 +44,8 @@ export class GameWorld {
   this.artStatus=report.ok===3?'glb':report.ok>0?'parcial':'reserva';
   document.dispatchEvent(new CustomEvent('deadroad:art-loaded',{detail:report}));
  }
- setGraphics(preset:GraphicsPreset){this.lighting17.setGraphics(preset);const settings=GRAPHICS[preset];this.driveDust.setPreset(preset);this.renderer.shadowMap.enabled=settings.shadows;this.moonLight.castShadow=settings.shadows;this.moonLight.shadow.mapSize.set(settings.shadowSize,settings.shadowSize);this.moonLight.shadow.map?.dispose();this.moonLight.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;this.renderer.toneMappingExposure=settings.exposure;this.renderer.setPixelRatio(renderPixelRatio(preset,window.devicePixelRatio||1));this.resize();}
- resize(){const w=this.renderer.domElement.clientWidth||innerWidth,h=this.renderer.domElement.clientHeight||innerHeight;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
+ setGraphics(preset:GraphicsPreset){this.graphicsPreset=preset;this.lighting17.setGraphics(preset);const settings=GRAPHICS[preset];this.driveDust.setPreset(preset);this.renderer.shadowMap.enabled=settings.shadows;this.moonLight.castShadow=settings.shadows;this.moonLight.shadow.mapSize.set(settings.shadowSize,settings.shadowSize);this.moonLight.shadow.map?.dispose();this.moonLight.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;this.renderer.toneMappingExposure=settings.exposure;this.resize();}
+ resize(){const w=this.renderer.domElement.clientWidth||innerWidth,h=this.renderer.domElement.clientHeight||innerHeight;this.renderer.setPixelRatio(renderPixelRatio(this.graphicsPreset,window.devicePixelRatio||1,w,h));this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
  private buildLandscape(){block(this.scene,250,.15,250,0,-.15,0,sand);block(this.scene,9,.03,230,0,-.04,-15,asphalt);for(let z=-113;z<104;z+=9){block(this.scene,.15,.01,3,0,-.018,z,mat(0xbda27f));}for(let z=-110;z<105;z+=12){for(const side of [-1,1]){const x=side*(15+(Math.sin(z*4.2)+1)*8);const s=1+Math.abs(Math.sin(z*.42))*3;const stone=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),mat(0x42353e));stone.position.set(x,s*.25,z);stone.scale.set(1,.38,1.1);this.scene.add(stone);}}for(let i=0;i<15;i++){let z=-108+i*14;let x=i%2===0?-31:33;let cactus=mat(0x374737);cylinder(this.scene,.3,3.3,x,1.3,z,cactus,6);block(this.scene,.26,1.7,.26,x+.8,1.2,z,cactus);block(this.scene,.8,.25,.25,x+.5,1.55,z,cactus);} }
  private buildDistantHorizon(){
   // Massive rock silhouettes, low-poly with carefully limited draw calls.

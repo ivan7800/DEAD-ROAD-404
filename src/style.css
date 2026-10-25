@@ -113,3 +113,8 @@ footer{font:700 10px Consolas,monospace;letter-spacing:1px;color:#d6b28d;text-sh
 .art-status{position:absolute;z-index:4;top:138px;right:22px;background:#161820de;border:1px solid #a58456;
  padding:6px 10px;color:#f1d2a0;font:700 10px Consolas,monospace;pointer-events:none;max-width:270px;text-align:right}
 @media(max-width:640px){.art-status{top:178px;right:8px;font-size:8px;max-width:180px}}
+
+/* Performance preset: reduce full-screen compositing while keeping the optional VHS look. */
+html.perf-mode .scan{display:none}
+html.perf-mode .analog-overlay:before,html.perf-mode .analog-overlay:after{animation:none}
+html.perf-mode .panel,html.perf-mode .controls-guide,html.perf-mode .encounter{backdrop-filter:none}
