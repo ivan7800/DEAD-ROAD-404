@@ -16,8 +16,13 @@ export class DriveDust {
   update(dt:number,car:THREE.Object3D,speed:number,steering:number,enabled:boolean){
     const delta=Math.max(0,Math.min(.07,Number.isFinite(dt)?dt:0));
     this.phase+=delta;
+    // Both low-resolution modes hide dust completely: skip feedback, transforms
+    // and particle bookkeeping rather than computing invisible work per frame.
+    if(this.preset==='psx'||this.preset==='rendimiento'){
+      this.accumulator=0;this.mesh.count=0;return;
+    }
     const feedback=driveFeedback(speed,steering,this.preset);
-    const active=enabled&&feedback.particlesPerSecond>0&&this.preset!=='psx'&&this.preset!=='rendimiento';
+    const active=enabled&&feedback.particlesPerSecond>0;
     this.accumulator=active?Math.min(2,this.accumulator+feedback.particlesPerSecond*delta):0;
     if(active){
       car.updateWorldMatrix(true,false);
@@ -32,7 +37,6 @@ export class DriveDust {
         p.y=Math.max(.12,pos.y+.02);p.age=0;p.life=.7+this.index%4*.12;p.size=.2+feedback.intensity*.24;
       }
     }
-    if(this.preset==='psx'||this.preset==='rendimiento'){this.mesh.count=0;return;}
     let n=0;
     for(const p of this.particles){
       p.age+=delta;if(p.age>=p.life)continue;
