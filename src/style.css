@@ -177,8 +177,9 @@ html.psx-mode .actions button,html.psx-mode .encounter-choices button{transition
 /* F32 · Readable, fully reachable dialogs on small/landscape viewports.
    The game canvas remains full-screen; long text scrolls inside its panel. */
 .journal{
- max-height:calc(100vh - 154px);
- max-height:calc(100dvh - 154px);
+ /* Its existing top:24% must be included in the available height. */
+ max-height:calc(76vh - 12px);
+ max-height:calc(76dvh - 12px);
  overflow-y:auto;
  overscroll-behavior:contain;
  scrollbar-gutter:stable;
