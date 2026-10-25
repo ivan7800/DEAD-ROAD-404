@@ -122,7 +122,16 @@ async function screenshotScene(chapter,index,size){
     controls:bounds(document.querySelector('#show-controls')),
     objectiveText:objective?.textContent?.slice(0,180),
     statusText:status?.textContent,
-    artStatus:document.getElementById('art-status')?.textContent};
+    artStatus:document.getElementById('art-status')?.textContent,
+    overflowElements:[...document.querySelectorAll('body *')].filter(el=>{
+     const st=getComputedStyle(el),r=el.getBoundingClientRect();
+     return st.display!=='none'&&st.visibility!=='hidden'&&Number(st.opacity)>0&&
+       r.width>0&&r.height>0&&(r.right>innerWidth+3||r.left< -3);
+    }).slice(0,20).map(el=>{
+     const rect=el.getBoundingClientRect();
+     return {tag:el.tagName,id:el.id,className:String(el.className).slice(0,90),
+      left:Math.round(rect.left),right:Math.round(rect.right)};
+    })};
   });
   assert.ok(diag.canvas.width>0&&diag.canvas.height>0,'Canvas sin tamaño en '+chapter.title);
   assert.ok(diag.status.width>0&&diag.status.height>0,'Estado oculto en '+chapter.title);
