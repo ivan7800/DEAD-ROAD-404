@@ -15,3 +15,11 @@ test('el control adaptativo se activa solamente con modelos y pestaña visible',
  assert.match(main,/adaptiveQuality\.observe/);assert.match(main,/!document\.hidden/);
  assert.match(main,/metrics\.reset\(\);writePreference/);
 });
+
+test('el paisaje se agrupa por zonas sin tocar objetos jugables',()=>{
+ const scene=read('src/scene.ts');
+ assert.match(scene,/batchStaticModel\(this\.scene,\{directOnly:true,cellSize:30\}\)/);
+ const script=read('src/staticBatch.ts');
+ assert.match(script,/if\(options\.directOnly\)/);
+ assert.match(script,/Math\.floor\(center\.x\/options\.cellSize\)/);
+});

@@ -4,10 +4,11 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
  * Excludes animated, skinned, morph, transparent and multi-material meshes.
  * Failures preserve the original rendering without dropping content.
  */
-export function batchStaticModel(root:THREE.Object3D):{before:number;after:number;merged:number}{
+export function batchStaticModel(root:THREE.Object3D,options:{directOnly?:boolean;cellSize?:number}={}):{before:number;after:number;merged:number}{
  root.updateMatrixWorld(true);
  const beforeMeshes:THREE.Mesh[]=[];
- root.traverse(obj=>{if(obj instanceof THREE.Mesh)beforeMeshes.push(obj);});
+ if(options.directOnly)for(const obj of root.children){if(obj instanceof THREE.Mesh)beforeMeshes.push(obj);}
+ else root.traverse(obj=>{if(obj instanceof THREE.Mesh)beforeMeshes.push(obj);});
  const invRoot=root.matrixWorld.clone().invert();
  const groups=new Map<string,THREE.Mesh[]>();
  for(const mesh of beforeMeshes){
@@ -18,7 +19,17 @@ export function batchStaticModel(root:THREE.Object3D):{before:number;after:numbe
   const attributes=Object.keys(geometry.attributes).sort().map(k=>{
    const a=geometry.getAttribute(k);return k+':'+a.itemSize+':'+a.array.constructor.name+':'+a.normalized;
   }).join('|');
-  const key=mesh.material.uuid+'|'+attributes+'|'+Boolean(geometry.index);
+  const material=mesh.material;
+  // Canonicalize ONLY plain, untextured factory materials; repeated posts share draw calls.
+  const plain=material instanceof THREE.MeshStandardMaterial && !material.map&&!material.normalMap&&!material.alphaMap&&!material.aoMap&&!material.emissiveMap&&!material.roughnessMap&&!material.metalnessMap&&!material.envMap;
+  const sameLook=plain?
+    [material.type,material.color.getHexString(),material.roughness,material.metalness,
+     material.emissive.getHexString(),material.emissiveIntensity,material.side,
+     material.flatShading,material.vertexColors,material.opacity,material.depthWrite].join(':'):
+    material.uuid;
+  const center=mesh.getWorldPosition(new THREE.Vector3());
+  const cell=options.cellSize&&options.cellSize>0?Math.floor(center.x/options.cellSize)+','+Math.floor(center.z/options.cellSize):'all';
+  const key=sameLook+'|'+attributes+'|'+Boolean(geometry.index)+'|'+cell;
   const bucket=groups.get(key)||[];bucket.push(mesh);groups.set(key,bucket);
  }
  let merged=0;
