@@ -22,6 +22,9 @@ import {normalizeFilmLook,toggleFilmLook,allowAnalogMotion,type FilmLook} from '
 import * as THREE from 'three';
 import {stepStamina,canSprint,movementSpeed,explorationHint} from './exploration.ts';
 import './style.css';
+import './ui/pulp.css';
+import {PulpUI} from './ui/pulpUI.ts';
+import {titleForLocation} from './ui/pulpSettings.ts';
 import {isNearTape,collectTape,motelCollision} from './motel.ts';
 import {GameWorld} from './scene.ts';
 import {graphicsPreset,nextGraphicsPreset,GRAPHICS,type GraphicsPreset} from './quality.ts';
@@ -42,7 +45,7 @@ let graphics:GraphicsPreset=graphicsPreset(readPreference(store,'dead-road-404-p
 let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let warden=freshWarden();let dinerThreat=freshDinerThreat();let townGuardian=freshGuardian();let inDiner=false;let inTown=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
 let cameraMode:CameraMode=validCamera(readPreference(store,'dead-road-404-camera'));
 let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film-look'));
-let steering=0;let helpOpen=false;let impactCooldown=0;
+let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;let lastPauseDraw=0;
 function applyFilmLook(){document.documentElement.classList.toggle('perf-mode',true);document.documentElement.classList.add('psx-mode');const overlay=$('analog-overlay');const enabled=filmLook==='suave'&&graphics!=='psx';overlay.classList.toggle('disabled',!enabled);overlay.classList.toggle('static-only',!allowAnalogMotion(enabled,window.matchMedia('(prefers-reduced-motion: reduce)').matches||graphics==='rendimiento'));$('analog-label').textContent='ESTÉTICA PSX · 1992';}
 applyFilmLook();
 const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
@@ -51,7 +54,14 @@ const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('st
 const addLog=(message:string)=>{$('log').textContent=message;};
 $('art-status').textContent='ARTE PSX · 240P · SIN GLB PESADOS';
 function beep(freq:number,duration=.12){soundscape.beep(freq,duration);}
-function notify(message:string){$('toast').textContent=message;$('toast').classList.add('show');toastUntil=performance.now()+3400;addLog(message);}
+function notify(message:string){
+ $('toast').textContent=message;$('toast').classList.add('show');
+ toastUntil=performance.now()+3400;addLog(message);
+ if(/^CAPÍTULO [IVX]+ COMPLETADO/.test(message))
+  pulpUi?.title('FIN DE ROLLO · 1992','CAPÍTULO COMPLETADO',message.slice(0,90));
+ else if(/(EL CAMPANERO CAE|LA CAMARERA HUECA CAE|EL CELADOR CAE)/.test(message))
+  pulpUi?.flash('ÚLTIMA TOMA');
+}
 function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].label+' · [G] CAMBIAR';const text=`🪓 ${inTown?'EL PUEBLO SIN NOMBRE':inDiner?'THE LAST LIGHT':enemy.alive?'AMENAZA':'DESPEJADO'}  |  ⛽ ${state.fuel.toFixed(1)} L  |  🍞 ${state.food}  |  ♥ ${state.health}  |  🔧 ${state.parts}  |  🚗 ${state.carCondition.toFixed(0)}%  |  ${state.km} km  |  🎒 ${inventoryTotal(state.inventory)} objetos`;$('stats').textContent=text;$('camera-label').textContent=mode==='drive'?`CÁMARA: ${CAMERA_LABELS[cameraMode]} · [C] CAMBIAR · [L] LUCES`:'';$('dashboard').classList.toggle('visible',mode==='drive');$('stamina-wrap').classList.toggle('visible',mode==='explore');($('diner') as HTMLButtonElement).disabled=!dinerAvailable(state)||state.chapterTwo.stage==='complete';
  ($('town') as HTMLButtonElement).disabled=!canEnterTown(state)||state.chapterThree.stage==='complete';
  $('town').textContent=state.chapterThree.stage==='complete'?'CAPÍTULO III COMPLETADO · [J] DIARIO':
@@ -59,7 +69,13 @@ function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].
  $('diner').textContent=state.chapterTwo.stage==='complete'?'CAPÍTULO II COMPLETADO · [J] DIARIO':
   dinerAvailable(state)?'ENTRAR EN THE LAST LIGHT · CAPÍTULO II':'RESTAURANTE THE LAST LIGHT · DESDE KM 24';
  $('objective').textContent=(townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
-function switchMode(next:Mode){input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore'){inDiner=false;inTown=false;}panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inTown?'EL PUEBLO SIN NOMBRE · CAPÍTULO III':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inTown?TOWN_LOCATIONS.entry.x:inDiner?DINER_POSITIONS.entry.x:6,1.7,inTown?TOWN_LOCATIONS.entry.z:inDiner?DINER_POSITIONS.entry.z:6);yaw=inTown||inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);world.setTownVisible(next==='explore'&&inTown);hud();}
+function switchMode(next:Mode){const previous=mode;input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore'){inDiner=false;inTown=false;}panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inTown?'EL PUEBLO SIN NOMBRE · CAPÍTULO III':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inTown?TOWN_LOCATIONS.entry.x:inDiner?DINER_POSITIONS.entry.x:6,1.7,inTown?TOWN_LOCATIONS.entry.z:inDiner?DINER_POSITIONS.entry.z:6);yaw=inTown||inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);world.setTownVisible(next==='explore'&&inTown);hud();
+ pulpUi?.setMode(next);
+ if(pulpUi&&previous!==next){
+  const card=titleForLocation(next,inTown?'town':inDiner?'diner':'station');
+  pulpUi.title(card.eyebrow,card.title,card.subtitle);
+ }
+}
 function toggleHelp(){helpOpen=!helpOpen;$('controls-guide').classList.toggle('hidden',!helpOpen);input.reset();document.exitPointerLock?.();if(helpOpen)$('close-controls').focus();}
 $('show-controls').addEventListener('click',toggleHelp);$('close-controls').addEventListener('click',toggleHelp);
 function toggleJournal(){
@@ -440,6 +456,9 @@ window.addEventListener('keydown',e=>{
  if(helpOpen){if(!e.repeat&&(k==='h'||k==='escape'))toggleHelp();return;}
  if(encounterOpen){input.reset();return;}
  if(journalOpen){if(!e.repeat&&(k==='j'||k==='escape'))toggleJournal();return;}
+ if(k==='escape'&&mode!=='map'&&!e.repeat){
+  e.preventDefault();pulpUi?.togglePause();input.reset();document.exitPointerLock?.();return;
+ }
  if(k==='h'&&!e.repeat){toggleHelp();return;}
  if(mode!=='map'||!['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))input.press(k);
  if(e.repeat)return;
@@ -570,4 +589,29 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  state.chapterOne.stage==='fight'&&Math.hypot(world.player.x-warden.x,world.player.z-warden.z)<5?'EL CELADOR · '+warden.health+'/120 · [F] ATACA · [SHIFT] ESQUIVA':
  !state.supplyCacheTaken&&Math.hypot(world.player.x-CACHE_POSITION.x,world.player.z-CACHE_POSITION.z)<2.2?'[E] REGISTRAR CAJA DE SUMINISTROS SUNSPUR':isAtPhone(world.player.x,world.player.z)?'[E] CABINA TELEFÓNICA · 1992':!state.motelTape&&isNearTape(world.player.x,world.player.z)?'[E] RECOGER CINTA DEL MOTEL':world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'?'[E] HABLAR CON VERA':world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'?'[E] RECOGER LLAVE 404':world.player.distanceTo(radioPosition)<4&&state.mission.stage==='arrival'?'[R] ESCUCHAR TRANSMISIÓN':world.player.distanceTo(new THREE.Vector3(11,1.7,1))<3&&!state.hasCan?'[E] RECOGER BIDÓN DE GASOLINA':state.hasCan?'Bidón recogido · [ESPACIO] ATACAR · [M] FIREBIRD':'[CLICK] MIRAR · [ESPACIO] GOLPEAR · [R] RADIO · [M] FIREBIRD';}
  if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);world.camera.fov=73;world.camera.updateProjectionMatrix();world.camera.position.lerp(new THREE.Vector3(28,19,32),Math.min(1,dt*2));world.camera.lookAt(8,0,0);}if(performance.now()>toastUntil)$('toast').classList.remove('show');}
-function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;metrics.add(frameMs);update(dt);world.setAtmosphere(now/1000);world.render();const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!document.hidden&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}switchMode('map');addLog(state.message);requestAnimationFrame(frame);
+function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;
+ if(!pulpUi?.isPaused){
+  metrics.add(frameMs);update(dt);world.setAtmosphere(now/1000);world.render();
+ }else if(now-lastPauseDraw>100){lastPauseDraw=now;world.render();}
+const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!document.hidden&&!pulpUi?.isPaused&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
+ storage:store,
+ onSave:()=>save(),
+ onLoad:()=>load(),
+ onMenu:()=>{saveQuietly();switchMode('map');},
+ getGraphics:()=>graphics,
+ setGraphics:(preset)=>{
+  adaptiveQuality.defer(performance.now());graphics=preset;world.setGraphics(preset);
+  applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',preset);
+  hud();notify('Resolución PSX: '+GRAPHICS[preset].label);
+ },
+ getChapters:()=>CHAPTERS.map(ch=>({
+  number:ch.number,title:ch.title,setting:ch.setting,status:campaignStatus(state.campaign,ch.id)
+ })),
+ setVolume:value=>soundscape.setVolume(value),
+ uiSound:kind=>{
+  try{soundscape.start();}catch{return;}
+  const pitch={select:360,confirm:220,back:155,error:88}[kind];
+  soundscape.beep(pitch,kind==='confirm'?.08:.05);
+ }
+});
+switchMode('map');addLog(state.message);requestAnimationFrame(frame);
