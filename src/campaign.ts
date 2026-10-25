@@ -1,4 +1,4 @@
-/** Progressive campaign: only finished chapters are playable; III–VI remain locked. */
+/** Progressive campaign: only implemented chapters are playable; IV–VI remain locked. */
 import type {MissionProgress} from './mission.ts';
 import type {EndingId} from './roadStory.ts';
 
@@ -11,8 +11,8 @@ export const CHAPTERS=[
  {id:'road-end',number:'VI',title:'DONDE TERMINA LA CARRETERA',setting:'ÚLTIMO DESVÍO'}
 ] as const;
 export type ChapterId=typeof CHAPTERS[number]['id'];
-/** Chapter II onwards remains locked until fully implemented and tested. */
-export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing']);
+/** Each new chapter unlocks only when its implementation and QA exist. */
+export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing','nameless']);
 export const MILESTONES={
  station:'Entraste en la gasolinera SUNSPUR',
  radio:'Escuchaste la frecuencia 404',
@@ -38,7 +38,17 @@ export const MILESTONES={
  dinerKitchen:'Abriste la puerta de cocina con el código 1992',
  dinerFreezer:'Abriste el congelador del restaurante',
  dinerThreat:'Sobreviviste a la Camarera Hueca',
- dinerDecision:'Decidiste qué hacer con las voces de los desaparecidos'
+ dinerDecision:'Decidiste qué hacer con las voces de los desaparecidos',
+ townArrival:'Llegaste al pueblo sin nombre',
+ townWitness:'Escuchaste a Elías, el testigo del pueblo',
+ townMemorial:'Leíste el monumento de los desaparecidos',
+ townPower:'Reactivaste el generador del ayuntamiento',
+ townArchive:'Descubriste el expediente del pueblo',
+ townClock:'Sintonizaste el reloj detenido a las 03:13',
+ townChapel:'Abriste la puerta del campanario',
+ townGuardian:'Sobreviviste al Campanero',
+ townSupplies:'Recuperaste los suministros del ayuntamiento',
+ townDecision:'Decidiste el destino del registro de desaparecidos'
 } as const;
 export type MilestoneId=keyof typeof MILESTONES;
 export interface CampaignProgress {current:ChapterId;completed:ChapterId[];milestones:MilestoneId[]}
@@ -85,7 +95,8 @@ export function normalizeCampaign(data:unknown,legacy?:LegacyCampaignState):Camp
    if(raw===expected&&PLAYABLE_CHAPTERS.has(raw as ChapterId))validCompleted.push(raw as ChapterId);
   }
  }
- const normalizedCurrent=v.current==='missing'&&validCompleted.includes('last-stop')?'missing':'last-stop';
+ const normalizedCurrent=v.current==='nameless'&&validCompleted.includes('missing')?'nameless':
+  v.current==='missing'&&validCompleted.includes('last-stop')?'missing':'last-stop';
  let progress:CampaignProgress={
   current:normalizedCurrent,
   completed:validCompleted,
