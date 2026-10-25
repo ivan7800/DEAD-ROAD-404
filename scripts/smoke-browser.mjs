@@ -459,6 +459,91 @@ try{
  assert.equal(restored.chapterFive.stage,'complete');
  assert.equal(restored.chapterFive.decision,'remember');
  assert.equal(errors.length,0,'Errores JavaScript del KM96: '+errors.join('; '));
+ // F27 real-browser narrative closure: valid completion of I–V, physical VI and saved ending.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
+  s.km=120;s.health=100;s.fuel=55;s.parts=5;s.ending=null;
+  s.mission={stage:'resolved',choice:'rescue'};
+  s.chapterOne={...s.chapterOne,stage:'complete',wardenHealth:0};
+  s.chapterTwo={...s.chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'};
+  s.chapterThree={...s.chapterThree,stage:'complete',guardianHealth:0,decision:'seal'};
+  s.chapterFour={...s.chapterFour,stage:'complete',operatorHealth:0,decision:'sever'};
+  s.chapterFive={...s.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'};
+  s.chapterSix={stage:'locked',relaysMask:0,codeAttempts:0,doubleHealth:140,suppliesTaken:false,legacyFinaleAllowed:false};
+  s.campaign.completed=['last-stop','missing','nameless','dead-frequency','impossible-mile'];
+  s.campaign.current='impossible-mile';
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ assert.equal(await page.locator('#road-end').isEnabled(),true,'El sexto capítulo no se desbloquea después de V y KM120');
+ await page.locator('#road-end').click();
+ await page.locator('#status').filter({hasText:'KM 120'}).waitFor({timeout:12000});
+ await page.screenshot({path:'artifacts/f27-ultimo-peaje.png'});
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'ÚLTIMA SEÑAL'}).waitFor({timeout:28000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'registro de peajes'}).waitFor();
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'REGISTRO DE PEAJES'}).waitFor({timeout:28000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'DOS relés'}).waitFor();
+ await page.keyboard.down('w');await sleep(2650);await page.keyboard.up('w');
+ await page.keyboard.down('a');
+ try{await page.locator('#prompt').filter({hasText:'RELÉ A'}).waitFor({timeout:15000});}
+ finally{await page.keyboard.up('a');}
+ await page.keyboard.press('e');
+ const first=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
+ assert.equal(first.relaysMask,1,'La interacción real no activa el primer relé');
+ await page.keyboard.down('d');
+ try{await page.locator('#prompt').filter({hasText:'RELÉ B'}).waitFor({timeout:15000});}
+ finally{await page.keyboard.up('d');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'barrera'}).waitFor();
+ const both=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
+ assert.equal(both.relaysMask,3,'Ambos relés deben estar activos');
+ await page.keyboard.down('a');await sleep(1400);await page.keyboard.up('a');
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'ABRIR BARRERA'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#encounter-title').filter({hasText:'ÚLTIMA BARRERA'}).waitFor();
+ await page.getByRole('button',{name:'0217',exact:true}).click();
+ await page.locator('#encounter-text').filter({hasText:'CÓDIGO INCORRECTO'}).waitFor();
+ await page.getByRole('button',{name:'1204',exact:true}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'EL DOBLE'}).waitFor();
+ await page.screenshot({path:'artifacts/f27-el-doble.png'});
+ await page.keyboard.down('w');await sleep(1750);await page.keyboard.up('w');
+ let vanquished=false;
+ for(let n=0;n<28;n++){
+  await page.keyboard.press('f');await sleep(560);
+  if(await page.locator('#encounter-title').filter({hasText:'ÚLTIMO DESVÍO'}).isVisible()){
+   vanquished=true;break;
+  }
+ }
+ const hp=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix.doubleHealth);
+ assert.equal(vanquished,true,'El combate físico no permite derrotar al Doble; HP='+hp+'; '+await page.locator('#prompt').innerText());
+ await page.screenshot({path:'artifacts/f27-doble-derrotado.png'});
+ await page.getByRole('button',{name:/ABANDONAR LA CARRETERA/}).click();
+ await page.locator('#encounter-title').filter({hasText:'AMANECER PRESTADO'}).waitFor();
+ await page.getByRole('button',{name:/GUARDAR FINAL Y REGRESAR/}).click();
+ await page.locator('#status').filter({hasText:'CARRETERA'}).waitFor();
+ const done=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(done.chapterSix.stage,'complete');
+ assert.equal(done.chapterSix.relaysMask,3);
+ assert.equal(done.chapterSix.codeAttempts,1);
+ assert.equal(done.chapterSix.doubleHealth,0);
+ assert.equal(done.ending,'dawn');
+ assert.equal(done.campaign.completed.includes('road-end'),true);
+ await page.locator('#load').click();
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(saved.ending,'dawn');
+ assert.equal(saved.chapterSix.stage,'complete');
+ assert.equal(await page.locator('#road-end').isEnabled(),false,'Final registrado debe bloquear el capítulo');
+ assert.equal(errors.length,0,'Errores JS en final F27: '+errors.join('; '));
+ console.log('PASS Chromium F27: KM120, peaje PSX, ambos relés, panel 1204, Doble, Amanecer Prestado y recuperación.');
  console.log('PASS Chromium F26: KM96 real, registrador, balizas, código, Agrimensor, decisión y guardado.');
  console.log('PASS Chromium F25: emisora WXR-404, bunker UMBRAL, dos codigos y persistencia, portada pulp, opciones, capítulos, pausa real, PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
