@@ -31,3 +31,20 @@ Chromium de GitHub Actions debe verificar el arranque, no descargar GLB, respeta
 GitHub Pages, Windows 11 y Linux Mint. Los lanzadores locales de F19 siguen incluidos.
 
 **Limitación de rendimiento:** la medición de FPS con SwiftShader en GitHub Actions no representa tu GPU. La mejora de fluidez se verifica en el PC real con F3; no garantizamos 60 FPS sin medirlo. El cambio de arte no elimina las misiones, encuentros, guardados ni finales.
+
+
+## Fase 21 — La Última Parada ampliada
+
+Después de resolver la misión de Vera, comienza el arco del **Celador de la Frecuencia**:
+
+1. Encuentra el **fusible** al este de SUNSPUR (x25,z7) e interactúa [E].
+2. Restaura el **cuadro** frente a la estación (x14,z5). El código de la radio es la hora congelada: **217 kHz**.
+3. Abre la **escotilla** frente a MILE 404 (x−20,z−36).
+4. Lucha contra el **Celador**, jefe low-poly de dos fases y ataques anunciados (ojo amarillo), hasta reducir sus 120 puntos de vida a cero.
+5. Decide entre **destruir** o **conservar** la transmisión. El Capítulo I se marca como completado, con consecuencias sobre salud o piezas.
+
+Toda la ruta conserva el aspecto PSX 240p y el guardado `dead-road-404-f19-v2`. Los jugadores con una partida F20 en la que ya terminaron la misión de Vera no pierden la posibilidad de alcanzar el final de carretera existente: esos guardados se migran como capítulo inicial resuelto.
+
+**La campaña completa no está acabada:** capítulos II–VI y su contenido todavía requieren las fases 22–27. La Fase 21 es una ampliación con recorrido, puzle y enfrentamiento verificables, no una calificación automática de 9,5/10.
+
+Detalles: [docs/FASE_21_LA_ULTIMA_PARADA.md](docs/FASE_21_LA_ULTIMA_PARADA.md).
