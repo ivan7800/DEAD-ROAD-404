@@ -436,6 +436,161 @@ function townPrompt(x:number,z:number):string{
  if(stage==='guardian')return 'EL CAMPANERO · '+townGuardian.health+'/120 · [F] GOLPEAR · [SHIFT] ESQUIVAR · [I] CURARSE';
  return '[J] CONSULTAR DIARIO · [M] VOLVER AL FIREBIRD';
 }
+
+/** F25 · Diegetic radio dialogue and two-stage cassette ciphers. */
+function syncRadioView(){
+ world.setRadioStage(state.chapterFour.stage,state.chapterFour.nora!==null,
+  state.chapterFour.cacheTaken,state.chapterFour.breakersMask);
+ world.setRadioUnderground(radioUnderground);
+ hud();
+}
+function showNoraDialogue(){
+ if(encounterOpen||state.chapterFour.nora!==null)return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='NORA · ÚLTIMA VOZ DE WXR-404';
+ $('encounter-text').textContent='«Mi hermano desapareció en el pueblo y su voz siguió trabajando en la emisora. Si bajas a UMBRAL, no confundas el estudio con la tumba. Aquí se oyen las dos cosas».';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:NoraChoice;label:string}>=[
+  {id:'help',label:'ESCUCHAR A NORA Y ACEPTAR SUS RACIONES · +2 COMIDA'},
+  {id:'refuse',label:'RECHAZAR SU HISTORIA · +1 PIEZA'}
+ ];
+ for(const o of options){
+  const button=document.createElement('button');button.type='button';button.textContent=o.label;
+  button.addEventListener('click',()=>{
+   state=speakNora(state,o.id);saveQuietly();syncRadioView();
+   encounterOpen=false;dialog.classList.add('hidden');notify(state.message);
+  });choices.append(button);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showRadioCipher(bunker:boolean){
+ if(encounterOpen)return;
+ const stage=state.chapterFour.stage;
+ if(stage!==(bunker?'bunker':'tuning'))return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent=bunker?'UMBRA · TERMINAL DE CONTENCIÓN':'WXR-404 · MESA DE MEZCLAS';
+ $('encounter-text').textContent=bunker?
+  'El terminal pide la hora del reloj detenido en el pueblo. En la cinta maestra consta: «A las 03:13 se abre la puerta».':
+  'La cinta maestra dice: «A las 02:17 se abre el canal». Introduce cuatro cifras para activar el enlace con el refugio.';
+ choices.replaceChildren();
+ const values=bunker?RADIO_BUNKER_CODES:RADIO_STUDIO_CODES;
+ for(const code of values){
+  const button=document.createElement('button');button.type='button';button.textContent=code;
+  button.addEventListener('click',()=>{
+   state=bunker?decodeRadioBunker(state,code):tuneRadioMixer(state,code);
+   saveQuietly();syncRadioView();notify(state.message);beep(code==='0313'?313:217,.11);
+   if(state.chapterFour.stage!==(bunker?'bunker':'tuning')){
+    encounterOpen=false;dialog.classList.add('hidden');
+   }else $('encounter-text').textContent=state.message+' · INTENTOS: '+(bunker?state.chapterFour.subcodeAttempts:state.chapterFour.attempts);
+  });choices.append(button);
+ }
+ const back=document.createElement('button');back.type='button';back.textContent='ABANDONAR PANEL · VOLVER A EXPLORAR';
+ back.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');});
+ choices.append(back);
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showRadioDecision(){
+ if(encounterOpen||state.chapterFour.stage!=='choice')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='PROYECTO UMBRAL · ÚLTIMO CANAL';
+ $('encounter-text').textContent='Los nombres del pueblo están grabados en una cinta de 1992, pero las voces aparecen en tiempo real. «Emitirlos es recordarlos», susurra Nora. «Desconectar es dejarnos morir», responde el Operador.';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:RadioDecision;label:string}>=[
+  {id:'broadcast',label:'EMITIR LOS NOMBRES · +14 L DE GASOLINA'},
+  {id:'sever',label:'CORTAR EL ENLACE UMBRAL · +2 PIEZAS'}
+ ];
+ for(const o of options){
+  const button=document.createElement('button');button.type='button';button.textContent=o.label;
+  button.addEventListener('click',()=>{
+   state=concludeRadio(state,o.id);saveQuietly();syncRadioView();notify(state.message);
+   $('encounter-title').textContent='CAPÍTULO IV COMPLETADO · FRECUENCIA MUERTA';
+   $('encounter-text').textContent=state.message+' El cartel de la carretera apunta hacia el desierto: KM 96, el kilómetro imposible.';
+   choices.replaceChildren();
+   const leave=document.createElement('button');leave.type='button';leave.textContent='REBOBINAR LA CINTA Y REGRESAR AL FIREBIRD';
+   leave.addEventListener('click',()=>{
+    encounterOpen=false;dialog.classList.add('hidden');radioUnderground=false;switchMode('map');
+    if(shouldOfferFinale(state))showFinale();
+   });choices.append(leave);leave.focus();
+  });choices.append(button);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function descendRadioBunker(){
+ radioUnderground=true;world.setRadioUnderground(true);
+ world.player.set(RADIO_POSITIONS.undergroundEntry.x,1.7,RADIO_POSITIONS.undergroundEntry.z);
+ yaw=Math.PI;pitch=0;input.reset();
+ status.textContent='REFUGIO UMBRAL · NIVEL -1';
+ pulpUi?.title('CAPÍTULO IV · SECTOR SUBTERRÁNEO','PROYECTO UMBRAL','NIVEL -1 · LA EMISIÓN SIGUE VIVA');
+ notify('Desciendes bajo la emisora. El aire sabe a polvo y cinta magnética.');
+}
+function exitRadioBunker(){
+ radioUnderground=false;world.setRadioUnderground(false);
+ world.player.set(RADIO_POSITIONS.hatch.x,1.7,RADIO_POSITIONS.hatch.z+2.6);
+ yaw=0;pitch=0;input.reset();
+ status.textContent='WXR-404 · CAPÍTULO IV';
+ pulpUi?.title('ESTACIÓN WXR-404 · 1992','VUELTA A LA SUPERFICIE','LA ANTENA APUNTA HACIA ABAJO');
+}
+function interactRadio(){
+ const x=world.player.x,z=world.player.z,stage=state.chapterFour.stage;
+ if(radioUnderground){
+  if(nearRadioProp(x,z,RADIO_POSITIONS.exit,1.55)){exitRadioBunker();return;}
+  if(stage==='bunker'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.5)){showRadioCipher(true);return;}
+  if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerA,2.0)){
+   state=disableRadioBreaker(state,'A');
+  }else if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerB,2.0)){
+   state=disableRadioBreaker(state,'B');
+  }else if(stage==='choice'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.8)){
+   showRadioDecision();return;
+  }else{notify('El eco responde, pero no puedes interactuar. Consulta [J] para seguir las pistas.');return;}
+  if(state.chapterFour.stage==='sentinel'){
+   radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);
+   world.setRadioOperator(radioOperator.x,radioOperator.z,true,false,elapsed);
+   beep(65,.35);
+  }
+ }else{
+  if(!state.chapterFour.cacheTaken&&nearRadioProp(x,z,RADIO_POSITIONS.supplies,2.2)){
+   state=takeRadioSupplies(state);
+  }else if(state.chapterFour.nora===null&&nearRadioProp(x,z,RADIO_POSITIONS.nora,1.55)){
+   showNoraDialogue();return;
+  }else if(stage==='arrival'&&nearRadioProp(x,z,RADIO_POSITIONS.sign,2.2)){
+   state=inspectRadioSign(state);
+  }else if(stage==='relay'&&nearRadioProp(x,z,RADIO_POSITIONS.relay,2.2)){
+   state=powerRadioRelay(state);
+  }else if(stage==='archive'&&nearRadioProp(x,z,RADIO_POSITIONS.archive,2.2)){
+   state=readRadioArchive(state);
+  }else if(stage==='tuning'&&nearRadioProp(x,z,RADIO_POSITIONS.mixer,2.3)){
+   showRadioCipher(false);return;
+  }else if(['hatch','bunker','breaker','sentinel','choice'].includes(stage)&&
+   nearRadioProp(x,z,RADIO_POSITIONS.hatch,2.7)){
+   if(stage==='hatch')state=openRadioBunker(state);
+   saveQuietly();syncRadioView();descendRadioBunker();return;
+  }else{notify('No hay ningún botón activo aquí. Consulta las pistas del diario [J].');return;}
+ }
+ saveQuietly();syncRadioView();notify(state.message);
+}
+function radioPrompt(x:number,z:number):string{
+ const stage=state.chapterFour.stage;
+ if(radioUnderground){
+  if(nearRadioProp(x,z,RADIO_POSITIONS.exit,1.55))return '[E] SUBIR A LA EMISORA · NIVEL 0';
+  if(stage==='bunker'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.5))return '[E] DESCIFRAR TERMINAL UMBRAL · 03:13';
+  if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerA,2))return '[E] APAGAR CIRCUITO DE CONTENCIÓN A';
+  if(stage==='breaker'&&nearRadioProp(x,z,RADIO_POSITIONS.breakerB,2))return '[E] APAGAR CIRCUITO DE CONTENCIÓN B';
+  if(stage==='choice'&&nearRadioProp(x,z,RADIO_POSITIONS.console,2.8))return '[E] DECIDIR EL DESTINO DE LA TRANSMISIÓN';
+  if(stage==='sentinel')return 'EL OPERADOR · '+radioOperator.health+'/150 · [F] GOLPEAR · [SHIFT] ESQUIVAR';
+  return '[J] DIARIO · [M] VOLVER AL FIREBIRD';
+ }
+ if(!state.chapterFour.cacheTaken&&nearRadioProp(x,z,RADIO_POSITIONS.supplies,2.2))return '[E] RECOGER BOTIQUÍN WXR-404';
+ if(state.chapterFour.nora===null&&nearRadioProp(x,z,RADIO_POSITIONS.nora,1.55))return '[E] HABLAR CON NORA · TÉCNICA DE RADIO';
+ if(stage==='arrival'&&nearRadioProp(x,z,RADIO_POSITIONS.sign,2.2))return '[E] LEER PLACA DE WXR-404';
+ if(stage==='relay'&&nearRadioProp(x,z,RADIO_POSITIONS.relay,2.2))return '[E] ACTIVAR RELÉ DE ANTENA';
+ if(stage==='archive'&&nearRadioProp(x,z,RADIO_POSITIONS.archive,2.2))return '[E] LEER CINTA MAESTRA · PROYECTO UMBRAL';
+ if(stage==='tuning'&&nearRadioProp(x,z,RADIO_POSITIONS.mixer,2.3))return '[E] SINTONIZAR WXR-404 · 02:17';
+ if(['hatch','bunker','breaker','sentinel','choice'].includes(stage)&&nearRadioProp(x,z,RADIO_POSITIONS.hatch,2.7))return '[E] DESCENDER AL REFUGIO UMBRAL';
+ return '[J] CONSULTAR DIARIO · [M] REGRESAR AL FIREBIRD';
+}
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
 function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
@@ -453,6 +608,14 @@ $('town').addEventListener('click',()=>{
  if(!canEnterTown(state)){notify('Completa LOS QUE NO REGRESAN y conduce hasta el KM 48.');return;}
  if(state.chapterThree.stage==='complete'){notify('El capítulo del pueblo ya ha terminado.');return;}
  state=beginTown(state);inDiner=false;inRadio=false;radioUnderground=false;inTown=true;townGuardian=freshGuardian(state.chapterThree.guardianHealth);
+ switchMode('explore');saveQuietly();notify(state.message);
+});
+$('radio').addEventListener('click',()=>{
+ try{soundscape.start();}catch{}
+ if(!canEnterRadio(state)){notify('Termina EL PUEBLO SIN NOMBRE y conduce hasta el KM 72.');return;}
+ if(state.chapterFour.stage==='complete'){notify('Esta cinta ya está archivada.');return;}
+ state=beginRadio(state);inTown=false;inDiner=false;inRadio=true;radioUnderground=false;
+ radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);
  switchMode('explore');saveQuietly();notify(state.message);
 });
 $('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
