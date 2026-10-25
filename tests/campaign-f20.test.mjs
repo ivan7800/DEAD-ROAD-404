@@ -4,17 +4,17 @@ import {CHAPTERS,PLAYABLE_CHAPTERS,freshCampaign,recordMilestone,completeChapter
 import {fresh,normalizeSave,travel} from '../src/state.ts';
 import {resolveFinale} from '../src/roadStory.ts';
 
-test('seis capítulos distintos, solo el primero declarado jugable',()=>{
+test('seis capítulos distintos, los dos primeros implementados y demás bloqueados',()=>{
  assert.equal(CHAPTERS.length,6);
  assert.equal(new Set(CHAPTERS.map(c=>c.id)).size,6);
- assert.deepEqual([...PLAYABLE_CHAPTERS],['last-stop']);
+ assert.deepEqual([...PLAYABLE_CHAPTERS],['last-stop','missing']);
  assert.equal(campaignStatus(freshCampaign(),'last-stop'),'active');
  for(const chapter of CHAPTERS.slice(1))assert.equal(campaignStatus(freshCampaign(),chapter.id),'locked');
 });
 test('no permite saltar a capítulos con localizaciones todavía no implementadas',()=>{
  const first=freshCampaign(),completed=completeChapter(first,'last-stop');
- assert.equal(canStartChapter(completed,'missing'),false);
- assert.deepEqual(startChapter(completed,'missing'),completed);
+ assert.equal(canStartChapter(completed,'missing'),true);
+ assert.equal(startChapter(completed,'missing').current,'missing');
  assert.deepEqual(completeChapter(first,'road-end'),first);
 });
 test('los hitos y la conclusión son idempotentes e inmutables',()=>{
@@ -32,11 +32,11 @@ test('se registran kilómetros y se guarda el progreso',()=>{
  assert.ok(normalizeSave(traveled)?.campaign.milestones.includes('road24'));
 });
 test('el desenlace completa el capítulo sin desbloquear capítulos ficticios',()=>{
- const s={...fresh(),km:120,mission:{stage:'resolved',choice:'rescue'},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},fuel:44,parts:3};
+ const s={...fresh(),km:120,mission:{stage:'resolved',choice:'rescue'},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},chapterTwo:{...fresh().chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'},fuel:44,parts:3};
  const result=resolveFinale(s,'escape');
  assert.equal(result.ending,'dawn');
  assert.equal(campaignStatus(result.campaign,'last-stop'),'completed');
- assert.equal(campaignStatus(result.campaign,'missing'),'locked');
+ assert.equal(campaignStatus(result.campaign,'missing'),'available');
  assert.ok(result.campaign.milestones.includes('junction'));
 });
 test('migración F19 reconstruye pistas reales sin inventar desbloqueos',()=>{

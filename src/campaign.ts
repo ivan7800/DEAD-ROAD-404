@@ -1,6 +1,4 @@
-/** Fase 20: serializable campaign framework. Only Chapter I has playable content.
- * Locked chapters are deliberately NOT advertised as playable until their scenes exist.
- */
+/** Progressive campaign: only finished chapters are playable; III–VI remain locked. */
 import type {MissionProgress} from './mission.ts';
 import type {EndingId} from './roadStory.ts';
 
@@ -14,7 +12,7 @@ export const CHAPTERS=[
 ] as const;
 export type ChapterId=typeof CHAPTERS[number]['id'];
 /** Chapter II onwards remains locked until fully implemented and tested. */
-export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop']);
+export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing']);
 export const MILESTONES={
  station:'Entraste en la gasolinera SUNSPUR',
  radio:'Escuchaste la frecuencia 404',
@@ -31,7 +29,16 @@ export const MILESTONES={
  frequency:'Sintonizaste la frecuencia 217',
  hatch:'Abriste la escotilla del motel MILE 404',
  warden:'Sobreviviste al Celador de la Frecuencia',
- chapterChoice:'Decidiste el destino de la transmisión'
+ chapterChoice:'Decidiste el destino de la transmisión',
+ diner:'Llegaste al restaurante THE LAST LIGHT',
+ mara:'Hablaste con Mara, la camarera de 1992',
+ dinerTicket:'Encontraste el pedido de la mesa cuatro',
+ neon:'Restableciste el neón del restaurante',
+ ledger:'Leíste el libro de huéspedes desaparecidos',
+ dinerKitchen:'Abriste la puerta de cocina con el código 1992',
+ dinerFreezer:'Abriste el congelador del restaurante',
+ dinerThreat:'Sobreviviste a la Camarera Hueca',
+ dinerDecision:'Decidiste qué hacer con las voces de los desaparecidos'
 } as const;
 export type MilestoneId=keyof typeof MILESTONES;
 export interface CampaignProgress {current:ChapterId;completed:ChapterId[];milestones:MilestoneId[]}
@@ -69,10 +76,18 @@ export function normalizeCampaign(data:unknown,legacy?:LegacyCampaignState):Camp
  const v=data&&typeof data==='object'?data as Partial<CampaignProgress>:{};
  const validMilestones=Array.isArray(v.milestones)?
   [...new Set(v.milestones.filter((x):x is MilestoneId=>typeof x==='string'&&milestones.includes(x as MilestoneId)))]:[];
- const validCompleted=Array.isArray(v.completed)?
-  [...new Set(v.completed.filter((x):x is ChapterId=>typeof x==='string'&&ids.includes(x as ChapterId)&&PLAYABLE_CHAPTERS.has(x as ChapterId)))]:[];
+ // Only accept completed chapters in real campaign order. Malformed saves cannot
+ // mark chapter II complete before I, or unlock later chapters prematurely.
+ const validCompleted:ChapterId[]=[];
+ if(Array.isArray(v.completed)){
+  for(const raw of v.completed){
+   const expected=CHAPTERS[validCompleted.length]?.id;
+   if(raw===expected&&PLAYABLE_CHAPTERS.has(raw as ChapterId))validCompleted.push(raw as ChapterId);
+  }
+ }
+ const normalizedCurrent=v.current==='missing'&&validCompleted.includes('last-stop')?'missing':'last-stop';
  let progress:CampaignProgress={
-  current:typeof v.current==='string'&&PLAYABLE_CHAPTERS.has(v.current as ChapterId)?v.current as ChapterId:'last-stop',
+  current:normalizedCurrent,
   completed:validCompleted,
   milestones:validMilestones
  };

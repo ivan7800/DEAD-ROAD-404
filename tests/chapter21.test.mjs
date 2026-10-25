@@ -60,11 +60,12 @@ test('fin de carretera no se dispara antes del desenlace del capítulo',()=>{
  s=collectChapterFuse(s);s=powerChapterConsole(s);s=tuneChapterFrequency(s,217);s=openChapterHatch(s);
  s=defeatChapterWarden({...s,chapterOne:{...s.chapterOne,wardenHealth:0}});
  s=closeChapterOne(s,'preserve');
- assert.equal(shouldOfferFinale(s),true);
+ assert.equal(shouldOfferFinale(s),false);
+ assert.equal(shouldOfferFinale({...s,chapterTwo:{...s.chapterTwo,stage:'complete'}}),true);
  assert.equal(travel(s,24).chapterOne.stage,'complete');
 });
 test('guardados F20 con misión terminada mantienen el final desbloqueado',()=>{
- const old={...fresh(),mission:{stage:'resolved',choice:'rescue'},km:120};delete old.chapterOne;
+ const old={...fresh(),mission:{stage:'resolved',choice:'rescue'},km:120};delete old.chapterOne;delete old.chapterTwo;
  const restored=normalizeSave(old);assert.ok(restored);
  assert.equal(restored.chapterOne.stage,'complete');assert.equal(shouldOfferFinale(restored),true);
 });

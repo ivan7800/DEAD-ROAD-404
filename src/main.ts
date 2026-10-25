@@ -5,6 +5,9 @@ import {stepArcadeDrive} from './arcadeDrive.ts';
 import {roadEdgeImpact,repairVehicle} from './vehicleWear.ts';
 import {beginChapterOne,chapterOneObjective,nearChapterProp,collectChapterFuse,powerChapterConsole,tuneChapterFrequency,openChapterHatch,defeatChapterWarden,closeChapterOne,FUSE_POSITION,CONSOLE_POSITION,HATCH_POSITION,FREQUENCIES,type ChapterOneDecision} from './chapterOne.ts';
 import {freshWarden,stepWarden,strikeWarden} from './warden.ts';
+import {beginDiner,dinerAvailable,dinerObjective,nearDinerProp,chooseMara,readDinerTicket,restoreDinerNeon,readDinerLedger,tryDinerCode,openDinerFreezer,defeatDinerThreat,concludeDiner,DINER_POSITIONS,DINER_FREQUENCIES,type MaraChoice,type DinerEnding} from './chapterTwo.ts';
+import {freshDinerThreat,stepDinerThreat,strikeDinerThreat} from './dinerThreat.ts';
+import {dinerCollision} from './dinerCollision.ts';
 import {ITEMS,addItem,inventoryTotal,useItem,openSupplyCache,CACHE_POSITION,type ItemId} from './inventory.ts';
 import {CHAPTERS,MILESTONES,campaignStatus,recordMilestone} from './campaign.ts';
 import {walkWithSlide} from './worldCollision.ts';
@@ -30,7 +33,7 @@ const store=safeStorage();
 const $=(id:string)=>document.getElementById(id)!;
 const canvas=$('scene') as HTMLCanvasElement,world=new GameWorld(canvas);
 let graphics:GraphicsPreset=graphicsPreset(readPreference(store,'dead-road-404-psx-graphics'));world.setGraphics(graphics);
-let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let warden=freshWarden();let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
+let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let warden=freshWarden();let dinerThreat=freshDinerThreat();let inDiner=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
 let cameraMode:CameraMode=validCamera(readPreference(store,'dead-road-404-camera'));
 let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film-look'));
 let steering=0;let helpOpen=false;let impactCooldown=0;
@@ -43,14 +46,17 @@ const addLog=(message:string)=>{$('log').textContent=message;};
 $('art-status').textContent='ARTE PSX · 240P · SIN GLB PESADOS';
 function beep(freq:number,duration=.12){soundscape.beep(freq,duration);}
 function notify(message:string){$('toast').textContent=message;$('toast').classList.add('show');toastUntil=performance.now()+3400;addLog(message);}
-function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].label+' · [G] CAMBIAR';const text=`🪓 ${enemy.alive?'AMENAZA':'DESPEJADO'}  |  ⛽ ${state.fuel.toFixed(1)} L  |  🍞 ${state.food}  |  ♥ ${state.health}  |  🔧 ${state.parts}  |  🚗 ${state.carCondition.toFixed(0)}%  |  ${state.km} km  |  🎒 ${inventoryTotal(state.inventory)} objetos`;$('stats').textContent=text;$('camera-label').textContent=mode==='drive'?`CÁMARA: ${CAMERA_LABELS[cameraMode]} · [C] CAMBIAR · [L] LUCES`:'';$('dashboard').classList.toggle('visible',mode==='drive');$('stamina-wrap').classList.toggle('visible',mode==='explore');$('objective').textContent=(chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
-function switchMode(next:Mode){input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(6,1.7,6);yaw=Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);hud();}
+function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].label+' · [G] CAMBIAR';const text=`🪓 ${inDiner?'THE LAST LIGHT':enemy.alive?'AMENAZA':'DESPEJADO'}  |  ⛽ ${state.fuel.toFixed(1)} L  |  🍞 ${state.food}  |  ♥ ${state.health}  |  🔧 ${state.parts}  |  🚗 ${state.carCondition.toFixed(0)}%  |  ${state.km} km  |  🎒 ${inventoryTotal(state.inventory)} objetos`;$('stats').textContent=text;$('camera-label').textContent=mode==='drive'?`CÁMARA: ${CAMERA_LABELS[cameraMode]} · [C] CAMBIAR · [L] LUCES`:'';$('dashboard').classList.toggle('visible',mode==='drive');$('stamina-wrap').classList.toggle('visible',mode==='explore');($('diner') as HTMLButtonElement).disabled=!dinerAvailable(state)||state.chapterTwo.stage==='complete';
+ $('diner').textContent=state.chapterTwo.stage==='complete'?'CAPÍTULO II COMPLETADO · [J] DIARIO':
+  dinerAvailable(state)?'ENTRAR EN THE LAST LIGHT · CAPÍTULO II':'RESTAURANTE THE LAST LIGHT · DESDE KM 24';
+ $('objective').textContent=(dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
+function switchMode(next:Mode){input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore')inDiner=false;panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inDiner?DINER_POSITIONS.entry.x:6,1.7,inDiner?DINER_POSITIONS.entry.z:6);yaw=inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);hud();}
 function toggleHelp(){helpOpen=!helpOpen;$('controls-guide').classList.toggle('hidden',!helpOpen);input.reset();document.exitPointerLock?.();if(helpOpen)$('close-controls').focus();}
 $('show-controls').addEventListener('click',toggleHelp);$('close-controls').addEventListener('click',toggleHelp);
 function toggleJournal(){
  journalOpen=!journalOpen;
  const journal=$('journal');journal.classList.toggle('hidden',!journalOpen);
- $('journal-stage').textContent=chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission);
+ $('journal-stage').textContent=dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission);
  $('journal-record').textContent=(state.motelTape?'CINTA DEL MOTEL: Recuperada · +1 pieza y +2 comida.\n':'')+(state.phoneHeard?'CABINA TELEFÓNICA: la voz conocía una fecha que todavía no ha llegado.\n':'')+(state.mission.stage==='resolved' ? 'Decisión registrada: '+({rescue:'Vera viaja contigo',take:'Cobraste por ayudar',leave:'Vera permanece en el motel'}[state.mission.choice!]||'Desconocida') : 'Pista: los secretos de la estación se descubren explorando y escuchando.');
  const chapters=$('journal-chapters');chapters.replaceChildren();
  for(const chapter of CHAPTERS){
@@ -185,13 +191,122 @@ function showChapterOneDecision(){
  }
  dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
 }
+
+/** Dialogue modal uses the existing focusable PSX encounter system. */
+function showMaraDialogue(){
+ if(encounterOpen||state.chapterTwo.mara!==null)return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='MARA · LA ÚLTIMA CAMARERA';
+ $('encounter-text').textContent='«Recuerdo seis clientes y siete platos. Hay un pedido en la mesa cuatro. Si sales de aquí, ¿podrías decirle a mi hija que aún recuerdo su nombre?»';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:MaraChoice;label:string}>=[
+  {id:'trust',label:'ESCUCHAR A MARA Y PROMETER QUE BUSCARÁS A SU HIJA'},
+  {id:'avoid',label:'DESCONFIAR DE ELLA · MANTENER LAS DISTANCIAS'}
+ ];
+ for(const option of options){
+  const button=document.createElement('button');button.type='button';button.textContent=option.label;
+  button.addEventListener('click',()=>{
+   state=chooseMara(state,option.id);saveQuietly();world.setDinerStage(state.chapterTwo.stage,true);
+   encounterOpen=false;dialog.classList.add('hidden');notify(state.message);hud();
+  });choices.append(button);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showDinerCode(){
+ if(encounterOpen||state.chapterTwo.stage!=='code')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='THE LAST LIGHT · PUERTA DE COCINA';
+ $('encounter-text').textContent='La cerradura digital pide cuatro dígitos. En el pedido de la mesa cuatro pone una fecha y en el libro aparecen seis nombres tachados.';
+ choices.replaceChildren();
+ for(const code of DINER_FREQUENCIES){
+  const button=document.createElement('button');button.type='button';button.textContent=String(code);
+  button.addEventListener('click',()=>{
+   state=tryDinerCode(state,code);saveQuietly();notify(state.message);hud();beep(code/10,.16);
+   if(state.chapterTwo.stage==='freezer'){
+    encounterOpen=false;dialog.classList.add('hidden');world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);
+   }else $('encounter-text').textContent=state.message+' · INTENTOS: '+state.chapterTwo.codeAttempts;
+  });
+  choices.append(button);
+ }
+ const back=document.createElement('button');back.type='button';back.textContent='VOLVER AL RESTAURANTE';
+ back.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');});
+ choices.append(back);dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function showDinerDecision(){
+ if(encounterOpen||state.chapterTwo.stage!=='choice')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='LOS QUE NO REGRESAN · ÚLTIMA MESA';
+ $('encounter-text').textContent='Entre el hielo queda una bobina: seis voces suplican que alguien las encuentre. La radio del Firebird puede emitirlas, pero la señal atraerá algo del pueblo sin nombre.';
+ choices.replaceChildren();
+ const options:ReadonlyArray<{id:DinerEnding;label:string}>=[
+  {id:'broadcast',label:'EMITIR LAS VOCES · +10 L DE GASOLINA'},
+  {id:'silence',label:'ENTERRAR LA GRABACIÓN · +2 PIEZAS'}
+ ];
+ for(const option of options){
+  const button=document.createElement('button');button.type='button';button.textContent=option.label;
+  button.addEventListener('click',()=>{
+   state=concludeDiner(state,option.id);saveQuietly();hud();world.setDinerStage(state.chapterTwo.stage,true);
+   $('encounter-title').textContent='CAPÍTULO II COMPLETADO · LOS QUE NO REGRESAN';
+   $('encounter-text').textContent=state.message+' El mapa señala una carretera hacia un pueblo sin nombre. Por ahora, el Firebird es tu única salida.';
+   choices.replaceChildren();
+   const close=document.createElement('button');close.type='button';close.textContent='SALIR DEL RESTAURANTE Y REGRESAR AL FIREBIRD';
+   close.addEventListener('click',()=>{
+    encounterOpen=false;dialog.classList.add('hidden');switchMode('map');
+    if(shouldOfferFinale(state))showFinale();
+   });choices.append(close);close.focus();
+  });choices.append(button);
+ }
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function interactDiner(){
+ const x=world.player.x,z=world.player.z,stage=state.chapterTwo.stage;
+ if(state.chapterTwo.mara===null&&nearDinerProp(x,z,DINER_POSITIONS.mara,1.5)){
+  showMaraDialogue();return;
+ }
+ if(stage==='arrival'&&nearDinerProp(x,z,DINER_POSITIONS.menu)){
+  state=readDinerTicket(state);
+ }else if(stage==='breaker'&&nearDinerProp(x,z,DINER_POSITIONS.breaker)){
+  state=restoreDinerNeon(state);
+ }else if(stage==='ledger'&&nearDinerProp(x,z,DINER_POSITIONS.ledger)){
+  state=readDinerLedger(state);
+ }else if(stage==='code'&&nearDinerProp(x,z,DINER_POSITIONS.keypad,2.5)){
+  showDinerCode();return;
+ }else if(stage==='freezer'&&nearDinerProp(x,z,DINER_POSITIONS.freezer,2.7)){
+  state=openDinerFreezer(state);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);
+  world.setDinerThreat(dinerThreat.x,dinerThreat.z,true,false,elapsed);
+  beep(78,.35);
+ }else{notify('No hay nada que puedas recoger aquí. Consulta [J] para seguir las pistas.');return;}
+ saveQuietly();world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);
+ notify(state.message);hud();
+}
+function dinerPrompt(x:number,z:number):string{
+ const stage=state.chapterTwo.stage;
+ if(state.chapterTwo.mara===null&&nearDinerProp(x,z,DINER_POSITIONS.mara,1.5))return '[E] HABLAR CON MARA · CAMARERA 1992';
+ if(stage==='arrival'&&nearDinerProp(x,z,DINER_POSITIONS.menu))return '[E] LEER PEDIDO · MESA CUATRO';
+ if(stage==='breaker'&&nearDinerProp(x,z,DINER_POSITIONS.breaker))return '[E] ENCENDER INTERRUPTOR DE NEÓN';
+ if(stage==='ledger'&&nearDinerProp(x,z,DINER_POSITIONS.ledger))return '[E] EXAMINAR LIBRO DE HUÉSPEDES';
+ if(stage==='code'&&nearDinerProp(x,z,DINER_POSITIONS.keypad,2.5))return '[E] INTRODUCIR CÓDIGO DE COCINA';
+ if(stage==='freezer'&&nearDinerProp(x,z,DINER_POSITIONS.freezer,2.7))return '[E] ABRIR CONGELADOR · 1992';
+ if(stage==='stalker')return 'LA CAMARERA HUECA · '+dinerThreat.health+'/90 · [F] GOLPEAR · [SHIFT] CORRER · [I] CURARSE';
+ return '[J] CONSULTA EL DIARIO · [M] REGRESAR AL FIREBIRD';
+}
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
-function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
+function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
 $('drive').addEventListener('click',()=>{try{soundscape.start();}catch{}if(state.ending){notify('Historia concluida · Empieza una nueva partida para volver a la carretera.');return;}if(state.carCondition<=0){notify('Repara el Firebird antes de conducir.');return;}if(state.fuel<2){notify('Te falta gasolina. Explora la gasolinera.');return;}switchMode('drive');notify('Gira la llave. El V8 ruge bajo un cielo sin estrellas.');});
-$('explore').addEventListener('click',()=>{try{soundscape.start();}catch{}state.visited=true;state.campaign=recordMilestone(state.campaign,'station');switchMode('explore');notify('La puerta de la estación golpea tres veces. No hay viento.');});
+$('explore').addEventListener('click',()=>{try{soundscape.start();}catch{}inDiner=false;state.visited=true;state.campaign=recordMilestone(state.campaign,'station');switchMode('explore');notify('La puerta de la estación golpea tres veces. No hay viento.');});
+$('diner').addEventListener('click',()=>{
+ try{soundscape.start();}catch{}
+ if(!dinerAvailable(state)){notify('Completa La Última Parada y conduce hasta el KM 24.');return;}
+ if(state.chapterTwo.stage==='complete'){notify('El capítulo del restaurante ya ha terminado.');return;}
+ state=beginDiner(state);inDiner=true;dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);
+ switchMode('explore');saveQuietly();notify(state.message);
+});
 $('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
-$('save').addEventListener('click',save);$('load').addEventListener('click',load);$('new').addEventListener('click',()=>{enemy=createEnemy();state=fresh();warden=freshWarden();world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');notify('Nueva partida. Las malas decisiones todavía están por llegar.');});
+$('save').addEventListener('click',save);$('load').addEventListener('click',load);$('new').addEventListener('click',()=>{enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();inDiner=false;world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');notify('Nueva partida. Las malas decisiones todavía están por llegar.');});
 window.addEventListener('keydown',e=>{
  const k=normalizeKey(e.key);
  const target=e.target as HTMLElement|null;
@@ -205,7 +320,8 @@ window.addEventListener('keydown',e=>{
  if(k==='h'&&!e.repeat){toggleHelp();return;}
  if(mode!=='map'||!['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))input.press(k);
  if(e.repeat)return;
-if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen){toggleJournal();return;}if(journalOpen){if(k==='escape')toggleJournal();return;}if(encounterOpen)return;if(k==='m'){state.carX=clamp(world.car.position.x,-3.7,3.7);state.carZ=clamp(world.car.position.z,-150,24);switchMode('map');}if(k==='p')save();if(k==='f3'){showPerformance=!showPerformance;$('perf-panel').classList.toggle('hidden',!showPerformance);notify(showPerformance?'Diagnóstico de rendimiento activado.':'Diagnóstico de rendimiento oculto.');}if(k==='v'){filmLook=toggleFilmLook(filmLook);writePreference(store,'dead-road-404-film-look',filmLook);applyFilmLook();notify(filmLook==='suave'?'Filtro VHS suave activado.':'Filtro VHS desactivado.');return;}if(k==='g'){adaptiveQuality.defer(performance.now());graphics=nextGraphicsPreset(graphics);world.setGraphics(graphics);applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('Calidad visual: '+GRAPHICS[graphics].label);hud();}if(k==='c'&&mode==='drive'){cameraMode=nextCamera(cameraMode);writePreference(store,'dead-road-404-camera',cameraMode);notify('Cámara: '+CAMERA_LABELS[cameraMode]);}if(k==='t'&&mode==='explore'){flashlightOn=!flashlightOn;notify(flashlightOn?'Linterna encendida. La oscuridad retrocede.':'Linterna apagada.');}if(k==='l'&&mode==='drive'){headlights=!headlights;world.firebird.setHeadlights(headlights);notify(headlights?'Faros encendidos':'Faros apagados');}if(k==='r'&&mode==='explore'){if(world.player.distanceTo(radioPosition)<4){state.mission=advanceMission(state.mission,'radio');state.campaign=recordMilestone(state.campaign,'radio');saveQuietly();notify('RADIO 404: «Vera está en el motel. La llave está tras las neveras». Una voz idéntica a la tuya.');hud();}else notify('Solo escuchas estática. La radio está detrás del mostrador.');}if(k==='e'&&mode==='explore'){
+if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen){toggleJournal();return;}if(journalOpen){if(k==='escape')toggleJournal();return;}if(encounterOpen)return;if(k==='m'){state.carX=clamp(world.car.position.x,-3.7,3.7);state.carZ=clamp(world.car.position.z,-150,24);switchMode('map');}if(k==='p')save();if(k==='f3'){showPerformance=!showPerformance;$('perf-panel').classList.toggle('hidden',!showPerformance);notify(showPerformance?'Diagnóstico de rendimiento activado.':'Diagnóstico de rendimiento oculto.');}if(k==='v'){filmLook=toggleFilmLook(filmLook);writePreference(store,'dead-road-404-film-look',filmLook);applyFilmLook();notify(filmLook==='suave'?'Filtro VHS suave activado.':'Filtro VHS desactivado.');return;}if(k==='g'){adaptiveQuality.defer(performance.now());graphics=nextGraphicsPreset(graphics);world.setGraphics(graphics);applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('Calidad visual: '+GRAPHICS[graphics].label);hud();}if(k==='c'&&mode==='drive'){cameraMode=nextCamera(cameraMode);writePreference(store,'dead-road-404-camera',cameraMode);notify('Cámara: '+CAMERA_LABELS[cameraMode]);}if(k==='t'&&mode==='explore'){flashlightOn=!flashlightOn;notify(flashlightOn?'Linterna encendida. La oscuridad retrocede.':'Linterna apagada.');}if(k==='l'&&mode==='drive'){headlights=!headlights;world.firebird.setHeadlights(headlights);notify(headlights?'Faros encendidos':'Faros apagados');}if(k==='r'&&mode==='explore'&&!inDiner){if(world.player.distanceTo(radioPosition)<4){state.mission=advanceMission(state.mission,'radio');state.campaign=recordMilestone(state.campaign,'radio');saveQuietly();notify('RADIO 404: «Vera está en el motel. La llave está tras las neveras». Una voz idéntica a la tuya.');hud();}else notify('Solo escuchas estática. La radio está detrás del mostrador.');}if(k==='e'&&mode==='explore'){
+ if(inDiner){interactDiner();}else{
  const px=world.player.x,pz=world.player.z;
  if(state.chapterOne.stage==='fuse'&&nearChapterProp(px,pz,FUSE_POSITION)){
   state=collectChapterFuse(state);saveQuietly();world.setChapterOneStage(state.chapterOne.stage);
@@ -223,9 +339,20 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
  const cache=openSupplyCache(state);state=cache.state;
  state.campaign=recordMilestone(state.campaign,'cache');
  world.setCacheVisible(false);saveQuietly();notify(cache.message);hud();
- }else if(isAtPhone(world.player.x,world.player.z)){const result=answerPhone(state.mission.stage,state.phoneHeard);if(canAnswerPhone(state.mission.stage,state.phoneHeard)){state.phoneHeard=true;state.campaign=recordMilestone(state.campaign,'phone');saveQuietly();beep(450,.12);}notify(result.message);hud();}else if(!state.motelTape&&isNearTape(world.player.x,world.player.z)){const result=collectTape(state);state={...state,motelTape:result.motelTape,parts:result.parts,food:result.food,inventory:addItem(state.inventory,'motelTape')};state.campaign=recordMilestone(state.campaign,'tape');world.setTapeVisible(false);saveQuietly();notify('CINTA MAGNÉTICA: «Las habitaciones no tienen número. Tienen fecha». +2 comida y +1 pieza.');hud();}else if(world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'){showMissionDialogue();}else if(world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'){state.mission=advanceMission(state.mission,'key');state.inventory=addItem(state.inventory,'key404');state.campaign=recordMilestone(state.campaign,'key');saveQuietly();notify('Obtienes la LLAVE 404. En su etiqueta pone: «NO ABRIR DESDE DENTRO».');hud();}else if(world.player.distanceTo(new THREE.Vector3(11,1.7,1))<3){const old=state.hasCan;state=pickFuel(state);if(!old)notify(state.message);else notify('Ya recogiste el bidón.');hud();}else notify('No hay nada a tu alcance.');}if((k===' '||k==='f')&&mode==='explore'&&attackCooldown===0&&state.health>0){
+ }else if(isAtPhone(world.player.x,world.player.z)){const result=answerPhone(state.mission.stage,state.phoneHeard);if(canAnswerPhone(state.mission.stage,state.phoneHeard)){state.phoneHeard=true;state.campaign=recordMilestone(state.campaign,'phone');saveQuietly();beep(450,.12);}notify(result.message);hud();}else if(!state.motelTape&&isNearTape(world.player.x,world.player.z)){const result=collectTape(state);state={...state,motelTape:result.motelTape,parts:result.parts,food:result.food,inventory:addItem(state.inventory,'motelTape')};state.campaign=recordMilestone(state.campaign,'tape');world.setTapeVisible(false);saveQuietly();notify('CINTA MAGNÉTICA: «Las habitaciones no tienen número. Tienen fecha». +2 comida y +1 pieza.');hud();}else if(world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'){showMissionDialogue();}else if(world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'){state.mission=advanceMission(state.mission,'key');state.inventory=addItem(state.inventory,'key404');state.campaign=recordMilestone(state.campaign,'key');saveQuietly();notify('Obtienes la LLAVE 404. En su etiqueta pone: «NO ABRIR DESDE DENTRO».');hud();}else if(world.player.distanceTo(new THREE.Vector3(11,1.7,1))<3){const old=state.hasCan;state=pickFuel(state);if(!old)notify(state.message);else notify('Ya recogiste el bidón.');hud();}else notify('No hay nada a tu alcance.');}}if((k===' '||k==='f')&&mode==='explore'&&attackCooldown===0&&state.health>0){
  attackCooldown=.48;
- if(state.chapterOne.stage==='fight'&&Math.hypot(world.player.x-warden.x,world.player.z-warden.z)<3.3){
+ if(inDiner){
+  if(state.chapterTwo.stage==='stalker'){
+   const result=strikeDinerThreat(dinerThreat,world.player.x,world.player.z,yaw);
+   dinerThreat=result.threat;state.chapterTwo={...state.chapterTwo,stalkerHealth:dinerThreat.health};
+   beep(result.hit?90:210,.12);world.flashHit(result.hit);
+   if(result.hit){
+    notify(result.defeated?'LA CAMARERA HUECA CAE · El hielo deja de crujir.':'CAMARERA HUECA · '+dinerThreat.health+'/90 · Su uniforme gotea agua helada.');
+    if(result.defeated){state=defeatDinerThreat(state);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);saveQuietly();hud();showDinerDecision();}
+    else saveQuietly();
+   }else notify('La Camarera Hueca está fuera de tu alcance. Acércate y mira hacia ella.');
+  }else notify('No hay ningún enemigo aquí. La radio sigue emitiendo estática.');
+ }else if(state.chapterOne.stage==='fight'&&Math.hypot(world.player.x-warden.x,world.player.z-warden.z)<3.3){
   const hit=strikeWarden(warden,world.player.x,world.player.z,yaw);
   warden=hit.warden;state.chapterOne={...state.chapterOne,wardenHealth:warden.health};
   beep(hit.hit?85:195,.18);world.flashHit(hit.hit);
@@ -255,7 +382,23 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  impactCooldown=impact.cooldown;state.carCondition=impact.condition;if(impact.hit){speed=impact.speed;notify('¡Golpe contra el arcén! Firebird: '+Math.round(state.carCondition)+'%');}
  if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');}
  world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(world.car.position.z<=-125){state=travel(state,24);world.car.position.z=20;state.carZ=20;switchMode('map');notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}}
- if(mode==='explore'){world.setFlashlight(flashlightOn,yaw,pitch);world.setMissionStage(state.mission.stage);const previousEnemy=enemy;const observed=updateEnemy(enemy,world.player.x,world.player.z,dt);enemy=observed.enemy;if(observed.hit&&state.health>0){state.health=clamp(state.health-9,0,100);beep(60,.28);world.flashDanger();notify(state.health===0?'Has caído. Pulsa M para reorganizarte.':'¡El vigilante te alcanza! -9 salud.');}world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed,Math.min(1,Math.hypot(enemy.x-previousEnemy.x,enemy.z-previousEnemy.z)/Math.max(.001,dt)));
+ if(mode==='explore'){world.setFlashlight(flashlightOn,yaw,pitch);world.setMissionStage(state.mission.stage);
+ if(inDiner){
+  world.setEnemy(enemy.x,enemy.z,false,elapsed);
+  world.setWarden(warden.x,warden.z,false,false,elapsed);
+  if(state.chapterTwo.stage==='stalker'){
+   const result=stepDinerThreat(dinerThreat,world.player.x,world.player.z,dt);
+   dinerThreat=result.threat;
+   if(result.hit&&state.health>0){
+    state.health=clamp(state.health-11,0,100);
+    world.flashDanger();beep(68,.25);saveQuietly();
+    notify(state.health===0?'La Camarera Hueca te ha alcanzado. Cura las heridas desde [I].':'¡LA CAMARERA HUECA TE ALCANZA! −11 salud. Esquiva el ataque anunciado.');
+   }
+   world.setDinerThreat(dinerThreat.x,dinerThreat.z,true,dinerThreat.phase==='windup',elapsed);
+  }else world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);
+ }else{
+  world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);
+  const previousEnemy=enemy;const observed=updateEnemy(enemy,world.player.x,world.player.z,dt);enemy=observed.enemy;if(observed.hit&&state.health>0){state.health=clamp(state.health-9,0,100);beep(60,.28);world.flashDanger();notify(state.health===0?'Has caído. Pulsa M para reorganizarte.':'¡El vigilante te alcanza! -9 salud.');}world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed,Math.min(1,Math.hypot(enemy.x-previousEnemy.x,enemy.z-previousEnemy.z)/Math.max(.001,dt)));
  if(state.chapterOne.stage==='fight'){
   const result=stepWarden(warden,world.player.x,world.player.z,dt);warden=result.warden;
   if(result.hit&&state.health>0){
@@ -264,13 +407,13 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
    saveQuietly();
   }
   world.setWarden(warden.x,warden.z,true,warden.phase==='telegraph',elapsed);
- }else world.setWarden(warden.x,warden.z,false,false,elapsed);
- const forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);const strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);if(document.pointerLockElement!==canvas){if(keys.has('arrowleft'))yaw+=dt*1.6;if(keys.has('arrowright'))yaw-=dt*1.6;}const dir=new THREE.Vector3(Math.sin(yaw)*forward+Math.cos(yaw)*strafe,0,-Math.cos(yaw)*forward+Math.sin(yaw)*strafe);const moving=dir.lengthSq()>0;const sprinting=canSprint(stamina,moving,keys.has('shift'));stamina=stepStamina(stamina,sprinting,dt);$('stamina-bar').style.width=stamina.toFixed(1)+'%';$('stamina-value').textContent=Math.round(stamina)+'%';if(moving)dir.normalize().multiplyScalar(dt*movementSpeed(sprinting));const position=walkWithSlide(world.player.x,world.player.z,dir.x,dir.z,motelCollision);
- world.player.x=position.x;world.player.z=position.z;world.camera.position.copy(world.player);world.camera.rotation.order='YXZ';world.camera.rotation.set(pitch,yaw,0);$('exploration-tip').textContent=explorationHint(state.mission.stage,flashlightOn);prompt.textContent=state.chapterOne.stage==='fuse'&&nearChapterProp(world.player.x,world.player.z,FUSE_POSITION)?'[E] RECOGER FUSIBLE DEL GENERADOR':
+ }else world.setWarden(warden.x,warden.z,false,false,elapsed);}
+ const forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);const strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);if(document.pointerLockElement!==canvas){if(keys.has('arrowleft'))yaw+=dt*1.6;if(keys.has('arrowright'))yaw-=dt*1.6;}const dir=new THREE.Vector3(Math.sin(yaw)*forward+Math.cos(yaw)*strafe,0,-Math.cos(yaw)*forward+Math.sin(yaw)*strafe);const moving=dir.lengthSq()>0;const sprinting=canSprint(stamina,moving,keys.has('shift'));stamina=stepStamina(stamina,sprinting,dt);$('stamina-bar').style.width=stamina.toFixed(1)+'%';$('stamina-value').textContent=Math.round(stamina)+'%';if(moving)dir.normalize().multiplyScalar(dt*movementSpeed(sprinting));const position=walkWithSlide(world.player.x,world.player.z,dir.x,dir.z,inDiner?dinerCollision:motelCollision);
+ world.player.x=position.x;world.player.z=position.z;world.camera.position.copy(world.player);world.camera.rotation.order='YXZ';world.camera.rotation.set(pitch,yaw,0);$('exploration-tip').textContent=explorationHint(state.mission.stage,flashlightOn);prompt.textContent=inDiner?dinerPrompt(world.player.x,world.player.z):state.chapterOne.stage==='fuse'&&nearChapterProp(world.player.x,world.player.z,FUSE_POSITION)?'[E] RECOGER FUSIBLE DEL GENERADOR':
  state.chapterOne.stage==='panel'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] INSERTAR FUSIBLE EN CUADRO 404':
  state.chapterOne.stage==='tuning'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] SINTONIZAR RADIO 02:17':
  state.chapterOne.stage==='hatch'&&nearChapterProp(world.player.x,world.player.z,HATCH_POSITION,2.7)?'[E] ABRIR ESCOTILLA DEL MOTEL':
  state.chapterOne.stage==='fight'&&Math.hypot(world.player.x-warden.x,world.player.z-warden.z)<5?'EL CELADOR · '+warden.health+'/120 · [F] ATACA · [SHIFT] ESQUIVA':
  !state.supplyCacheTaken&&Math.hypot(world.player.x-CACHE_POSITION.x,world.player.z-CACHE_POSITION.z)<2.2?'[E] REGISTRAR CAJA DE SUMINISTROS SUNSPUR':isAtPhone(world.player.x,world.player.z)?'[E] CABINA TELEFÓNICA · 1992':!state.motelTape&&isNearTape(world.player.x,world.player.z)?'[E] RECOGER CINTA DEL MOTEL':world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'?'[E] HABLAR CON VERA':world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'?'[E] RECOGER LLAVE 404':world.player.distanceTo(radioPosition)<4&&state.mission.stage==='arrival'?'[R] ESCUCHAR TRANSMISIÓN':world.player.distanceTo(new THREE.Vector3(11,1.7,1))<3&&!state.hasCan?'[E] RECOGER BIDÓN DE GASOLINA':state.hasCan?'Bidón recogido · [ESPACIO] ATACAR · [M] FIREBIRD':'[CLICK] MIRAR · [ESPACIO] GOLPEAR · [R] RADIO · [M] FIREBIRD';}
- if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);world.camera.fov=73;world.camera.updateProjectionMatrix();world.camera.position.lerp(new THREE.Vector3(28,19,32),Math.min(1,dt*2));world.camera.lookAt(8,0,0);}if(performance.now()>toastUntil)$('toast').classList.remove('show');}
+ if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);world.camera.fov=73;world.camera.updateProjectionMatrix();world.camera.position.lerp(new THREE.Vector3(28,19,32),Math.min(1,dt*2));world.camera.lookAt(8,0,0);}if(performance.now()>toastUntil)$('toast').classList.remove('show');}
 function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;metrics.add(frameMs);update(dt);world.setAtmosphere(now/1000);world.render();const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!document.hidden&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}switchMode('map');addLog(state.message);requestAnimationFrame(frame);

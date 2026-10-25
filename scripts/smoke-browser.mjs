@@ -115,7 +115,43 @@ try{
  const storySave=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
  assert.equal(storySave.chapterOne.stage,'hatch');
  assert.equal(storySave.chapterOne.attempts,1);
+
+ // Phase 22: validate the second real 3D location and a production keypad interaction.
+ // The checkpoint is representative of a legitimately completed chapter I, preserving
+ // the actual gameplay navigation, modal input and save round-trip for chapter II.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
+  s.km=24;s.ending=null;s.encounterResolved=true;
+  s.mission={stage:'resolved',choice:'rescue'};
+  s.chapterOne={stage:'complete',attempts:0,wardenHealth:0,decision:'destroy'};
+  s.campaign.completed=['last-stop'];s.campaign.current='last-stop';
+  s.chapterTwo={stage:'code',codeAttempts:0,stalkerHealth:90,mara:'avoid',ending:null,legacyFinaleAllowed:false};
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ await page.locator('#objective').filter({hasText:'año del ticket'}).waitFor({timeout:10000});
+ assert.equal(await page.locator('#diner').isEnabled(),true,'Capítulo II no se desbloquea tras I y KM24');
+ await page.locator('#diner').click();
+ await page.locator('#status').filter({hasText:'THE LAST LIGHT'}).waitFor({timeout:10000});
+ await page.screenshot({path:'artifacts/restaurante-f22.png'});
+ await page.keyboard.down('w');await sleep(1150);await page.keyboard.up('w');
+ await page.keyboard.down('d');await sleep(600);await page.keyboard.up('d');
+ await page.locator('#prompt').filter({hasText:'INTRODUCIR CÓDIGO DE COCINA'}).waitFor({timeout:12000});
+ await page.keyboard.press('e');
+ await page.locator('#encounter-title').filter({hasText:'PUERTA DE COCINA'}).waitFor();
+ await page.screenshot({path:'artifacts/codigo-restaurante-f22.png'});
+ await page.getByRole('button',{name:'4040',exact:true}).click();
+ await page.locator('#encounter-text').filter({hasText:'CÓDIGO 4040 INCORRECTO'}).waitFor();
+ await page.getByRole('button',{name:'1992',exact:true}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'Abre el congelador'}).waitFor();
+ await page.keyboard.press('m');
+ await page.locator('#load').click();
+ const dinerSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(dinerSave.chapterTwo.stage,'freezer');
+ assert.equal(dinerSave.chapterTwo.codeAttempts,1);
+ assert.equal(dinerSave.campaign.current,'missing');
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
- console.log('PASS Chromium F21: PSX, inventario, conducción '+velocity+' km/h, recogida SUNSPUR, progresión radio 404→217, persistencia y capítulo I.');
+ console.log('PASS Chromium F22: PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
