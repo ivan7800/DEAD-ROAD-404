@@ -165,9 +165,41 @@ try{
  await page.locator('#save').click();
  const saved=await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2'));
  assert.ok(saved,'El botón Guardar no funciona');
+ // F28: New Game must not silently discard a save, and confirmed reset must survive reload.
  await page.locator('#new').click();
+ await page.locator('#encounter-title').filter({hasText:'REBOBINAR LA CINTA'}).waitFor();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved,
+  'Abrir confirmación no debe sobrescribir el guardado');
+ await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.includes('CONFIRMAR NUEVA PARTIDA')),true,
+  'Tab debe avanzar dentro del diálogo');
+ await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.includes('CANCELAR')),true,
+  'El foco debe ciclar dentro del diálogo y no saltar al juego');
+ await page.getByRole('button',{name:/CANCELAR · CONSERVAR PARTIDA/}).click();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved,
+  'Cancelar debe preservar la partida anterior');
+ await page.locator('#new').click();
+ await page.getByRole('button',{name:'CONFIRMAR NUEVA PARTIDA'}).click();
+ const f28Fresh=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f28Fresh.km,0);
+ assert.equal(f28Fresh.visited,false);
+ assert.equal(f28Fresh.campaign.completed.length,0);
+ await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#load').click();
  await page.locator('#toast').filter({hasText:'Partida recuperada'}).waitFor();
+ const f28Loaded=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f28Loaded.km,0,'Nueva partida no persistió al recargar');
+ // Restore the earlier authenticated checkpoint for the rest of the campaign smoke.
+ await page.evaluate(raw=>localStorage.setItem('dead-road-404-f19-v2',raw),saved);
+ await page.locator('#load').click();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved);
+ await page.locator('#show-controls').click();
+ await page.locator('#controls-guide:not(.hidden)').waitFor();
+ await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>document.getElementById('controls-guide')?.contains(document.activeElement)),true,
+  'Guía de ayuda debe mantener el foco en el diálogo');
+ await page.locator('#close-controls').click();
  // Consumption and save/load must be functional from actual UI, not only pure tests.
  await page.evaluate(()=>{
   const key='dead-road-404-f19-v2';
