@@ -2,6 +2,16 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 26 — El kilómetro imposible (v0.20.0)
+
+El capítulo V está implementado en el **KM 96**: abre el mapa al completar IV, conduce hasta 96 km y entra en **EL KILÓMETRO IMPOSIBLE**. El nuevo escenario PSX contiene una carretera repetida, tres señales de distancia, un registrador de patrulla y dos balizas. Investiga el poste y la patrulla con [E], activa A/B, descifra **2496** (24 km entre KM72 y KM96) y enfréntate al **Agrimensor** (120 PV; [F] golpear, [SHIFT] esquivar). La elección final guarda nombres (+12 L) o entierra el mapa (+3 piezas). La maleta opcional otorga +18 salud y +2 comida una sola vez.
+
+El guardado sigue en `dead-road-404-f19-v2` y mantiene el formato `version:2`. Las partidas anteriores a la fase 26 conservan el epílogo histórico; las nuevas requieren completar V antes de ese desenlace. El capítulo VI queda pendiente: todavía **no es la campaña definitiva ni una versión 1.0**.
+
+Pruebas automatizadas: [GitHub Actions F26](https://github.com/ivan7800/DEAD-ROAD-404/actions/runs/40217843970) incluye Node, build TypeScript/Vite, Pages y recorrido Chromium real del capítulo V (balizas, código, jefe, decisión y guardado). Quedan pendientes pruebas manuales visuales y de rendimiento en hardware Windows/Linux.
+
+Detalles: [docs/FASE_26_KILOMETRO_IMPOSIBLE.md](docs/FASE_26_KILOMETRO_IMPOSIBLE.md).
+
 ## Edición PSX, 25 de octubre de 2026
 
 **PSX 240p es el modo predeterminado** para todos los usuarios, independientemente de ajustes gráficos antiguos. La versión original y las partidas guardadas permanecen intactas.
