@@ -16,11 +16,18 @@ export function collides(x:number,z:number,radius=.30,boxes:ReadonlyArray<Box2>=
  return boxes.some(b=>x+radius>b.minX&&x-radius<b.maxX&&z+radius>b.minZ&&z-radius<b.maxZ);
 }
 export function walkWithSlide(x:number,z:number,dx:number,dz:number,external:(x:number,z:number)=>boolean=()=>false):{x:number;z:number} {
- // Resolution along each axis lets players slide around corners instead of sticking.
- const obstructed=(a:number,b:number)=>collides(a,b)||external(a,b);
- let nx=Math.max(-40,Math.min(40,x+dx)),nz=Math.max(-65,Math.min(45,z+dz));
- if(!obstructed(nx,nz))return {x:nx,z:nz};
- if(!obstructed(nx,z))return {x:nx,z};
- if(!obstructed(x,nz))return {x,z:nz};
- return {x,z};
+ // Swept movement: small substeps prevent tunnelling through walls on slow frames.
+ if(![x,z,dx,dz].every(Number.isFinite))return {x:0,z:0};
+ const blocked=(a:number,b:number)=>collides(a,b)||external(a,b);
+ const steps=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dz))/.12));
+ const sx=dx/steps,sz=dz/steps;
+ let px=x,pz=z;
+ for(let i=0;i<steps;i++){
+  const nx=Math.max(-40,Math.min(40,px+sx));
+  const nz=Math.max(-65,Math.min(45,pz+sz));
+  if(!blocked(nx,nz)){px=nx;pz=nz;continue;}
+  if(!blocked(nx,pz)){px=nx;continue;}
+  if(!blocked(px,nz)){pz=nz;}
+ }
+ return {x:px,z:pz};
 }

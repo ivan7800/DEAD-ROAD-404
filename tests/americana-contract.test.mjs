@@ -23,10 +23,10 @@ test('Fase 17 no pisa guardados de versiones anteriores',()=>{
  assert.match(main,/const PRIOR_SAVE_KEY='dead-road-404-f14-v2'/);
  assert.match(main,/const OLDER_SAVE_KEY='dead-road-404-f13-v2'/);
  assert.match(main,/const ORIGINAL_SAVE_KEY='dead-road-404-v2'/);
- assert.match(main,/localStorage\.getItem\(PHASE18_SAVE_KEY\)/);
- assert.match(main,/localStorage\.getItem\(PHASE17_SAVE_KEY\)/);
- assert.match(main,/localStorage\.getItem\(PHASE16_SAVE_KEY\)/);
- assert.match(main,/localStorage\.getItem\(LEGACY_SAVE_KEY\)/);
+ assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE18_SAVE_KEY/);
+ assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE17_SAVE_KEY/);
+ assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE16_SAVE_KEY/);
+ assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*LEGACY_SAVE_KEY/);
  assert.doesNotMatch(main,/localStorage\.setItem\(LEGACY_SAVE_KEY/);
  assert.doesNotMatch(main,/localStorage\.setItem\(PHASE18_SAVE_KEY/);
 });
