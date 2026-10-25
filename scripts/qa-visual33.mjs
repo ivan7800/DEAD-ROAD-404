@@ -24,7 +24,7 @@ const chapters=[
 const sizes=[{name:'escritorio',width:1280,height:800},
  {name:'movil',width:390,height:844}];
 const server=spawn(process.platform==='win32'?'npm.cmd':'npm',
- ['run','preview','--','host','127.0.0.1','--port','4178','--strictPort'],
+ ['run','preview','--','--host','127.0.0.1','--port','4178','--strictPort'],
  {stdio:'pipe',shell:process.platform==='win32',detached:process.platform!=='win32',
  env:{...process.env,GITHUB_REPOSITORY:'ivan7800/DEAD-ROAD-404'}});
 let output='';for(const stream of [server.stdout,server.stderr])
