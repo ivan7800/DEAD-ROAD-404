@@ -66,12 +66,12 @@ test('normalización de estado previene máscaras inválidas y partidas malicios
  assert.equal(saved?.version,2);
 });
 test('partidas F25 existentes mantienen su antiguo epílogo; partidas nuevas deben completar V',()=>{
- let legacy=ready();legacy.km=120;legacy.mission.stage='resolved';
+ let legacy=ready();legacy.km=120;legacy.mission={stage:'resolved',choice:'rescue'};
  legacy.chapterFive=undefined;
  const old=normalizeSave(JSON.parse(JSON.stringify(legacy)));
  assert.equal(old?.chapterFive.legacyFinaleAllowed,true);
  assert.equal(shouldOfferFinale(old),true);
- const newer=ready();newer.km=120;newer.mission.stage='resolved';
+ const newer=ready();newer.km=120;newer.mission={stage:'resolved',choice:'rescue'};
  assert.equal(shouldOfferFinale(newer),false);
  newer.chapterFive.stage='complete';newer.chapterFive.decision='remember';
  assert.equal(shouldOfferFinale(newer),true);
