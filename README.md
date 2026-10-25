@@ -2,6 +2,14 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 34 — Revisión visual basada en capturas reales (v0.21.7)
+
+La auditoría manual de las capturas generadas por GitHub Actions en F33 confirmó **solapamiento de capas del HUD en móvil**: cabecera, pausa, estadísticas, rótulos de gráficos, objetivo, mensaje narrativo, resistencia y botones inferiores. La solución reorganiza las franjas superiores e inferiores solo durante conducción/exploración a 640 px o menos, oculta etiquetas de diagnóstico redundantes sin perder las opciones de ajuste y conserva el menú original. Chromium comprueba ahora intersecciones geométricas reales en **18 capturas (6 capítulos × escritorio/móvil/móvil compacto)**; no basta con capturar la pantalla.
+
+La inspección revela además que las escenas I–III son oscuras y de siluetas repetitivas; aún requiere una mejora artística específica con comparación antes/después en capturas, sin alterar de forma arbitraria el tono de terror ni afirmar que ha alcanzado 9,5/10.
+
+Informe reproducible: [Fase 34](docs/FASE_34_REVISION_VISUAL_REAL.md). Las pruebas de GPU física Windows/Linux continúan pendientes.
+
 ## Fase 33 — Auditoría visual de los seis capítulos (v0.21.6)
 
 Se añade `npm run qa:visual`: Chromium obtiene capturas en los seis escenarios PSX, tanto en escritorio 1280×800 como en móvil 390×844. Verifica que el HUD principal y los objetivos permanezcan visibles, que el canvas tenga dimensiones válidas y que no aparezcan errores JavaScript; también fotografía las opciones de alto contraste, texto grande y movimiento reducido. Las capturas se adjuntan al CI para revisión humana.
