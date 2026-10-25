@@ -40,6 +40,14 @@ try{
  const response=await page.goto(base,{waitUntil:'domcontentloaded'});
  assert.equal(response?.status(),200,'La página del juego no responde');
  await page.locator('#objective').filter({hasText:'Investiga'}).waitFor({timeout:20000});
+ // Screen readers should hear objectives only when they change, not all HUD refreshes.
+ const f28RepeatedAnnouncements=await page.evaluate(async()=>{
+  const target=document.getElementById('objective');let n=0;
+  const observer=new MutationObserver(()=>n++);
+  observer.observe(target,{childList:true,characterData:true,subtree:true});
+  await new Promise(resolve=>setTimeout(resolve,900));observer.disconnect();return n;
+ });
+ assert.equal(f28RepeatedAnnouncements,0,'La región viva del objetivo se reescribe sin cambios');
  await page.locator('#art-status').filter({hasText:'ARTE PSX · 240P · SIN GLB PESADOS'}).waitFor({timeout:30000});
  const requestedModels=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.endsWith('.glb')).length);
  assert.equal(requestedModels,0,'El modo PSX no debe solicitar archivos GLB detallados');
@@ -152,6 +160,16 @@ try{
  await page.locator('#explore').click();
  await page.locator('#status').filter({hasText:'EXPLORACIÓN'}).waitFor();
  await page.screenshot({path:'artifacts/exploracion.png'});
+ // Journal must not swallow native arrow-key scrolling when playing with keyboard.
+ await page.keyboard.press('j');
+ await page.locator('#journal:not(.hidden)').waitFor();
+ const f28ScrollAllowed=await page.evaluate(()=>{
+  const e=new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true});
+  window.dispatchEvent(e);return !e.defaultPrevented;
+ });
+ assert.equal(f28ScrollAllowed,true,'El diario bloquea flechas del teclado e impide desplazar texto');
+ await page.keyboard.press('j');
+ await page.locator('#journal:not(.hidden)').waitFor({state:'hidden'});
  // Reach and loot the in-world PSX cache through actual movement and [E].
  await page.keyboard.down('w');
  try{await page.locator('#prompt').filter({hasText:'REGISTRAR CAJA DE SUMINISTROS'}).waitFor({timeout:20000});}
@@ -186,6 +204,7 @@ try{
  assert.equal(f28Fresh.visited,false);
  assert.equal(f28Fresh.campaign.completed.length,0);
  await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#art-status').filter({hasText:'ARTE PSX · 240P'}).waitFor();
  await page.locator('#load').click();
  await page.locator('#toast').filter({hasText:'Partida recuperada'}).waitFor();
  const f28Loaded=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
