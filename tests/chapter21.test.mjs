@@ -60,7 +60,8 @@ test('fin de carretera no se dispara antes del desenlace del capítulo',()=>{
  s=collectChapterFuse(s);s=powerChapterConsole(s);s=tuneChapterFrequency(s,217);s=openChapterHatch(s);
  s=defeatChapterWarden({...s,chapterOne:{...s.chapterOne,wardenHealth:0}});
  s=closeChapterOne(s,'preserve');
- assert.equal(shouldOfferFinale(s),true);
+ assert.equal(shouldOfferFinale(s),false);
+ assert.equal(shouldOfferFinale({...s,chapterTwo:{...s.chapterTwo,stage:'complete'}}),true);
  assert.equal(travel(s,24).chapterOne.stage,'complete');
 });
 test('guardados F20 con misión terminada mantienen el final desbloqueado',()=>{
