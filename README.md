@@ -8,7 +8,7 @@ Se añade `npm run qa:visual`: Chromium obtiene capturas en los seis escenarios 
 
 La prueba de resistencia automatizada aumenta de 18 a **65 segundos**, con cambios de modo, guardados y recargas. Puedes ejecutar una prueba local de 20 minutos con `npm run qa:stability -- --minutes=20`. Requiere `npm ci` y Chromium de Playwright.
 
-Los escenarios se visitan mediante checkpoints válidos y controles de juego reales; esto **no demuestra** una campaña completa desde cero ni calidad visual subjetiva. Consulta [el informe técnico F33](docs/FASE_33_REVISION_VISUAL_Y_ESTABILIDAD.md). Quedan pendientes GPU física Windows/Linux, inspección humana de capturas y pruebas largas de la historia.
+Para realizar la revisión local sin memorizar comandos, usa **QA-33-WINDOWS.cmd** en Windows o **bash QA-33-LINUX.sh** en Linux. Ambos ofrecen un menú para capturas, test prolongado, benchmark de GPU y compilación; no piden privilegios de administrador. En Linux puedes ejecutar `chmod +x QA-33-LINUX.sh` si deseas abrirlo como ejecutable desde el explorador de archivos.\n\nLos escenarios se visitan mediante checkpoints válidos y controles de juego reales; esto **no demuestra** una campaña completa desde cero ni calidad visual subjetiva. Consulta [el informe técnico F33](docs/FASE_33_REVISION_VISUAL_Y_ESTABILIDAD.md). Quedan pendientes GPU física Windows/Linux, inspección humana de capturas y pruebas largas de la historia.
 
 ## Fase 32 — Pulido de diálogos y estabilidad (v0.21.5)
 
