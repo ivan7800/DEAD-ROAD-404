@@ -12,7 +12,7 @@ test('journal exposes an accessible dismiss action and returns focus',()=>{
 });
 test('mobile and landscape dialogs scroll without clipping',()=>{
  const css=read('src/style.css');
- assert.match(css,/\.journal\{\s*max-height:calc/);
+ assert.match(css,/\.journal\{[^}]*max-height:calc/);
  assert.match(css,/\.encounter-card\{\s*max-height:calc/);
  assert.match(css,/\.journal-close\{/);
  assert.match(css,/@media\(max-height:620px\)/);
