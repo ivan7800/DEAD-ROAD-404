@@ -43,7 +43,7 @@ export function normalizeSave(data:unknown):GameState|null {
  const chapterThree=normalizeChapterThree(v.chapterThree,chapterTwo.stage==='complete'||chapterTwo.legacyFinaleAllowed);
  const chapterFour=normalizeChapterFour(v.chapterFour,chapterThree.stage==='complete'||chapterThree.legacyFinaleAllowed);
  // Historical F25 saves may still reach the original KM120 epilogue; new games must play V.
- const chapterFive=normalizeChapterFive(v.chapterFive,v.chapterFive===undefined&&chapterFour.stage==='complete');
+ const chapterFive=normalizeChapterFive(v.chapterFive,v.chapterFive===undefined&&(chapterFour.stage==='complete'||chapterFour.legacyFinaleAllowed||chapterThree.legacyFinaleAllowed||chapterTwo.legacyFinaleAllowed));
  let campaign=normalizeCampaign(v.campaign,{
   mission,ending:v.ending??null,visited:v.visited!,phoneHeard,motelTape,
   encounterResolved:v.encounterResolved??false,km:v.km!,supplyCacheTaken
