@@ -31,7 +31,7 @@ export function normalizeChapterOne(value:unknown,missionAlreadyResolved:boolean
  const health=typeof v.wardenHealth==='number'&&Number.isFinite(v.wardenHealth)?
   Math.max(0,Math.min(WARDEN_MAX_HEALTH,Math.floor(v.wardenHealth))):WARDEN_MAX_HEALTH;
  const decision=v.decision==='destroy'||v.decision==='preserve'?v.decision:null;
- return {stage,attempts,wardenHealth:stage==='choice'||stage==='complete'?0:health,decision:stage==='complete'?decision:null};
+ return {stage:stage==='fight'&&health===0?'choice':stage,attempts,wardenHealth:stage==='choice'||stage==='complete'?0:health,decision:stage==='complete'?decision:null};
 }
 export function nearChapterProp(x:number,z:number,p:{x:number;z:number},radius=2.3):boolean{
  return Number.isFinite(x)&&Number.isFinite(z)&&Math.hypot(x-p.x,z-p.z)<=radius;
