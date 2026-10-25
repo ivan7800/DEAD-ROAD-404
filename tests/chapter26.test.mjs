@@ -74,6 +74,8 @@ test('partidas F25 existentes mantienen su antiguo epílogo; partidas nuevas deb
  const newer=ready();newer.km=120;newer.mission={stage:'resolved',choice:'rescue'};
  assert.equal(shouldOfferFinale(newer),false);
  newer.chapterFive.stage='complete';newer.chapterFive.decision='remember';
+ assert.equal(shouldOfferFinale(newer),false);
+ newer.chapterSix.stage='choice';newer.chapterSix.doubleHealth=0;
  assert.equal(shouldOfferFinale(newer),true);
 });
 test('el Agrimensor necesita orientación, se acerca y ataca con aviso',()=>{
