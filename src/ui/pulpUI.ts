@@ -47,6 +47,7 @@ export class PulpUI {
  get isPaused(){return this.screen!==null;}
  get currentScreen(){return this.screen;}
  get preferences():Readonly<PulpSettings>{return {...this.settings};}
+ setGrain(enabled:boolean){this.update({grain:enabled});}
  get animationsEnabled(){
   return shouldAnimatePulp(this.settings.reducedMotion,window.matchMedia('(prefers-reduced-motion: reduce)').matches);
  }
@@ -143,6 +144,7 @@ export class PulpUI {
    this.close();this.actions.onMenu();this.actions.uiSound('confirm');
   });
   get('pulp-reset-settings').addEventListener('click',()=>{
+   this.actions.setGraphics('psx');
    this.update(DEFAULT_PULP_SETTINGS);
    this.actions.uiSound('confirm');
   });
