@@ -62,7 +62,7 @@ let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film
 let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;let lastPauseDraw=0;
 function applyFilmLook(){document.documentElement.classList.toggle('perf-mode',true);document.documentElement.classList.add('psx-mode');const overlay=$('analog-overlay');const enabled=filmLook==='suave'&&graphics!=='psx';overlay.classList.toggle('disabled',!enabled);overlay.classList.toggle('static-only',!allowAnalogMotion(enabled,window.matchMedia('(prefers-reduced-motion: reduce)').matches||graphics==='rendimiento'));$('analog-label').textContent='ESTÉTICA PSX · 1992';}
 applyFilmLook();
-const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
+const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let newGameConfirmationOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
 const keyPosition=new THREE.Vector3(17.2,1.7,-8.4),veraPosition=new THREE.Vector3(-20,1.7,-40.5),radioPosition=new THREE.Vector3(14.4,1.7,-2.4);
 const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('status'),prompt=$('prompt'),cross=$('crosshair');
 const addLog=(message:string)=>{$('log').textContent=message;};
@@ -811,7 +811,7 @@ function startNewGame(){
  enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();
  townGuardian=freshGuardian();radioOperator=freshRadioOperator();mileHunter=freshMileHunter();
  roadDouble=freshRoadDouble();inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;
- radioUnderground=false;encounterOpen=false;$('encounter').classList.add('hidden');
+ radioUnderground=false;encounterOpen=false;newGameConfirmationOpen=false;$('encounter').classList.add('hidden');
  world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');
  // Commit the reset at the source of the new session, not at a later manual save.
  const persisted=writeSave(store,SAVE_KEY,{...state,mode:'map'});
@@ -820,12 +820,12 @@ function startNewGame(){
 }
 function askNewGame(){
  if(encounterOpen)return;
- encounterOpen=true;input.reset();document.exitPointerLock?.();
+ encounterOpen=true;newGameConfirmationOpen=true;input.reset();document.exitPointerLock?.();
  const dialog=$('encounter'),choices=$('encounter-choices');choices.replaceChildren();
  $('encounter-title').textContent='¿REBOBINAR LA CINTA 404?';
  $('encounter-text').textContent='Empezar de nuevo reemplazará el guardado actual. Esta decisión no se podrá deshacer.';
  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='CANCELAR · CONSERVAR PARTIDA';
- cancel.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');
+ cancel.addEventListener('click',()=>{encounterOpen=false;newGameConfirmationOpen=false;dialog.classList.add('hidden');
   ($('new') as HTMLButtonElement).focus();});
  const confirm=document.createElement('button');confirm.type='button';confirm.textContent='CONFIRMAR NUEVA PARTIDA';
  confirm.addEventListener('click',startNewGame);
@@ -858,6 +858,10 @@ window.addEventListener('keydown',e=>{
  // Modal dialogs own the keyboard; keys never leak back into gameplay.
  if(inventoryOpen){if(!e.repeat&&(k==='i'||k==='escape'))toggleInventory();return;}
  if(helpOpen){if(!e.repeat&&(k==='h'||k==='escape'))toggleHelp();return;}
+ if(encounterOpen&&newGameConfirmationOpen&&k==='escape'){
+  e.preventDefault();encounterOpen=false;newGameConfirmationOpen=false;
+  $('encounter').classList.add('hidden');($('new') as HTMLButtonElement).focus();return;
+ }
  if(encounterOpen){input.reset();return;}
  if(journalOpen){if(!e.repeat&&(k==='j'||k==='escape'))toggleJournal();return;}
  if(k==='escape'&&mode!=='map'&&!e.repeat){
