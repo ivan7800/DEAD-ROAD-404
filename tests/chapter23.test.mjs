@@ -109,7 +109,7 @@ test('el final de carretera requiere terminar III en partidas nuevas',()=>{
  const completed=concludeTown(toChoice(),'seal');
  assert.equal(shouldOfferFinale({...completed,km:120}),false);
  assert.equal(shouldOfferFinale({...completed,km:120,chapterFour:{...completed.chapterFour,stage:'complete'}}),false);
- assert.equal(shouldOfferFinale({...completed,km:120,chapterFour:{...completed.chapterFour,stage:'complete'},chapterFive:{...completed.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'}}),true);
+ assert.equal(shouldOfferFinale({...completed,km:120,chapterFour:{...completed.chapterFour,stage:'complete'},chapterFive:{...completed.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'},chapterSix:{...completed.chapterSix,stage:'choice',doubleHealth:0}}),true);
  assert.equal(travel(completed,24).chapterThree.stage,'complete');
 });
 test('guardar/cargar persiste clave errónea, Elías y guardián herido',()=>{
