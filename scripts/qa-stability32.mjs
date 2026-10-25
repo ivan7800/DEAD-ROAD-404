@@ -122,6 +122,12 @@ try{
   await page.locator('#panel:not(.hidden)').waitFor();
   await page.locator('#save').click();
   report.cycles++;
+  // Every fifteen cycles begin a fresh isolated session to keep long local runs
+  // independent of fuel depletion or story events after reaching KM24.
+  if(report.cycles%15===0){
+   await page.locator('#new').click();
+   await page.getByRole('button',{name:'CONFIRMAR NUEVA PARTIDA'}).click();
+  }
   if(report.cycles%5===0){
    beforeReload=JSON.parse(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')));
    await page.reload({waitUntil:'domcontentloaded'});
