@@ -1,4 +1,5 @@
 import {buildFirebird1992} from './firebird1992.ts';
+import {makeRetroCar,type RetroCar} from './retroCar.ts';
 import {addFirebirdDetails14} from './firebirdDetail14.ts';
 import {brakeLampIntensity} from './arcadeBrakes.ts';
 import * as THREE from 'three';
@@ -34,8 +35,8 @@ function sculptedBody(parent:THREE.Group){
 }
 export class Firebird {
  readonly group=new THREE.Group(); readonly wheels:THREE.Group[]=[];readonly steeringWheel=new THREE.Group();readonly cockpitAnchor=new THREE.Object3D();
- private roll=0;private detailedModel:THREE.Object3D|null=null;private detailedWheels:THREE.Object3D[]=[];private detailedHeadlights:THREE.SpotLight[]=[];private body=new THREE.Group();private headlamps:THREE.SpotLight[]=[];private gauges:THREE.Group[]=[];private brakeLights:THREE.Mesh[]=[];
- constructor(){this.group.add(this.body);const c=this.body;
+ private retro:RetroCar=makeRetroCar();private roll=0;private detailedModel:THREE.Object3D|null=null;private detailedWheels:THREE.Object3D[]=[];private detailedHeadlights:THREE.SpotLight[]=[];private body=new THREE.Group();private headlamps:THREE.SpotLight[]=[];private gauges:THREE.Group[]=[];private brakeLights:THREE.Mesh[]=[];
+ constructor(){this.group.add(this.body,this.retro.group);this.retro.group.visible=false;const c=this.body;
  // Tapered silhouette, sloping windshield and fastback roof (original procedural approximation).
  sculptedBody(c);box(c,2.18,.06,2.2,0,.945,-1.22,paint);
  shape(c,[[-1.16,.82],[-1.12,1.28],[-.86,1.83],[.61,1.83],[1.17,1.08],[1.17,.82]],2.1,-1.05,0,0,paint);
@@ -136,6 +137,8 @@ export class Firebird {
  addFirebirdDetails14(c);
  this.cockpitAnchor.position.set(-.51,1.71,.23);c.add(this.cockpitAnchor);
  }
+ /** Lightweight PSX silhouette used at every quality setting. */
+ setRetro(enabled:boolean){this.retro.group.visible=enabled;this.body.visible=!enabled&&!this.detailedModel;if(this.detailedModel)this.detailedModel.visible=!enabled;}
  /** Replace the procedural fallback only after a complete GLB has loaded. */
  installDetailedModel(model:THREE.Object3D){
   if(this.detailedModel){this.group.remove(this.detailedModel);}
@@ -148,9 +151,9 @@ export class Firebird {
    this.group.add(lamp,lamp.target);this.detailedHeadlights.push(lamp);
   }
  }
- animate(dt:number,speed:number,steer:number,fuel=44,braking=false){this.roll+=speed*dt/0.49;for(let i=0;i<this.wheels.length;i++){this.wheels[i].rotation.x=this.roll;if(i%2===0)this.wheels[i].rotation.y=steer*.24;}this.steeringWheel.rotation.z=steer*.28;this.gauges[0].rotation.z=2-Math.min(1,Math.abs(speed)/23)*4;this.gauges[1].rotation.z=2-Math.min(1,Math.max(0,fuel)/80)*4;for(const lamp of this.brakeLights){(lamp.material as THREE.MeshStandardMaterial).emissiveIntensity=brakeLampIntensity(braking,speed<0);}this.body.rotation.z=THREE.MathUtils.lerp(this.body.rotation.z,-steer*Math.min(Math.abs(speed)/23,1)*.035,Math.min(1,dt*4));
+ animate(dt:number,speed:number,steer:number,fuel=44,braking=false){this.roll+=speed*dt/0.49;for(let i=0;i<this.retro.wheels.length;i++){const wheel=this.retro.wheels[i];wheel.rotation.x=this.roll;if(i<2)wheel.rotation.y=steer*.2;}for(let i=0;i<this.wheels.length;i++){this.wheels[i].rotation.x=this.roll;if(i%2===0)this.wheels[i].rotation.y=steer*.24;}this.steeringWheel.rotation.z=steer*.28;this.gauges[0].rotation.z=2-Math.min(1,Math.abs(speed)/23)*4;this.gauges[1].rotation.z=2-Math.min(1,Math.max(0,fuel)/80)*4;for(const lamp of this.brakeLights){(lamp.material as THREE.MeshStandardMaterial).emissiveIntensity=brakeLampIntensity(braking,speed<0);}this.body.rotation.z=THREE.MathUtils.lerp(this.body.rotation.z,-steer*Math.min(Math.abs(speed)/23,1)*.035,Math.min(1,dt*4));
  for(let i=0;i<this.detailedWheels.length;i++){const w=this.detailedWheels[i];w.rotation.x=this.roll;if(i<2)w.rotation.y=steer*.24;}
  if(this.detailedModel)this.detailedModel.rotation.z=this.body.rotation.z;
  }
- setHeadlights(on:boolean){this.headlamps.forEach(l=>l.visible=on);this.detailedHeadlights.forEach(l=>l.visible=on);}
+ setHeadlights(on:boolean){this.retro.headlights.forEach(l=>l.visible=on);this.headlamps.forEach(l=>l.visible=on);this.detailedHeadlights.forEach(l=>l.visible=on);}
 }

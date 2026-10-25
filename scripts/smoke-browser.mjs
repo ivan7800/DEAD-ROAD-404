@@ -18,13 +18,17 @@ try{
  const response=await page.goto(base,{waitUntil:'domcontentloaded'});
  assert.equal(response?.status(),200,'La página del juego no responde');
  await page.locator('#objective').filter({hasText:'Investiga'}).waitFor({timeout:20000});
- await page.locator('#art-status').filter({hasText:'3/3 MODELOS F19 CARGADOS'}).waitFor({timeout:30000});
+ await page.locator('#art-status').filter({hasText:'ARTE PSX · 240P · SIN GLB PESADOS'}).waitFor({timeout:30000});
+ const requestedModels=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.endsWith('.glb')).length);
+ assert.equal(requestedModels,0,'El modo PSX no debe solicitar archivos GLB detallados');
  assert.equal(errors.length,0,'Errores JS al iniciar: '+errors.join('; '));
  assert.equal(missing.length,0,'Recursos que no cargaron: '+missing.join('; '));
  await page.keyboard.press('F3');
  await page.locator('#perf-panel').filter({hasText:'draw calls'}).waitFor({timeout:10000});
  const monitor=await page.locator('#perf-panel').innerText();
  assert.match(monitor,/DPR [0-9.]+/,'No se muestran datos de resolución real');
+ const pixels=await page.evaluate(()=>{const c=document.querySelector('#scene');return c.width*c.height;});
+ assert.ok(pixels<=110_000,'PSX 240p supera presupuesto de pixeles: '+pixels);
  console.log('RENDER DIAGNOSTIC · '+monitor);
  await page.locator('#drive').click();
  await page.locator('#dashboard.visible').waitFor();

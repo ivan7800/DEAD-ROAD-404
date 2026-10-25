@@ -18,7 +18,7 @@ export class AmericanaLighting17 {
   }
  }
  setGraphics(preset:GraphicsPreset){
-  this.reduced=preset==='rendimiento';
+  this.reduced=preset==='rendimiento'||preset==='psx';
   this.stationInterior.visible=!this.reduced;
   this.motelLamp.visible=!this.reduced;
   this.sodium.intensity=this.reduced?12:22;

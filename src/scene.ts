@@ -4,6 +4,8 @@ import {ArchitecturalPass} from './architecturalPass.ts';
 import {Americana1992} from './americana1992.ts';
 import {RoadsideDetail14} from './roadsideDetail14.ts';
 import {DriveDust} from './driveDust.ts';
+import {createPSXSignage} from './psxSigns.ts';
+import {applyPSXMaterials} from './psxMaterials.ts';
 import {batchStaticModel} from './staticBatch.ts';
 import * as THREE from 'three';
 import type {Mode} from './state.ts';
@@ -17,11 +19,11 @@ function block(parent:THREE.Object3D,w:number,h:number,d:number,x:number,y:numbe
 function cylinder(parent:THREE.Object3D,r:number,h:number,x:number,y:number,z:number,m:THREE.Material,seg=9){let o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o;}
 export class GameWorld {
  readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();
- artStatus:'cargando'|'glb'|'parcial'|'reserva'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
+ artStatus:'cargando'|'glb'|'parcial'|'reserva'|'psx'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
  readonly architecturalPass=new ArchitecturalPass();readonly americana1992=new Americana1992();readonly roadsideDetail14=new RoadsideDetail14(); readonly driveDust:DriveDust;readonly firebird=new Firebird();readonly car=this.firebird.group; readonly roadsideArt=new RoadsideArt(); readonly player=new THREE.Vector3(0,1.7,7); readonly can=new THREE.Vector3(11,0,1);
- readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='equilibrado';private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
+ readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
  constructor(canvas:HTMLCanvasElement){
-  this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
+  this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=false;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.sky=new THREE.Color(0x10121c);this.scene.background=this.sky;this.scene.fog=new THREE.FogExp2(0x423340,.019);
   this.scene.add(new THREE.HemisphereLight(0x887baa,0x4c2824,1.5));const moon=new THREE.DirectionalLight(0x9e9fc9,1.9);moon.position.set(-15,24,-18);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-65;moon.shadow.camera.right=65;moon.shadow.camera.top=65;moon.shadow.camera.bottom=-65;this.scene.add(moon);this.moonLight=moon;
   this.scene.add(this.dangerLight,this.hitLight,this.lighting17.group);
@@ -30,11 +32,16 @@ export class GameWorld {
   this.flashlight.target = this.flashlightTarget;
   this.flashlight.visible=false;
   this.scene.add(this.flashlight,this.flashlightTarget);
-  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
+  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
   // Batch only directly-owned noninteractive scenery; game actors live in groups.
   this.sceneryBatch=batchStaticModel(this.scene,{directOnly:true,cellSize:30});
+  for(const group of [this.stationFallback,this.motelFallback]){
+   const b=batchStaticModel(group,{directOnly:true,cellSize:20});
+   this.sceneryBatch.merged+=b.merged;
+  }
   this.resize();window.addEventListener('resize',()=>this.resize());
-  void this.initArtAssets();
+  // Retro production intentionally never fetches the expensive detailed GLB models.
+  // The old loader is kept only for future offline art inspection.
  }
  async initArtAssets(){
   const report=await loadArtAssets(this.scene,this.firebird,{station:this.stationFallback,motel:this.motelFallback});
@@ -44,7 +51,20 @@ export class GameWorld {
   this.artStatus=report.ok===3?'glb':report.ok>0?'parcial':'reserva';
   document.dispatchEvent(new CustomEvent('deadroad:art-loaded',{detail:report}));
  }
- setGraphics(preset:GraphicsPreset){this.graphicsPreset=preset;this.lighting17.setGraphics(preset);const settings=GRAPHICS[preset];this.driveDust.setPreset(preset);this.renderer.shadowMap.enabled=settings.shadows;this.moonLight.castShadow=settings.shadows;this.moonLight.shadow.mapSize.set(settings.shadowSize,settings.shadowSize);this.moonLight.shadow.map?.dispose();this.moonLight.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;this.renderer.toneMappingExposure=settings.exposure;this.resize();}
+ setGraphics(preset:GraphicsPreset){
+  this.graphicsPreset=preset;
+  // Every preset keeps the original low-poly PSX geometry; G changes only internal resolution.
+  this.artStatus='psx';this.stationFallback.visible=true;this.motelFallback.visible=true;
+  this.architecturalPass.group.visible=false;this.roadsideArt.group.visible=false;
+  this.roadsideDetail14.group.visible=false;this.americana1992.group.visible=false;
+  this.firebird.setRetro(true);
+  this.lighting17.group.visible=false;
+  this.renderer.toneMapping=THREE.NoToneMapping;
+  this.camera.far=88;this.camera.updateProjectionMatrix();
+  this.sky.setHex(0x171523);this.scene.fog=new THREE.FogExp2(0x211b2c,.039);
+  this.scene.traverse(o=>{if(o instanceof THREE.PointLight)o.visible=false;});
+  if(!this.psxMaterialReady){applyPSXMaterials(this.scene);this.psxMaterialReady=true;}
+  this.lighting17.setGraphics(preset);const settings=GRAPHICS[preset];this.driveDust.setPreset(preset);this.renderer.shadowMap.enabled=settings.shadows;this.moonLight.castShadow=settings.shadows;this.moonLight.shadow.mapSize.set(settings.shadowSize,settings.shadowSize);this.moonLight.shadow.map?.dispose();this.moonLight.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;this.renderer.toneMappingExposure=settings.exposure;this.resize();}
  resize(){const w=this.renderer.domElement.clientWidth||innerWidth,h=this.renderer.domElement.clientHeight||innerHeight;this.renderer.setPixelRatio(renderPixelRatio(this.graphicsPreset,window.devicePixelRatio||1,w,h));this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
  private buildLandscape(){block(this.scene,250,.15,250,0,-.15,0,sand);block(this.scene,9,.03,230,0,-.04,-15,asphalt);for(let z=-113;z<104;z+=9){block(this.scene,.15,.01,3,0,-.018,z,mat(0xbda27f));}for(let z=-110;z<105;z+=12){for(const side of [-1,1]){const x=side*(15+(Math.sin(z*4.2)+1)*8);const s=1+Math.abs(Math.sin(z*.42))*3;const stone=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),mat(0x42353e));stone.position.set(x,s*.25,z);stone.scale.set(1,.38,1.1);this.scene.add(stone);}}for(let i=0;i<15;i++){let z=-108+i*14;let x=i%2===0?-31:33;let cactus=mat(0x374737);cylinder(this.scene,.3,3.3,x,1.3,z,cactus,6);block(this.scene,.26,1.7,.26,x+.8,1.2,z,cactus);block(this.scene,.8,.25,.25,x+.5,1.55,z,cactus);} }
  private buildDistantHorizon(){
@@ -143,7 +163,7 @@ export class GameWorld {
  }
  flashDanger(){this.dangerLight.position.copy(this.player);this.dangerLight.intensity=15;}
  flashHit(hit:boolean){if(hit){this.hitLight.position.copy(this.player);this.hitLight.intensity=10;}}
- setAtmosphere(time:number){const dt=this.lastAtmosphereTime>0?Math.max(0,Math.min(.15,time-this.lastAtmosphereTime)):.016;this.lastAtmosphereTime=time;this.roadsideArt.animate(time,true);this.lighting17.animate(time,window.matchMedia('(prefers-reduced-motion: reduce)').matches);this.americana1992.setTime(time,window.matchMedia('(prefers-reduced-motion: reduce)').matches);this.dangerLight.intensity*=Math.exp(-10*dt);this.hitLight.intensity*=Math.exp(-11*dt);if(this.neon)this.neon.intensity=window.matchMedia('(prefers-reduced-motion: reduce)').matches?45:42+Math.sin(time*3.8)*12+Math.sin(time*11)*6;}
+ setAtmosphere(time:number){const dt=this.lastAtmosphereTime>0?Math.max(0,Math.min(.15,time-this.lastAtmosphereTime)):.016;this.lastAtmosphereTime=time;if(this.graphicsPreset!=='psx')this.roadsideArt.animate(time,true);if(this.graphicsPreset!=='psx')this.lighting17.animate(time,window.matchMedia('(prefers-reduced-motion: reduce)').matches);if(this.graphicsPreset!=='psx')this.americana1992.setTime(time,window.matchMedia('(prefers-reduced-motion: reduce)').matches);this.dangerLight.intensity*=Math.exp(-10*dt);this.hitLight.intensity*=Math.exp(-11*dt);if(this.neon&&this.graphicsPreset!=='psx')this.neon.intensity=window.matchMedia('(prefers-reduced-motion: reduce)').matches?45:42+Math.sin(time*3.8)*12+Math.sin(time*11)*6;}
  private buildStationInterior(){
   // Front opening leads into an explorable store, with wall collision controlled in worldCollision.ts.
   const shelf=mat(0x493b3b),packet=mat(0xb2916c),cold=mat(0x49717c),red=mat(0x8c3e3c);
