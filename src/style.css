@@ -159,3 +159,10 @@ html.psx-mode .actions button,html.psx-mode .encounter-choices button{transition
 .journal-timeline p{margin:2px 0;font:12px/1.4 Consolas,monospace;color:#d0bda7}
 @media(max-width:640px){.inventory-access{bottom:54px;left:9px;font-size:10px}
 .inventory-item{grid-template-columns:1fr}.inventory-card{padding:16px}}
+
+/* Chapter II: the diner button announces actual availability without false affordances. */
+#diner{border:2px solid #dc9a66;background:#453047;color:#ffdfae;
+ text-shadow:1px 1px 0 #150e17;font-weight:800;letter-spacing:.05em}
+#diner:not(:disabled):hover,#diner:not(:disabled):focus-visible{
+ outline:2px solid #f7cc8b;background:#663e4b}
+#diner:disabled{opacity:.48;cursor:not-allowed;filter:grayscale(.55)}

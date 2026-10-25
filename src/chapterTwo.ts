@@ -77,7 +77,7 @@ export function dinerObjective(s:GameState):string{
   case 'freezer':return 'CAPÍTULO II · Abre el congelador del fondo [E]';
   case 'stalker':return 'CAPÍTULO II · LA CAMARERA HUECA · [F] atacar · [SHIFT] correr · [I] curarse';
   case 'choice':return 'CAPÍTULO II · Decide el destino de la grabación del restaurante';
-  case 'complete':return 'CAPÍTULO II COMPLETADO · El pueblo sin nombre sigue al otro lado del desierto';
+  case 'complete':return '';
  }
 }
 export function chooseMara(s:GameState,choice:MaraChoice):GameState{

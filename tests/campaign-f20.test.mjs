@@ -4,10 +4,10 @@ import {CHAPTERS,PLAYABLE_CHAPTERS,freshCampaign,recordMilestone,completeChapter
 import {fresh,normalizeSave,travel} from '../src/state.ts';
 import {resolveFinale} from '../src/roadStory.ts';
 
-test('seis capítulos distintos, solo el primero declarado jugable',()=>{
+test('seis capítulos distintos, los dos primeros implementados y demás bloqueados',()=>{
  assert.equal(CHAPTERS.length,6);
  assert.equal(new Set(CHAPTERS.map(c=>c.id)).size,6);
- assert.deepEqual([...PLAYABLE_CHAPTERS],['last-stop']);
+ assert.deepEqual([...PLAYABLE_CHAPTERS],['last-stop','missing']);
  assert.equal(campaignStatus(freshCampaign(),'last-stop'),'active');
  for(const chapter of CHAPTERS.slice(1))assert.equal(campaignStatus(freshCampaign(),chapter.id),'locked');
 });
