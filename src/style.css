@@ -172,3 +172,58 @@ html.psx-mode .actions button,html.psx-mode .encounter-choices button{transition
  text-shadow:1px 1px #100d16;font-weight:800;letter-spacing:.035em}
 #town:not(:disabled):hover,#town:not(:disabled):focus-visible{outline:2px solid #efdbac;background:#4e4252}
 #town:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.55)}
+
+
+/* F32 · Readable, fully reachable dialogs on small/landscape viewports.
+   The game canvas remains full-screen; long text scrolls inside its panel. */
+.journal{
+ max-height:calc(100vh - 154px);
+ max-height:calc(100dvh - 154px);
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ scrollbar-gutter:stable;
+}
+.journal:focus-visible{
+ outline:2px solid #fbd18f;
+ outline-offset:3px;
+}
+.journal-close{
+ display:block;
+ width:100%;
+ min-height:44px;
+ margin-top:14px;
+ padding:10px 14px;
+ background:#53353b;
+ color:#fff0d2;
+ border:2px solid #d3a578;
+ font:700 12px Consolas,monospace;
+ cursor:pointer;
+}
+.journal-close:hover,.journal-close:focus-visible{
+ background:#75453d;
+ outline:2px solid #ffe6ae;
+ outline-offset:2px;
+}
+.encounter{
+ overflow-y:auto;
+ overscroll-behavior:contain;
+}
+.encounter-card{
+ max-height:calc(100vh - 32px);
+ max-height:calc(100dvh - 32px);
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ scrollbar-gutter:stable;
+}
+@media(max-width:640px){
+ .journal{top:110px;right:10px;max-height:calc(100vh - 122px);max-height:calc(100dvh - 122px);}
+ .encounter{padding:10px;}
+ .encounter-card{max-height:calc(100dvh - 20px);padding:clamp(14px,4vw,28px);}
+ .encounter-choices button{min-height:44px;}
+}
+@media(max-height:620px){
+ .journal{top:12px;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);}
+ .encounter{padding:8px;}
+ .encounter-card{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px);}
+ .controls-guide-card,.inventory-card{max-height:calc(100dvh - 24px);}
+}
