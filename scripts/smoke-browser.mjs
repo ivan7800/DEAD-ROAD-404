@@ -23,6 +23,44 @@ try{
  assert.equal(requestedModels,0,'El modo PSX no debe solicitar archivos GLB detallados');
  assert.equal(errors.length,0,'Errores JS al iniciar: '+errors.join('; '));
  assert.equal(missing.length,0,'Recursos que no cargaron: '+missing.join('; '));
+ // F24: new original 1992 main menu and fully functional screen controls.
+ assert.match(await page.locator('#panel h1').innerText(),/DEAD ROAD 404/);
+ await page.locator('#pulp-options-open').click();
+ await page.locator('#pulp-options:not(.hidden)').waitFor();
+ await page.locator('#pulp-graphics').selectOption('cine');
+ await page.locator('#graphics-label').filter({hasText:'450P'}).waitFor();
+ await page.locator('#pulp-graphics').selectOption('psx');
+ await page.locator('#graphics-label').filter({hasText:'240P'}).waitFor();
+ await page.locator('#pulp-high-contrast').check();
+ assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('pulp-high-contrast')),true);
+ await page.locator('#pulp-reduce-motion').check();
+ assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('pulp-reduce-motion')),true);
+ await page.locator('#pulp-large-text').check();
+ assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('pulp-large-text')),true);
+ await page.locator('#pulp-grain').uncheck();
+ assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('pulp-grain')),false);
+ await page.locator('#pulp-volume').evaluate(el=>{
+  el.value='35';el.dispatchEvent(new Event('input',{bubbles:true}));
+ });
+ const optionsPersisted=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-pulp-ui-v1')));
+ assert.equal(optionsPersisted.volume,35);
+ assert.equal(optionsPersisted.highContrast,true);
+ mkdirSync('artifacts',{recursive:true});await page.screenshot({path:'artifacts/opciones-midnight-f24.png'});
+ await page.locator('#pulp-reset-settings').click();
+ await page.locator('#pulp-options-close').click();
+ await page.locator('#pulp-options:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#pulp-chapters-open').click();
+ await page.locator('#pulp-chapters:not(.hidden)').waitFor();
+ assert.equal(await page.locator('#pulp-chapters-list article').count(),6,'Archivo debe contener seis rollos');
+ await page.locator('#pulp-chapters-list').filter({hasText:'CINTA PRECINTADA'}).waitFor();
+ await page.screenshot({path:'artifacts/archivo-capitulos-f24.png'});
+ await page.keyboard.press('Escape');
+ await page.locator('#pulp-chapters:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#pulp-credits-open').click();
+ await page.locator('#pulp-credits:not(.hidden)').waitFor();
+ await page.locator('#pulp-credits-close').click();
+ await page.locator('#pulp-credits:not(.hidden)').waitFor({state:'hidden'});
+ await page.screenshot({path:'artifacts/portada-midnight-f24.png'});
  await page.keyboard.press('F3');
  await page.locator('#perf-panel').filter({hasText:'draw calls'}).waitFor({timeout:10000});
  const monitor=await page.locator('#perf-panel').innerText();
@@ -49,6 +87,19 @@ try{
  mkdirSync('artifacts',{recursive:true});await page.screenshot({path:'artifacts/conduccion.png'});
  const velocity=Number(await page.locator('#speed-number').innerText());
  assert.ok(velocity>0,'El coche no ha acelerado');
+ // F24 pause is an actual suspension of the game, not a decorative overlay.
+ await page.keyboard.press('Escape');
+ await page.locator('#pulp-pause:not(.hidden)').waitFor();
+ const frozenSpeed=await page.locator('#speed-number').innerText();
+ await sleep(250);
+ assert.equal(await page.locator('#speed-number').innerText(),frozenSpeed,'El juego cambia mientras esta en pausa');
+ await page.screenshot({path:'artifacts/pausa-cinta-f24.png'});
+ await page.locator('#pulp-options-from-pause').click();
+ await page.locator('#pulp-options:not(.hidden)').waitFor();
+ await page.locator('#pulp-options-close').click();
+ await page.locator('#pulp-pause:not(.hidden)').waitFor();
+ await page.locator('#pulp-resume').click();
+ await page.locator('#pulp-pause:not(.hidden)').waitFor({state:'hidden'});
  await page.keyboard.press('m');
  await page.locator('#explore').click();
  await page.locator('#status').filter({hasText:'EXPLORACIÓN'}).waitFor();
@@ -191,6 +242,6 @@ try{
  assert.equal(townSave.chapterThree.attempts,1);
  assert.equal(townSave.campaign.current,'nameless');
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
- console.log('PASS Chromium F23: PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
+ console.log('PASS Chromium F24: portada pulp, opciones, capítulos, pausa real, PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
