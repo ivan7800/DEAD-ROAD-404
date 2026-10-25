@@ -2,6 +2,12 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 28 — Guardados seguros y accesibilidad (v0.21.1)
+
+Esta revisión mejora la experiencia sin alterar la estructura de la campaña: «Nueva partida» muestra confirmación y escribe inmediatamente el nuevo guardado, cancelar no modifica la partida anterior, los diálogos del juego retienen el foco de Tab, el diario vuelve a permitir desplazamiento con teclado y los lectores de pantalla reciben avisos solo cuando cambia el objetivo. Se mantienen los seis capítulos y sus cuatro finales.
+
+Auditoría y limitaciones: [FASE_28_AUDITORIA_CALIDAD.md](docs/FASE_28_AUDITORIA_CALIDAD.md). Faltan mediciones de FPS en GPU real, pruebas manuales en Windows/Linux y validación completa de accesibilidad; no se declara 9,5/10 todavía.
+
 ## Fase 27 — Donde termina la carretera (v0.21.0)
 
 **Los seis capítulos de la historia principal ya tienen un recorrido jugable**. Al completar el KM 96 y conducir hasta el **KM 120**, el mapa permite entrar en el último desvío. El nuevo peaje PSX incluye señal del final, registro de 1992, dos relés A/B, barrera con el código **1204** y encuentro contra **El Doble** (140 PV, ataque anunciado y dos ritmos). Desde la elección final se obtienen cuatro desenlaces persistentes, incluido **El coro de los ausentes** si transmitiste el registro desde el pueblo (III), emitiste los nombres desde WXR-404 (IV) y conservaste el mapa del KM 96 (V).
