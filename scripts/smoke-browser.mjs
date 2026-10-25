@@ -15,6 +15,15 @@ try{
  const page=await browser.newPage({viewport:{width:1280,height:800}});
  // Use the opt-in F3 position readout; all movement still uses real keyboard input.
  async function walkTo(targetX,targetZ,tolerance=1.3,timeout=45000){
+  // Reloading the page resets F3; enable telemetry before reading the player.
+  const f3Hidden=await page.locator('#perf-panel').evaluate(el=>el.classList.contains('hidden'));
+  if(f3Hidden)await page.keyboard.press('F3');
+  // Keydown toggles F3 synchronously, but player coordinates appear on the next rAF.
+  await page.waitForFunction(()=>{
+   const el=document.getElementById('perf-panel');
+   return el&&!el.classList.contains('hidden')&&
+    Number.isFinite(Number(el.dataset.playerX))&&Number.isFinite(Number(el.dataset.playerZ));
+  },null,{timeout:8000});
   const deadline=Date.now()+timeout;let lastPos='';
   while(Date.now()<deadline){
    const p=await page.locator('#perf-panel').evaluate(el=>({
@@ -40,6 +49,14 @@ try{
  const response=await page.goto(base,{waitUntil:'domcontentloaded'});
  assert.equal(response?.status(),200,'La página del juego no responde');
  await page.locator('#objective').filter({hasText:'Investiga'}).waitFor({timeout:20000});
+ // Screen readers should hear objectives only when they change, not all HUD refreshes.
+ const f28RepeatedAnnouncements=await page.evaluate(async()=>{
+  const target=document.getElementById('objective');let n=0;
+  const observer=new MutationObserver(()=>n++);
+  observer.observe(target,{childList:true,characterData:true,subtree:true});
+  await new Promise(resolve=>setTimeout(resolve,900));observer.disconnect();return n;
+ });
+ assert.equal(f28RepeatedAnnouncements,0,'La región viva del objetivo se reescribe sin cambios');
  await page.locator('#art-status').filter({hasText:'ARTE PSX · 240P · SIN GLB PESADOS'}).waitFor({timeout:30000});
  const requestedModels=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.endsWith('.glb')).length);
  assert.equal(requestedModels,0,'El modo PSX no debe solicitar archivos GLB detallados');
@@ -152,6 +169,16 @@ try{
  await page.locator('#explore').click();
  await page.locator('#status').filter({hasText:'EXPLORACIÓN'}).waitFor();
  await page.screenshot({path:'artifacts/exploracion.png'});
+ // Journal must not swallow native arrow-key scrolling when playing with keyboard.
+ await page.keyboard.press('j');
+ await page.locator('#journal:not(.hidden)').waitFor();
+ const f28ScrollAllowed=await page.evaluate(()=>{
+  const e=new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true});
+  window.dispatchEvent(e);return !e.defaultPrevented;
+ });
+ assert.equal(f28ScrollAllowed,true,'El diario bloquea flechas del teclado e impide desplazar texto');
+ await page.keyboard.press('j');
+ await page.locator('#journal:not(.hidden)').waitFor({state:'hidden'});
  // Reach and loot the in-world PSX cache through actual movement and [E].
  await page.keyboard.down('w');
  try{await page.locator('#prompt').filter({hasText:'REGISTRAR CAJA DE SUMINISTROS'}).waitFor({timeout:20000});}
@@ -165,9 +192,47 @@ try{
  await page.locator('#save').click();
  const saved=await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2'));
  assert.ok(saved,'El botón Guardar no funciona');
+ // F28: New Game must not silently discard a save, and confirmed reset must survive reload.
  await page.locator('#new').click();
+ await page.locator('#encounter-title').filter({hasText:'REBOBINAR LA CINTA'}).waitFor();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved,
+  'Abrir confirmación no debe sobrescribir el guardado');
+ await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.includes('CONFIRMAR NUEVA PARTIDA')),true,
+  'Tab debe avanzar dentro del diálogo');
+ await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.includes('CANCELAR')),true,
+  'El foco debe ciclar dentro del diálogo y no saltar al juego');
+ await page.getByRole('button',{name:/CANCELAR · CONSERVAR PARTIDA/}).click();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved,
+  'Cancelar debe preservar la partida anterior');
+ await page.locator('#new').click();
+ await page.keyboard.press('Escape');
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved,
+  'Escape en confirmación debe conservar la partida');
+ await page.locator('#new').click();
+ await page.getByRole('button',{name:'CONFIRMAR NUEVA PARTIDA'}).click();
+ const f28Fresh=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f28Fresh.km,0);
+ assert.equal(f28Fresh.visited,false);
+ assert.equal(f28Fresh.campaign.completed.length,0);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#art-status').filter({hasText:'ARTE PSX · 240P'}).waitFor();
  await page.locator('#load').click();
  await page.locator('#toast').filter({hasText:'Partida recuperada'}).waitFor();
+ const f28Loaded=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f28Loaded.km,0,'Nueva partida no persistió al recargar');
+ // Restore the earlier authenticated checkpoint for the rest of the campaign smoke.
+ await page.evaluate(raw=>localStorage.setItem('dead-road-404-f19-v2',raw),saved);
+ await page.locator('#load').click();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2')),saved);
+ await page.locator('#show-controls').click();
+ await page.locator('#controls-guide:not(.hidden)').waitFor();
+ await page.keyboard.press('Tab');
+ assert.equal(await page.evaluate(()=>document.getElementById('controls-guide')?.contains(document.activeElement)),true,
+  'Guía de ayuda debe mantener el foco en el diálogo');
+ await page.locator('#close-controls').click();
  // Consumption and save/load must be functional from actual UI, not only pure tests.
  await page.evaluate(()=>{
   const key='dead-road-404-f19-v2';

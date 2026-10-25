@@ -62,7 +62,7 @@ let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film
 let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;let lastPauseDraw=0;
 function applyFilmLook(){document.documentElement.classList.toggle('perf-mode',true);document.documentElement.classList.add('psx-mode');const overlay=$('analog-overlay');const enabled=filmLook==='suave'&&graphics!=='psx';overlay.classList.toggle('disabled',!enabled);overlay.classList.toggle('static-only',!allowAnalogMotion(enabled,window.matchMedia('(prefers-reduced-motion: reduce)').matches||graphics==='rendimiento'));$('analog-label').textContent='ESTÉTICA PSX · 1992';}
 applyFilmLook();
-const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
+const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let newGameConfirmationOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
 const keyPosition=new THREE.Vector3(17.2,1.7,-8.4),veraPosition=new THREE.Vector3(-20,1.7,-40.5),radioPosition=new THREE.Vector3(14.4,1.7,-2.4);
 const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('status'),prompt=$('prompt'),cross=$('crosshair');
 const addLog=(message:string)=>{$('log').textContent=message;};
@@ -89,7 +89,9 @@ function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].
   canEnterTown(state)?'ENTRAR EN EL PUEBLO SIN NOMBRE · CAPÍTULO III':'EL PUEBLO SIN NOMBRE · DESDE KM 48';
  $('diner').textContent=state.chapterTwo.stage==='complete'?'CAPÍTULO II COMPLETADO · [J] DIARIO':
   dinerAvailable(state)?'ENTRAR EN THE LAST LIGHT · CAPÍTULO II':'RESTAURANTE THE LAST LIGHT · DESDE KM 24';
- $('objective').textContent=(endObjective(state)||mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
+ const nextObjective=(endObjective(state)||mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');
+ // Updating an unchanged live region every quarter-second floods screen readers.
+ if($('objective').textContent!==nextObjective)$('objective').textContent=nextObjective;}
 function switchMode(next:Mode){const previous=mode;input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore'){inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;}panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inRoadEnd?'KM 120 · CAPÍTULO VI':inMile?'KM 96 · CAPÍTULO V':inRadio?(radioUnderground?'REFUGIO UMBRAL · NIVEL -1':'WXR-404 · CAPÍTULO IV'):inTown?'EL PUEBLO SIN NOMBRE · CAPÍTULO III':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inRoadEnd?END_POSITIONS.entry.x:inMile?MILE_POSITIONS.entry.x:inRadio?RADIO_POSITIONS.entry.x:inTown?TOWN_LOCATIONS.entry.x:inDiner?DINER_POSITIONS.entry.x:6,1.7,inRoadEnd?END_POSITIONS.entry.z:inMile?MILE_POSITIONS.entry.z:inRadio?RADIO_POSITIONS.entry.z:inTown?TOWN_LOCATIONS.entry.z:inDiner?DINER_POSITIONS.entry.z:6);yaw=inRoadEnd||inMile||inRadio||inTown||inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);world.setTownVisible(next==='explore'&&inTown);world.setRadioStage(state.chapterFour.stage,state.chapterFour.nora!==null,state.chapterFour.cacheTaken,state.chapterFour.breakersMask);world.setRadioUnderground(radioUnderground);world.setRadioVisible(next==='explore'&&inRadio);world.setMileStage(state.chapterFive.stage,state.chapterFive.beaconsMask,state.chapterFive.cacheTaken);world.setMileVisible(next==='explore'&&inMile);world.setRoadEndStage(state.chapterSix.stage,state.chapterSix.relaysMask,state.chapterSix.suppliesTaken);world.setRoadEndVisible(next==='explore'&&inRoadEnd);hud();
  pulpUi?.setMode(next);
  if(pulpUi&&previous!==next){
@@ -804,15 +806,62 @@ $('road-end').addEventListener('click',()=>{
  switchMode('explore');saveQuietly();notify(state.message);
 });
 $('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
-$('save').addEventListener('click',save);$('load').addEventListener('click',load);$('new').addEventListener('click',()=>{enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();townGuardian=freshGuardian();radioOperator=freshRadioOperator();mileHunter=freshMileHunter();roadDouble=freshRoadDouble();inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');notify('Nueva partida. Las malas decisiones todavía están por llegar.');});
+$('save').addEventListener('click',save);$('load').addEventListener('click',load);/** New-game confirmation preserves the existing save until the player commits. */
+function startNewGame(){
+ enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();
+ townGuardian=freshGuardian();radioOperator=freshRadioOperator();mileHunter=freshMileHunter();
+ roadDouble=freshRoadDouble();inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;
+ radioUnderground=false;encounterOpen=false;newGameConfirmationOpen=false;$('encounter').classList.add('hidden');
+ world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');
+ // Commit the reset at the source of the new session, not at a later manual save.
+ const persisted=writeSave(store,SAVE_KEY,{...state,mode:'map'});
+ notify(persisted?'NUEVA PARTIDA INICIADA · La cinta anterior ha sido reemplazada.':
+  'NUEVA PARTIDA INICIADA · No se ha podido guardar; permite almacenamiento para conservar el progreso.');
+}
+function askNewGame(){
+ if(encounterOpen)return;
+ encounterOpen=true;newGameConfirmationOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');choices.replaceChildren();
+ $('encounter-title').textContent='¿REBOBINAR LA CINTA 404?';
+ $('encounter-text').textContent='Empezar de nuevo reemplazará el guardado actual. Esta decisión no se podrá deshacer.';
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='CANCELAR · CONSERVAR PARTIDA';
+ cancel.addEventListener('click',()=>{encounterOpen=false;newGameConfirmationOpen=false;dialog.classList.add('hidden');
+  ($('new') as HTMLButtonElement).focus();});
+ const confirm=document.createElement('button');confirm.type='button';confirm.textContent='CONFIRMAR NUEVA PARTIDA';
+ confirm.addEventListener('click',startNewGame);
+ choices.append(cancel,confirm);dialog.classList.remove('hidden');cancel.focus();
+}
+$('new').addEventListener('click',askNewGame);
+/** Keep Tab navigation inside active game dialogs. Pulp overlays own their own trap. */
+window.addEventListener('keydown',e=>{
+ if(e.key!=='Tab'||pulpUi?.isPaused)return;
+ const root=encounterOpen?$('encounter'):inventoryOpen?$('inventory-panel'):
+  helpOpen?$('controls-guide'):null;
+ if(!root||root.classList.contains('hidden'))return;
+ const controls=[...root.querySelectorAll<HTMLElement>(
+  'button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled])'
+ )].filter(el=>el.getClientRects().length>0);
+ if(controls.length===0){e.preventDefault();root.tabIndex=-1;root.focus();return;}
+ const first=controls[0],last=controls[controls.length-1];
+ const current=document.activeElement as HTMLElement|null;
+ if(!current||!controls.includes(current)){
+  e.preventDefault();(e.shiftKey?last:first).focus();
+ }else if(e.shiftKey&&current===first){e.preventDefault();last.focus();}
+ else if(!e.shiftKey&&current===last){e.preventDefault();first.focus();}
+},true);
 window.addEventListener('keydown',e=>{
  const k=normalizeKey(e.key);
- const target=e.target as HTMLElement|null;
+ const target=e.target instanceof HTMLElement?e.target:null;
  if(target?.matches('input,textarea,select,[contenteditable="true"]'))return;
- if(capturesGameKey(k,mode) && !target?.closest('button'))e.preventDefault();
+ // Dialogs and journal own their keyboard: allow native scrolling and focus.
+ if(!encounterOpen&&!inventoryOpen&&!helpOpen&&!journalOpen&&capturesGameKey(k,mode)&&!target?.closest('button'))e.preventDefault();
  // Modal dialogs own the keyboard; keys never leak back into gameplay.
  if(inventoryOpen){if(!e.repeat&&(k==='i'||k==='escape'))toggleInventory();return;}
  if(helpOpen){if(!e.repeat&&(k==='h'||k==='escape'))toggleHelp();return;}
+ if(encounterOpen&&newGameConfirmationOpen&&k==='escape'){
+  e.preventDefault();encounterOpen=false;newGameConfirmationOpen=false;
+  $('encounter').classList.add('hidden');($('new') as HTMLButtonElement).focus();return;
+ }
  if(encounterOpen){input.reset();return;}
  if(journalOpen){if(!e.repeat&&(k==='j'||k==='escape'))toggleJournal();return;}
  if(k==='escape'&&mode!=='map'&&!e.repeat){
