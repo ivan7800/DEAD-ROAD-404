@@ -3,7 +3,7 @@
 ## Identidad
 **1992. KM 96.** La carretera lleva veinticuatro kilómetros anunciando la misma distancia. El jugador sale de la emisora WXR-404 con una decisión que vuelve a escucharse en una caja registradora de patrulla abandonada. Las balizas de una carretera que no aparece en el mapa no miden longitud: miden aquello que el viajero recuerda.
 
-## Implementación prevista de la rama F26
+## Implementación de la rama F26
 - Nueva área física low-poly PSX, independiente del escenario de carretera, en TypeScript y Three.js, sin activos remotos ni GLB.
 - Acceso en el mapa al completar IV y alcanzar el KM 96. Entrada real con WASD, E, F, Shift, M, I, J.
 - Misión: poste repetido → registrador → dos balizas independientes A/B → dial ambiental **2496** (24 km entre 72 y 96) → **El Agrimensor** → decisión irreversible.
@@ -21,4 +21,6 @@ node scripts/check-pages-build.mjs
 npm run smoke
 ```
 
-Revisar accesibilidad teclado, ruta física a ambos postes, interacción sin doble cobro, combate de 120 PV, persistencia real del progreso, ausencia de errores JS y compatibilidad de partidas F25. No fusionar si no aprueba CI y no afirmar 9,5/10 sin QA visual/manual.
+**Estado de CI:** completada la prueba real de Chrome con ambas balizas, código fallido y correcto, combate, decisión, guardado/carga, sin errores JS. Ejecución: https://github.com/ivan7800/DEAD-ROAD-404/actions/runs/40217843970
+
+Aún deben comprobarse manualmente accesibilidad completa, legibilidad visual, fluidez en GPU real y una partida larga de principio a fin. No afirmar 9,5/10 sin esas pruebas.
