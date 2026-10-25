@@ -15,6 +15,9 @@ try{
  const page=await browser.newPage({viewport:{width:1280,height:800}});
  // Use the opt-in F3 position readout; all movement still uses real keyboard input.
  async function walkTo(targetX,targetZ,tolerance=1.3,timeout=45000){
+  // Reloading the page resets F3; enable telemetry before reading the player.
+  const f3Hidden=await page.locator('#perf-panel').evaluate(el=>el.classList.contains('hidden'));
+  if(f3Hidden)await page.keyboard.press('F3');
   const deadline=Date.now()+timeout;let lastPos='';
   while(Date.now()<deadline){
    const p=await page.locator('#perf-panel').evaluate(el=>({
