@@ -41,8 +41,8 @@ test('F17: conserva lectura de guardado F16, sin escribirlo',()=>{
  assert.match(main,/const SAVE_KEY='dead-road-404-f19-v2'/);
  assert.match(main,/const PHASE17_SAVE_KEY='dead-road-404-f17-v2'/);
  assert.match(main,/const PHASE16_SAVE_KEY='dead-road-404-f16-v2'/);
- assert.match(main,/getItem\(PHASE17_SAVE_KEY\)/);
- assert.match(main,/getItem\(PHASE16_SAVE_KEY\)/);
+ assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE17_SAVE_KEY/);
+ assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE16_SAVE_KEY/);
  assert.doesNotMatch(main,/setItem\(PHASE17_SAVE_KEY/);
  assert.doesNotMatch(main,/setItem\(PHASE16_SAVE_KEY/);
 });

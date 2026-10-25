@@ -42,7 +42,7 @@ test('F18: rutas y tres GLB integrados sin recursos remotos',()=>{
 test('F18: preserva F17 como origen de guardado, sin sobrescribirlo',()=>{
  const s=get('src/main.ts');
  assert.match(s,/const SAVE_KEY='dead-road-404-f19-v2'/);
- assert.match(s,/getItem\(PHASE17_SAVE_KEY\)/);
+ assert.match(s,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE17_SAVE_KEY/);
  assert.doesNotMatch(s,/setItem\(PHASE17_SAVE_KEY/);
 });
 test('F18: herramientas de autoría reproducibles y lanzadores incluidos',()=>{

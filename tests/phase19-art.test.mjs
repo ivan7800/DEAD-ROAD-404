@@ -31,7 +31,7 @@ test('F19: recursos offline, versiones y guardado migrable',()=>{
  }
  assert.equal(JSON.parse(txt('package.json')).version,'0.19.0');
  const main=txt('src/main.ts');assert.match(main,/const SAVE_KEY='dead-road-404-f19-v2'/);
- assert.match(main,/localStorage\.getItem\(PHASE18_SAVE_KEY\)/);
+ assert.match(main,/readLatestValidSave\(store,\[SAVE_KEY[^\]]*PHASE18_SAVE_KEY/);
  assert.doesNotMatch(main,/localStorage\.setItem\(PHASE18_SAVE_KEY/);
 });
 test('F19: generador reproducible, renders, validación y lanzadores Windows/Linux',()=>{
