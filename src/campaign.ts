@@ -25,7 +25,13 @@ export const MILESTONES={
  cache:'Registraste el botiquín de suministros',
  road24:'Sobreviviste al primer tramo de carretera',
  traveller:'Conociste al hombre de la chaqueta amarilla',
- junction:'Elegiste en el último desvío'
+ junction:'Elegiste en el último desvío',
+ fuse:'Encontraste el fusible del generador SUNSPUR',
+ relay:'Restableciste el cuadro eléctrico',
+ frequency:'Sintonizaste la frecuencia 217',
+ hatch:'Abriste la escotilla del motel MILE 404',
+ warden:'Sobreviviste al Celador de la Frecuencia',
+ chapterChoice:'Decidiste el destino de la transmisión'
 } as const;
 export type MilestoneId=keyof typeof MILESTONES;
 export interface CampaignProgress {current:ChapterId;completed:ChapterId[];milestones:MilestoneId[]}
