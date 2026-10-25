@@ -34,11 +34,13 @@ try{
  await page.locator('#inventory-open').click();
  await page.locator('#inventory-panel:not(.hidden)').waitFor();
  await page.locator('#inventory-list').filter({hasText:'BOTIQUÍN'}).waitFor();
+ mkdirSync('artifacts',{recursive:true});await page.screenshot({path:'artifacts/inventario-f20.png'});
  await page.keyboard.press('i');
  await page.locator('#inventory-panel:not(.hidden)').waitFor({state:'hidden'});
  await page.keyboard.press('j');
  await page.locator('#journal-chapters').filter({hasText:'LA ÚLTIMA PARADA'}).waitFor();
  await page.locator('#journal-chapters').filter({hasText:'BLOQUEADO'}).waitFor();
+ await page.screenshot({path:'artifacts/campana-f20.png'});
  await page.keyboard.press('j');
  await page.locator('#journal:not(.hidden)').waitFor({state:'hidden'});
  await page.locator('#drive').click();
@@ -51,6 +53,15 @@ try{
  await page.locator('#explore').click();
  await page.locator('#status').filter({hasText:'EXPLORACIÓN'}).waitFor();
  await page.screenshot({path:'artifacts/exploracion.png'});
+ // Reach and loot the in-world PSX cache through actual movement and [E].
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'REGISTRAR CAJA DE SUMINISTROS'}).waitFor({timeout:20000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#toast').filter({hasText:'Caja SUNSPUR'}).waitFor({timeout:10000});
+ await page.keyboard.press('i');
+ await page.locator('#inventory-list').filter({hasText:'KIT DE REPARACIÓN'}).waitFor();
+ await page.keyboard.press('i');
  await page.keyboard.press('m');
  await page.locator('#save').click();
  const saved=await page.evaluate(()=>localStorage.getItem('dead-road-404-f19-v2'));
@@ -75,6 +86,6 @@ try{
  await page.locator('#load').click();
  await page.locator('#stats').filter({hasText:'♥ 95'}).waitFor();
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
- console.log('PASS Chromium F20: PSX, diario de seis capítulos, inventario utilizable, conducción '+velocity+' km/h, exploración y guardado/carga.');
+ console.log('PASS Chromium F20: PSX, capítulos, caja SUNSPUR recogida a pie, mochila, curación, conducción '+velocity+' km/h, exploración y guardado/carga.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
