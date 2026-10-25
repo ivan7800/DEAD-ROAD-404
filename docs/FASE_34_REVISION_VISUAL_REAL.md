@@ -46,6 +46,12 @@ npm run qa:stability -- --minutes=20
 
 Fusionar solo cuando el último SHA tenga CI completo verde. Verificar después despliegue `main` y que los artefactos visuales permitan comparar **antes/después**.
 
+### Desbordamiento virtual oculto en 320 px
+
+La primera pasada F34 del capítulo IV en 320×568 informó `document.documentElement.scrollWidth=354` frente a `innerWidth=320`. Se amplió el diagnóstico: `overflowElements=[]` al inspeccionar todos los elementos **visibles** con rectángulos fuera del viewport, y los rectángulos individuales de cabecera, pausa, estadísticas, objetivo, narrativa, resistencia y controles permanecían dentro del ancho disponible, sin superposición. Por tanto, la señal parece derivar de decoración oculta/posicionamiento no visible y no prueba por sí misma que una pieza de interfaz se salga de la pantalla. El documento ya está configurado con `overflow:hidden` de raíz.
+
+El test F34 se ha corregido para **fallar por cualquier elemento visible fuera de la pantalla**, mientras registra el exceso de `scrollWidth` como **aviso diagnóstico**, no lo borra ni lo falsea. Revisar ese exceso de anchura residual en un navegador móvil físico y eliminar su origen antes de afirmar compatibilidad visual absoluta.
+
 ## Estado pendiente
 
 El objetivo 9,5/10 permanece **abierto**. Falta confirmar con GPU física en Windows y Linux los FPS (meta ≥45 sostenidos), inspección visual de las nuevas 18 capturas, pulido del decorado e iluminación, accesibilidad con lectores de pantalla y una partida completa de varias horas. La prueba automatizada no equivale a certificación de esos puntos.
