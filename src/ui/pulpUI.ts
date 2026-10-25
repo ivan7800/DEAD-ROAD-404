@@ -47,6 +47,7 @@ export class PulpUI {
  get isPaused(){return this.screen!==null;}
  get currentScreen(){return this.screen;}
  get preferences():Readonly<PulpSettings>{return {...this.settings};}
+ setGrain(enabled:boolean){this.update({grain:enabled});}
  get animationsEnabled(){
   return shouldAnimatePulp(this.settings.reducedMotion,window.matchMedia('(prefers-reduced-motion: reduce)').matches);
  }
@@ -67,8 +68,11 @@ export class PulpUI {
   if(screen==='options')this.syncControls();
   if(screen==='chapters')this.renderChapters();
   this.actions.uiSound('confirm');
-  const button=get(SCREEN_IDS[screen]).querySelector<HTMLElement>('button:not([disabled]),input,select');
-  button?.focus();
+  const root=get(SCREEN_IDS[screen]);
+  if(screen==='chapters'||screen==='credits'||screen==='options'){
+   const title=root.querySelector<HTMLElement>('h2');
+   if(title){title.tabIndex=-1;title.focus({preventScroll:true});}
+  }else root.querySelector<HTMLElement>('button:not([disabled])')?.focus({preventScroll:true});
  }
  close(){
   if(this.screen===null)return;
@@ -81,7 +85,10 @@ export class PulpUI {
   for(const id of Object.values(SCREEN_IDS))get(id).classList.add('hidden');
   this.screen=null;this.returnScreen=null;
   document.documentElement.classList.remove('pulp-modal-open');
-  this.prevFocus?.focus();
+  // Returning to the poster must not leave its title cropped because Playwright or
+  // keyboard focus had scrolled a lower menu button into view earlier.
+  if(this.mode==='map')get('panel').scrollTop=0;
+  this.prevFocus?.focus({preventScroll:true});
   this.actions.uiSound('back');
  }
  togglePause(){
@@ -143,6 +150,7 @@ export class PulpUI {
    this.close();this.actions.onMenu();this.actions.uiSound('confirm');
   });
   get('pulp-reset-settings').addEventListener('click',()=>{
+   this.actions.setGraphics('psx');
    this.update(DEFAULT_PULP_SETTINGS);
    this.actions.uiSound('confirm');
   });
