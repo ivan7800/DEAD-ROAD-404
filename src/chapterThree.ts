@@ -39,6 +39,7 @@ export function normalizeChapterThree(value:unknown,legacyFinaleAllowed=false):C
  if(!value||typeof value!=='object')return {...freshChapterThree(),legacyFinaleAllowed};
  const p=value as Partial<ChapterThreeProgress>;
  const stage=stages.includes(p.stage as TownStage)?p.stage as TownStage:'locked';
+ if(stage==='locked')return {...freshChapterThree(),legacyFinaleAllowed:p.legacyFinaleAllowed===true};
  const h=typeof p.guardianHealth==='number'&&Number.isFinite(p.guardianHealth)?
   Math.max(0,Math.min(TOWN_GUARDIAN_HEALTH,Math.floor(p.guardianHealth))):TOWN_GUARDIAN_HEALTH;
  const effectiveStage=stage==='guardian'&&h===0?'choice':stage;
