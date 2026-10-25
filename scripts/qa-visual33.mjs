@@ -139,8 +139,13 @@ async function screenshotScene(chapter,index,size){
    'Estado fuera de vista horizontal: '+JSON.stringify(diag));
   assert.ok(diag.status.top>=-2&&diag.status.bottom<=size.height+2,
    'Estado fuera de vista vertical: '+JSON.stringify(diag));
-  assert.ok(diag.documentWidth<=size.width+3,
-   'Overflow horizontal '+chapter.title+': '+JSON.stringify(diag));
+  // ScrollWidth also counts hidden/offscreen tape decoration. The screenshot
+  // must reject any ACTUALLY VISIBLE element outside the viewport.
+  assert.equal(diag.overflowElements.length,0,
+   'Elementos visibles fuera del viewport '+chapter.title+': '+JSON.stringify(diag));
+  if(diag.documentWidth>size.width+3)
+   console.log('F34 AVISO: scrollWidth virtual '+diag.documentWidth+' > '+size.width+
+    ' sin elementos visibles fuera de pantalla · '+chapter.id+' '+size.name);
   assert.ok(diag.objectiveText?.trim().length>0,'Objetivo ausente: '+chapter.title);
   if(size.width<=390){
    const overlaps=(a,b)=>Boolean(a&&b&&
