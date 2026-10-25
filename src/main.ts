@@ -3,6 +3,8 @@ import {safeStorage,readPreference,writePreference,writeSave,readLatestValidSave
 import {shouldOfferFinale,resolveFinale,roadObjective,ENDINGS,FINALE_OPTIONS,type FinalApproach} from './roadStory.ts';
 import {stepArcadeDrive} from './arcadeDrive.ts';
 import {roadEdgeImpact,repairVehicle} from './vehicleWear.ts';
+import {ITEMS,addItem,inventoryTotal,useItem,openSupplyCache,CACHE_POSITION,type ItemId} from './inventory.ts';
+import {CHAPTERS,MILESTONES,campaignStatus,recordMilestone} from './campaign.ts';
 import {walkWithSlide} from './worldCollision.ts';
 import {answerPhone,canAnswerPhone,isAtPhone} from './phone1992.ts';
 import {normalizeFilmLook,toggleFilmLook,allowAnalogMotion,type FilmLook} from './filmLook.ts';
@@ -26,7 +28,7 @@ const store=safeStorage();
 const $=(id:string)=>document.getElementById(id)!;
 const canvas=$('scene') as HTMLCanvasElement,world=new GameWorld(canvas);
 let graphics:GraphicsPreset=graphicsPreset(readPreference(store,'dead-road-404-psx-graphics'));world.setGraphics(graphics);
-let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
+let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
 let cameraMode:CameraMode=validCamera(readPreference(store,'dead-road-404-camera'));
 let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film-look'));
 let steering=0;let helpOpen=false;let impactCooldown=0;
@@ -39,8 +41,8 @@ const addLog=(message:string)=>{$('log').textContent=message;};
 $('art-status').textContent='ARTE PSX · 240P · SIN GLB PESADOS';
 function beep(freq:number,duration=.12){soundscape.beep(freq,duration);}
 function notify(message:string){$('toast').textContent=message;$('toast').classList.add('show');toastUntil=performance.now()+3400;addLog(message);}
-function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].label+' · [G] CAMBIAR';const text=`🪓 ${enemy.alive?'AMENAZA':'DESPEJADO'}  |  ⛽ ${state.fuel.toFixed(1)} L  |  🍞 ${state.food}  |  ♥ ${state.health}  |  🔧 ${state.parts}  |  🚗 ${state.carCondition.toFixed(0)}%  |  ${state.km} km`;$('stats').textContent=text;$('camera-label').textContent=mode==='drive'?`CÁMARA: ${CAMERA_LABELS[cameraMode]} · [C] CAMBIAR · [L] LUCES`:'';$('dashboard').classList.toggle('visible',mode==='drive');$('stamina-wrap').classList.toggle('visible',mode==='explore');$('objective').textContent=(roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
-function switchMode(next:Mode){input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}mode=next;state.mode=mode;panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(6,1.7,6);yaw=Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);hud();}
+function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].label+' · [G] CAMBIAR';const text=`🪓 ${enemy.alive?'AMENAZA':'DESPEJADO'}  |  ⛽ ${state.fuel.toFixed(1)} L  |  🍞 ${state.food}  |  ♥ ${state.health}  |  🔧 ${state.parts}  |  🚗 ${state.carCondition.toFixed(0)}%  |  ${state.km} km  |  🎒 ${inventoryTotal(state.inventory)} objetos`;$('stats').textContent=text;$('camera-label').textContent=mode==='drive'?`CÁMARA: ${CAMERA_LABELS[cameraMode]} · [C] CAMBIAR · [L] LUCES`:'';$('dashboard').classList.toggle('visible',mode==='drive');$('stamina-wrap').classList.toggle('visible',mode==='explore');$('objective').textContent=(roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
+function switchMode(next:Mode){input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(6,1.7,6);yaw=Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);hud();}
 function toggleHelp(){helpOpen=!helpOpen;$('controls-guide').classList.toggle('hidden',!helpOpen);input.reset();document.exitPointerLock?.();if(helpOpen)$('close-controls').focus();}
 $('show-controls').addEventListener('click',toggleHelp);$('close-controls').addEventListener('click',toggleHelp);
 function toggleJournal(){
@@ -48,8 +50,63 @@ function toggleJournal(){
  const journal=$('journal');journal.classList.toggle('hidden',!journalOpen);
  $('journal-stage').textContent=missionObjective(state.mission);
  $('journal-record').textContent=(state.motelTape?'CINTA DEL MOTEL: Recuperada · +1 pieza y +2 comida.\n':'')+(state.phoneHeard?'CABINA TELEFÓNICA: la voz conocía una fecha que todavía no ha llegado.\n':'')+(state.mission.stage==='resolved' ? 'Decisión registrada: '+({rescue:'Vera viaja contigo',take:'Cobraste por ayudar',leave:'Vera permanece en el motel'}[state.mission.choice!]||'Desconocida') : 'Pista: los secretos de la estación se descubren explorando y escuchando.');
+ const chapters=$('journal-chapters');chapters.replaceChildren();
+ for(const chapter of CHAPTERS){
+  const row=document.createElement('div');
+  const progress=campaignStatus(state.campaign,chapter.id);
+  row.className='journal-chapter '+progress;
+  const status=progress==='completed'?'COMPLETADO':progress==='active'?'EN CURSO':progress==='available'?'DISPONIBLE':'BLOQUEADO · PRÓXIMO CAPÍTULO';
+  const title=document.createElement('strong');title.textContent=chapter.number+' · '+chapter.title+' · '+status;
+  const setting=document.createElement('small');setting.textContent=chapter.setting;
+  row.append(title,setting);chapters.append(row);
+ }
+ const timeline=$('journal-timeline');timeline.replaceChildren();
+ if(state.campaign.milestones.length===0){
+  const empty=document.createElement('p');empty.textContent='Todavía no has registrado pistas.';timeline.append(empty);
+ }else{
+  for(const id of state.campaign.milestones){
+   const item=document.createElement('p');item.textContent='▸ '+MILESTONES[id];timeline.append(item);
+  }
+ }
  if(journalOpen){keys.clear();document.exitPointerLock?.();}
 }
+
+function renderInventory(){
+ const list=$('inventory-list');list.replaceChildren();
+ let shown=0;
+ for(const [id,item] of Object.entries(ITEMS) as Array<[ItemId,(typeof ITEMS)[ItemId]]>){
+  const quantity=state.inventory[id];if(quantity<=0)continue;
+  shown++;
+  const row=document.createElement('div');row.className='inventory-item';
+  const description=document.createElement('div');
+  const title=document.createElement('strong');title.textContent=item.name+' ×'+quantity;
+  const detail=document.createElement('small');detail.textContent=item.description;
+  description.append(title,detail);
+  const use=document.createElement('button');use.type='button';
+  use.textContent=item.kind==='quest'?'PISTA':'UTILIZAR';use.disabled=item.kind==='quest';
+  use.addEventListener('click',()=>{
+   const result=useItem(state,id);
+   if(result.used){state=result.state;saveQuietly();hud();renderInventory();}
+   notify(result.message);
+  });
+  row.append(description,use);list.append(row);
+ }
+ if(!shown){const empty=document.createElement('p');empty.textContent='La mochila está vacía. Explora SUNSPUR en busca de suministros.';list.append(empty);}
+ $('inventory-description').textContent='Capítulo '+CHAPTERS.find(x=>x.id===state.campaign.current)!.number+' · '+inventoryTotal(state.inventory)+' objetos · Los objetos de historia no se consumen.';
+}
+function toggleInventory(){
+ if(encounterOpen||helpOpen)return;
+ inventoryOpen=!inventoryOpen;
+ $('inventory-panel').classList.toggle('hidden',!inventoryOpen);
+ if(inventoryOpen){
+  if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}
+  input.reset();document.exitPointerLock?.();renderInventory();
+  ($('inventory-close') as HTMLButtonElement).focus();
+ }else{($('inventory-access') as HTMLButtonElement).focus();}
+}
+$('inventory-access').addEventListener('click',toggleInventory);
+$('inventory-open').addEventListener('click',toggleInventory);
+$('inventory-close').addEventListener('click',toggleInventory);
 function showEncounter(){if(!shouldOfferEncounter(state)||encounterOpen)return;encounterOpen=true;input.reset();document.exitPointerLock?.();const dialog=$('encounter');$('encounter-title').textContent=ENCOUNTER.title;$('encounter-text').textContent=ENCOUNTER.intro;const choices=$('encounter-choices');choices.replaceChildren();for(const option of ENCOUNTER.choices){const btn=document.createElement('button');btn.type='button';btn.textContent=option.label;btn.addEventListener('click',()=>{const next=resolveEncounter(state,option.id as EncounterChoice);if(!next.encounterResolved){notify(next.message);return;}state=next;encounterOpen=false;dialog.classList.add('hidden');notify(next.message);hud();});choices.append(btn);}dialog.classList.remove('hidden');(choices.querySelector('button') as HTMLButtonElement|null)?.focus();}
 function showMissionDialogue(){if(encounterOpen)return;encounterOpen=true;input.reset();document.exitPointerLock?.();const dialog=$('encounter');$('encounter-title').textContent='VERA · LA ÚLTIMA CLIENTA';$('encounter-text').textContent='«El tipo de la radio llevaba muerto dos días antes de hablar. Tengo un mapa que no debería existir. ¿Me llevas o nos cobramos mutuamente por respirar?»';const choices=$('encounter-choices');choices.replaceChildren();for(const opt of MISSION_CHOICES){const b=document.createElement('button');b.type='button';b.textContent=opt.label+' — '+opt.description;b.addEventListener('click',()=>{const prior=state.mission;state.mission=advanceMission(prior,'talk',opt.id as MissionChoice);if(state.mission.stage==='resolved'&&prior.stage!=='resolved'){if(opt.id==='rescue'){state.food=Math.max(0,state.food-3);state.parts+=1;}else if(opt.id==='take'){state.parts+=2;state.health=Math.max(0,state.health-10);}else state.food+=5;notify('CAPÍTULO I COMPLETADO · '+opt.label+' · La carretera se cobra lo suyo.');save();}encounterOpen=false;dialog.classList.add('hidden');hud();if(shouldOfferFinale(state))showFinale();});choices.append(b);}dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();}
 function showFinale(){
