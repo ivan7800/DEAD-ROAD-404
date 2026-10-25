@@ -8,6 +8,8 @@ import {DinerScene} from './dinerScene.ts';
 import {TownScene} from './townScene.ts';
 import {RadioScene} from './radioScene.ts';
 import {MileScene} from './mileScene.ts';
+import {RoadEndScene} from './roadEndScene.ts';
+import type {RoadEndStage} from './chapterSix.ts';
 import type {MileStage} from './chapterFive.ts';
 import type {RadioStage} from './chapterFour.ts';
 import type {TownStage} from './chapterThree.ts';
@@ -30,7 +32,7 @@ export class GameWorld {
  readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();readonly legacyEnvironment=new THREE.Group();
  artStatus:'cargando'|'glb'|'parcial'|'reserva'|'psx'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
  readonly architecturalPass=new ArchitecturalPass();readonly americana1992=new Americana1992();readonly roadsideDetail14=new RoadsideDetail14(); readonly driveDust:DriveDust;readonly firebird=new Firebird();readonly car=this.firebird.group; readonly roadsideArt=new RoadsideArt(); readonly player=new THREE.Vector3(0,1.7,7); readonly can=new THREE.Vector3(11,0,1);
- readonly diner=new DinerScene();readonly town=new TownScene();readonly radio=new RadioScene();readonly mile=new MileScene();readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private fuseVisual=new THREE.Group();private consoleVisual=new THREE.Group();private hatchVisual=new THREE.Group();readonly wardenVisual=new THREE.Group();private wardenEye:THREE.Mesh|null=null;private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
+ readonly diner=new DinerScene();readonly town=new TownScene();readonly radio=new RadioScene();readonly mile=new MileScene();readonly roadEnd=new RoadEndScene();readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private fuseVisual=new THREE.Group();private consoleVisual=new THREE.Group();private hatchVisual=new THREE.Group();readonly wardenVisual=new THREE.Group();private wardenEye:THREE.Mesh|null=null;private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
  constructor(canvas:HTMLCanvasElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=false;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.sky=new THREE.Color(0x10121c);this.scene.background=this.sky;this.scene.fog=new THREE.FogExp2(0x423340,.019);
@@ -41,10 +43,10 @@ export class GameWorld {
   this.flashlight.target = this.flashlightTarget;
   this.flashlight.visible=false;
   this.scene.add(this.flashlight,this.flashlightTarget);
-  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.buildChapterOneProps();this.scene.add(this.diner.group,this.town.group,this.radio.group,this.mile.group);this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
+  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.buildChapterOneProps();this.scene.add(this.diner.group,this.town.group,this.radio.group,this.mile.group,this.roadEnd.group);this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
   // Batch only directly-owned noninteractive scenery; game actors live in groups.
   this.sceneryBatch=batchStaticModel(this.scene,{directOnly:true,cellSize:30});
-  for(const group of [this.stationFallback,this.motelFallback,this.diner.scenery,this.town.scenery,this.radio.surfaceScenery,this.radio.bunkerScenery,this.mile.scenery]){
+  for(const group of [this.stationFallback,this.motelFallback,this.diner.scenery,this.town.scenery,this.radio.surfaceScenery,this.radio.bunkerScenery,this.mile.scenery,this.roadEnd.scenery]){
    const b=batchStaticModel(group,{directOnly:true,cellSize:20});
    this.sceneryBatch.merged+=b.merged;
   }
@@ -53,7 +55,7 @@ export class GameWorld {
   // Batch first, then reparent without altering transformations or draw calls.
   this.legacyEnvironment.name='BASE_ROAD_STATION_AND_MOTEL';
   for(const object of [...this.scene.children]){
-   if(object===this.diner.group||object===this.town.group||object===this.radio.group||object===this.mile.group||
+   if(object===this.diner.group||object===this.town.group||object===this.radio.group||object===this.mile.group||object===this.roadEnd.group||
       object===this.car||object===this.flashlightTarget||object instanceof THREE.Light)continue;
    this.legacyEnvironment.add(object);
   }
@@ -301,8 +303,11 @@ export class GameWorld {
    this.wardenEye.scale.x=telegraph?1.7:1;
   }
  }
- setRadioVisible(visible:boolean){this.radio.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.mile.group.visible;}
- setMileVisible(visible:boolean){this.mile.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.radio.group.visible;}
+ setRadioVisible(visible:boolean){this.radio.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.mile.group.visible&&!this.roadEnd.group.visible;}
+ setMileVisible(visible:boolean){this.mile.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.radio.group.visible&&!this.roadEnd.group.visible;}
+ setRoadEndVisible(visible:boolean){this.roadEnd.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.radio.group.visible&&!this.mile.group.visible;}
+ setRoadEndStage(stage:RoadEndStage,mask:number,suppliesTaken:boolean){this.roadEnd.setStage(stage,mask,suppliesTaken);}
+ setRoadDouble(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.roadEnd.setDouble(x,z,visible,telegraph,time);}
  setMileStage(stage:MileStage,mask:number,cacheTaken:boolean){this.mile.setStage(stage,mask,cacheTaken);}
  setMileHunter(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.mile.setHunter(x,z,visible,telegraph,time);}
  setRadioUnderground(value:boolean){this.radio.setUnderground(value);}
