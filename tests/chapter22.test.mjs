@@ -90,7 +90,8 @@ test('el final de la carretera requiere completar II en partidas nuevas',()=>{
  assert.equal(shouldOfferFinale(s),false);
  const conclusion=concludeDiner(toChoice(),'broadcast');
  assert.equal(shouldOfferFinale({...conclusion,km:120}),false);
- assert.equal(shouldOfferFinale({...conclusion,km:120,chapterThree:{...conclusion.chapterThree,stage:'complete'}}),true);
+ assert.equal(shouldOfferFinale({...conclusion,km:120,chapterThree:{...conclusion.chapterThree,stage:'complete'}}),false);
+ assert.equal(shouldOfferFinale({...conclusion,km:120,chapterThree:{...conclusion.chapterThree,stage:'complete'},chapterFour:{...conclusion.chapterFour,stage:'complete'}}),true);
 });
 test('guardar/cargar conserva intentos, salud enemiga, Mara y pista',()=>{
  let s=started();s=chooseMara(s,'trust');s=readDinerTicket(s);
@@ -104,7 +105,7 @@ test('guardar/cargar conserva intentos, salud enemiga, Mara y pista',()=>{
  assert.equal(result?.campaign.current,'missing');
 });
 test('los guardados F21 conservan el antiguo epílogo sin desbloquear falsamente II',()=>{
- const old={...arrived(),km:120};delete old.chapterTwo;delete old.chapterThree;
+ const old={...arrived(),km:120};delete old.chapterTwo;delete old.chapterThree;delete old.chapterFour;
  const result=normalizeSave(old);assert.ok(result);
  assert.equal(result.chapterTwo.stage,'locked');
  assert.equal(result.chapterTwo.legacyFinaleAllowed,true);

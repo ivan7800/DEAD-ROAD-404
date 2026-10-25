@@ -1,4 +1,4 @@
-/** Progressive campaign: only implemented chapters are playable; IV–VI remain locked. */
+/** Progressive campaign: chapters I–IV are playable; V–VI remain locked. */
 import type {MissionProgress} from './mission.ts';
 import type {EndingId} from './roadStory.ts';
 
@@ -12,7 +12,7 @@ export const CHAPTERS=[
 ] as const;
 export type ChapterId=typeof CHAPTERS[number]['id'];
 /** Each new chapter unlocks only when its implementation and QA exist. */
-export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing','nameless']);
+export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing','nameless','dead-frequency']);
 export const MILESTONES={
  station:'Entraste en la gasolinera SUNSPUR',
  radio:'Escuchaste la frecuencia 404',
@@ -48,7 +48,20 @@ export const MILESTONES={
  townChapel:'Abriste la puerta del campanario',
  townGuardian:'Sobreviviste al Campanero',
  townSupplies:'Recuperaste los suministros del ayuntamiento',
- townDecision:'Decidiste el destino del registro de desaparecidos'
+ townDecision:'Decidiste el destino del registro de desaparecidos',
+ radioArrival:'Llegaste a la emisora abandonada WXR-404',
+ radioNora:'Escuchaste a Nora, última técnica de transmisión',
+ radioSign:'Encontraste la placa del Proyecto Umbral',
+ radioRelay:'Reactivaste el relé exterior de WXR-404',
+ radioArchive:'Escuchaste la cinta maestra del estudio',
+ radioTuned:'Sintonizaste el mezclador a las 02:17',
+ radioBunker:'Descendiste al refugio UMBRAL',
+ radioDecoded:'Descifraste el terminal del refugio con 03:13',
+ radioBreaker:'Desconectaste el primer circuito de contención',
+ radioContainment:'Apagaste ambas fuentes y liberaste al Operador',
+ radioOperator:'Sobreviviste al Operador de la Frecuencia Muerta',
+ radioSupplies:'Recuperaste el equipo médico de la emisora',
+ radioDecision:'Decidiste el destino de la emisión de los desaparecidos'
 } as const;
 export type MilestoneId=keyof typeof MILESTONES;
 export interface CampaignProgress {current:ChapterId;completed:ChapterId[];milestones:MilestoneId[]}
@@ -95,7 +108,8 @@ export function normalizeCampaign(data:unknown,legacy?:LegacyCampaignState):Camp
    if(raw===expected&&PLAYABLE_CHAPTERS.has(raw as ChapterId))validCompleted.push(raw as ChapterId);
   }
  }
- const normalizedCurrent=v.current==='nameless'&&validCompleted.includes('missing')?'nameless':
+ const normalizedCurrent=v.current==='dead-frequency'&&validCompleted.includes('nameless')?'dead-frequency':
+  v.current==='nameless'&&validCompleted.includes('missing')?'nameless':
   v.current==='missing'&&validCompleted.includes('last-stop')?'missing':'last-stop';
  let progress:CampaignProgress={
   current:normalizedCurrent,
