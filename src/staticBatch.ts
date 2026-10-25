@@ -21,11 +21,24 @@ export function batchStaticModel(root:THREE.Object3D,options:{directOnly?:boolea
   }).join('|');
   const material=mesh.material;
   // Canonicalize ONLY plain, untextured factory materials; repeated posts share draw calls.
-  const plain=material instanceof THREE.MeshStandardMaterial && !material.map&&!material.normalMap&&!material.alphaMap&&!material.aoMap&&!material.emissiveMap&&!material.roughnessMap&&!material.metalnessMap&&!material.envMap;
-  const sameLook=plain?
+  const plainStandard=material instanceof THREE.MeshStandardMaterial &&
+    !material.map&&!material.normalMap&&!material.alphaMap&&!material.aoMap&&!material.emissiveMap&&
+    !material.roughnessMap&&!material.metalnessMap&&!material.envMap&&!material.lightMap;
+  // After applyPSXMaterials the same objects become untextured Lambert meshes.
+  // Rebatch by palette-equivalent appearance, never by color alone or on interactive groups.
+  const plainLambert=material instanceof THREE.MeshLambertMaterial &&
+    !material.map&&!material.normalMap&&!material.alphaMap&&!material.aoMap&&!material.emissiveMap&&
+    !material.lightMap&&!material.envMap&&!material.vertexColors&&!material.transparent&&!material.wireframe;
+  const sameLook=plainStandard?
     [material.type,material.color.getHexString(),material.roughness,material.metalness,
      material.emissive.getHexString(),material.emissiveIntensity,material.side,
-     material.flatShading,material.vertexColors,material.opacity,material.depthWrite].join(':'):
+     material.flatShading,material.vertexColors,material.opacity,material.depthWrite,
+     material.depthTest,material.alphaTest,material.blending,material.wireframe].join(':'):
+    plainLambert?
+    [material.type,material.color.getHexString(),material.emissive.getHexString(),
+     material.emissiveIntensity,material.side,material.flatShading,material.opacity,
+     material.depthWrite,material.depthTest,material.alphaTest,material.blending,
+     material.fog,material.toneMapped].join(':'):
     material.uuid;
   const center=mesh.getWorldPosition(new THREE.Vector3());
   const cell=options.cellSize&&options.cellSize>0?Math.floor(center.x/options.cellSize)+','+Math.floor(center.z/options.cellSize):'all';
