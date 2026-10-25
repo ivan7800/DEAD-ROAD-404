@@ -48,7 +48,7 @@ test('Mara es una decisión única con consecuencia real y sin duplicaciones',()
  assert.equal(trusted.chapterTwo.mara,'trust');
  assert.deepEqual(chooseMara(trusted,'trust'),trusted);
  const distrust=chooseMara(s,'avoid');assert.equal(distrust.food,s.food);
- assert.equal(chooseMara(fresh(),'trust'),fresh());
+ assert.deepEqual(chooseMara(fresh(),'trust'),fresh());
 });
 test('puzle completo: ticket, neón, libro, cuatro cifras y congelador',()=>{
  let s=started();

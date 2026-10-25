@@ -76,10 +76,18 @@ export function normalizeCampaign(data:unknown,legacy?:LegacyCampaignState):Camp
  const v=data&&typeof data==='object'?data as Partial<CampaignProgress>:{};
  const validMilestones=Array.isArray(v.milestones)?
   [...new Set(v.milestones.filter((x):x is MilestoneId=>typeof x==='string'&&milestones.includes(x as MilestoneId)))]:[];
- const validCompleted=Array.isArray(v.completed)?
-  [...new Set(v.completed.filter((x):x is ChapterId=>typeof x==='string'&&ids.includes(x as ChapterId)&&PLAYABLE_CHAPTERS.has(x as ChapterId)))]:[];
+ // Only accept completed chapters in real campaign order. Malformed saves cannot
+ // mark chapter II complete before I, or unlock later chapters prematurely.
+ const validCompleted:ChapterId[]=[];
+ if(Array.isArray(v.completed)){
+  for(const raw of v.completed){
+   const expected=CHAPTERS[validCompleted.length]?.id;
+   if(raw===expected&&PLAYABLE_CHAPTERS.has(raw as ChapterId))validCompleted.push(raw as ChapterId);
+  }
+ }
+ const normalizedCurrent=v.current==='missing'&&validCompleted.includes('last-stop')?'missing':'last-stop';
  let progress:CampaignProgress={
-  current:typeof v.current==='string'&&PLAYABLE_CHAPTERS.has(v.current as ChapterId)?v.current as ChapterId:'last-stop',
+  current:normalizedCurrent,
   completed:validCompleted,
   milestones:validMilestones
  };

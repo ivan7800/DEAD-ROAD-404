@@ -65,7 +65,7 @@ test('fin de carretera no se dispara antes del desenlace del capítulo',()=>{
  assert.equal(travel(s,24).chapterOne.stage,'complete');
 });
 test('guardados F20 con misión terminada mantienen el final desbloqueado',()=>{
- const old={...fresh(),mission:{stage:'resolved',choice:'rescue'},km:120};delete old.chapterOne;
+ const old={...fresh(),mission:{stage:'resolved',choice:'rescue'},km:120};delete old.chapterOne;delete old.chapterTwo;
  const restored=normalizeSave(old);assert.ok(restored);
  assert.equal(restored.chapterOne.stage,'complete');assert.equal(shouldOfferFinale(restored),true);
 });
