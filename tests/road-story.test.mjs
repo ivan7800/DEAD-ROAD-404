@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh,normalizeSave,travel} from '../src/state.ts';
 import {roadMessage,roadObjective,shouldOfferFinale,resolveFinale,ENDINGS} from '../src/roadStory.ts';
-const ready=(choice='rescue')=>({...fresh(),mission:{stage:'resolved',choice},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},chapterTwo:{...fresh().chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'},chapterThree:{...fresh().chapterThree,stage:'complete',guardianHealth:0,decision:'seal'},chapterFour:{...fresh().chapterFour,stage:'complete',operatorHealth:0,decision:'sever'},km:120,fuel:40,parts:2,chapterFive:{...fresh().chapterFive,stage:'complete',hunterHealth:0,decision:'remember'}});
+const ready=(choice='rescue')=>({...fresh(),mission:{stage:'resolved',choice},chapterOne:{...fresh().chapterOne,stage:'complete',wardenHealth:0},chapterTwo:{...fresh().chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'},chapterThree:{...fresh().chapterThree,stage:'complete',guardianHealth:0,decision:'seal'},chapterFour:{...fresh().chapterFour,stage:'complete',operatorHealth:0,decision:'sever'},km:120,fuel:40,parts:2,chapterFive:{...fresh().chapterFive,stage:'complete',hunterHealth:0,decision:'remember'},chapterSix:{...fresh().chapterSix,stage:'choice',doubleHealth:0}});
 test('cinco etapas de carretera con narrativa distinta',()=>{const m=[24,48,72,96,120].map(roadMessage);assert.equal(new Set(m).size,5);});
 test('no ofrece final hasta completar misión y 120 km',()=>{
  assert.equal(shouldOfferFinale(fresh()),false);
@@ -15,7 +15,7 @@ test('tres finales según elección y recursos',()=>{
  assert.equal(resolveFinale(ready('take'),'escape').ending,'toll');
  assert.equal(resolveFinale(ready(),'listen').ending,'loop');
  assert.equal(resolveFinale({...ready(),fuel:2},'escape').ending,'toll');
- assert.equal(Object.keys(ENDINGS).length,3);
+ assert.equal(Object.keys(ENDINGS).length,4);
 });
 test('los finales son persistentes y no se pueden explotar',()=>{
  const ended=resolveFinale(ready(),'escape');

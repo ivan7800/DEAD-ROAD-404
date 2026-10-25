@@ -13,6 +13,28 @@ try{
  await waitForServer();
  browser=await chromium.launch({headless:true,args:['--enable-webgl','--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader']});
  const page=await browser.newPage({viewport:{width:1280,height:800}});
+ // Use the opt-in F3 position readout; all movement still uses real keyboard input.
+ async function walkTo(targetX,targetZ,tolerance=1.3,timeout=45000){
+  const deadline=Date.now()+timeout;let lastPos='';
+  while(Date.now()<deadline){
+   const p=await page.locator('#perf-panel').evaluate(el=>({
+    x:Number(el.dataset.playerX),z:Number(el.dataset.playerZ)
+   }));
+   if(!Number.isFinite(p.x)||!Number.isFinite(p.z))throw new Error('F3 no expone coordenadas válidas');
+   lastPos=JSON.stringify(p);
+   if(Math.abs(targetX-p.x)<tolerance&&Math.abs(targetZ-p.z)<tolerance)return;
+   const dx=targetX-p.x,dz=targetZ-p.z;
+   const side=Math.abs(dx)>tolerance?(dx>0?'d':'a'):null;
+   const forward=Math.abs(dz)>tolerance?(dz<0?'w':'s'):null;
+   if(side)await page.keyboard.down(side);
+   if(forward)await page.keyboard.down(forward);
+   await sleep(155);
+   if(side)await page.keyboard.up(side);
+   if(forward)await page.keyboard.up(forward);
+   await sleep(65);
+  }
+  throw new Error('Ruta física no alcanzada '+targetX+','+targetZ+'; posición '+lastPos);
+ }
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  const missing=[];page.on('requestfailed',request=>missing.push(request.url()+': '+request.failure()?.errorText));
  const response=await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -408,24 +430,19 @@ try{
  finally{await page.keyboard.up('w');}
  await page.keyboard.press('e');
  await page.locator('#objective').filter({hasText:'DOS balizas'}).waitFor();
- await page.keyboard.down('w');await sleep(2700);await page.keyboard.up('w');
- await page.keyboard.down('a');
- try{await page.locator('#prompt').filter({hasText:'BALIZA A'}).waitFor({timeout:15000});}
- finally{await page.keyboard.up('a');}
+ await walkTo(-6,-31,1.3);
+ await page.locator('#prompt').filter({hasText:'BALIZA A'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  const a=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFive);
  assert.equal(a.beaconsMask,1,'No se activó la baliza A');
- await page.keyboard.down('d');
- try{await page.locator('#prompt').filter({hasText:'BALIZA B'}).waitFor({timeout:15000});}
- finally{await page.keyboard.up('d');}
+ await walkTo(6,-31,1.3);
+ await page.locator('#prompt').filter({hasText:'BALIZA B'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  await page.locator('#objective').filter({hasText:'combinación'}).waitFor();
  const beacons=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterFive);
  assert.equal(beacons.beaconsMask,3,'No se activaron ambas balizas');
- await page.keyboard.down('a');await sleep(950);await page.keyboard.up('a');
- await page.keyboard.down('w');
- try{await page.locator('#prompt').filter({hasText:'DESCIFRAR MARCADOR'}).waitFor({timeout:30000});}
- finally{await page.keyboard.up('w');}
+ await walkTo(0,-42,1.3);
+ await page.locator('#prompt').filter({hasText:'DESCIFRAR MARCADOR'}).waitFor({timeout:12000});
  await page.keyboard.press('e');
  await page.locator('#encounter-title').filter({hasText:'MARCADOR DE DISTANCIA'}).waitFor();
  await page.getByRole('button',{name:'0404',exact:true}).click();
@@ -459,6 +476,86 @@ try{
  assert.equal(restored.chapterFive.stage,'complete');
  assert.equal(restored.chapterFive.decision,'remember');
  assert.equal(errors.length,0,'Errores JavaScript del KM96: '+errors.join('; '));
+ // F27 real-browser narrative closure: valid completion of I–V, physical VI and f27Saved ending.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
+  s.km=120;s.health=100;s.fuel=55;s.parts=5;s.ending=null;
+  s.mission={stage:'resolved',choice:'rescue'};
+  s.chapterOne={...s.chapterOne,stage:'complete',wardenHealth:0};
+  s.chapterTwo={...s.chapterTwo,stage:'complete',stalkerHealth:0,ending:'silence'};
+  s.chapterThree={...s.chapterThree,stage:'complete',guardianHealth:0,decision:'seal'};
+  s.chapterFour={...s.chapterFour,stage:'complete',operatorHealth:0,decision:'sever'};
+  s.chapterFive={...s.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'};
+  s.chapterSix={stage:'locked',relaysMask:0,codeAttempts:0,doubleHealth:140,suppliesTaken:false,legacyFinaleAllowed:false};
+  s.campaign.completed=['last-stop','missing','nameless','dead-frequency','impossible-mile'];
+  s.campaign.current='impossible-mile';
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ assert.equal(await page.locator('#road-end').isEnabled(),true,'El sexto capítulo no se desbloquea después de V y KM120');
+ await page.locator('#road-end').click();
+ await page.locator('#status').filter({hasText:'KM 120'}).waitFor({timeout:12000});
+ await page.screenshot({path:'artifacts/f27-ultimo-peaje.png'});
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'ÚLTIMA SEÑAL'}).waitFor({timeout:28000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'registro de peajes'}).waitFor();
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'REGISTRO DE PEAJES'}).waitFor({timeout:28000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'DOS relés'}).waitFor();
+ await walkTo(-6,-30,1.3);
+ await page.locator('#prompt').filter({hasText:'RELÉ A'}).waitFor({timeout:12000});
+ await page.keyboard.press('e');
+ const f27First=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
+ assert.equal(f27First.relaysMask,1,'La interacción real no activa el primer relé');
+ await walkTo(6,-30,1.3);
+ await page.locator('#prompt').filter({hasText:'RELÉ B'}).waitFor({timeout:12000});
+ await page.keyboard.press('e');
+ await page.locator('#objective').filter({hasText:'barrera'}).waitFor();
+ const f27Both=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix);
+ assert.equal(f27Both.relaysMask,3,'Ambos relés deben estar activos');
+ await walkTo(0,-42,1.3);
+ await page.locator('#prompt').filter({hasText:'ABRIR BARRERA'}).waitFor({timeout:12000});
+ await page.keyboard.press('e');
+ await page.locator('#encounter-title').filter({hasText:'ÚLTIMA BARRERA'}).waitFor();
+ await page.getByRole('button',{name:'0217',exact:true}).click();
+ await page.locator('#encounter-text').filter({hasText:'CÓDIGO INCORRECTO'}).waitFor();
+ await page.getByRole('button',{name:'1204',exact:true}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'EL DOBLE'}).waitFor();
+ await page.screenshot({path:'artifacts/f27-el-doble.png'});
+ await page.keyboard.down('w');await sleep(1750);await page.keyboard.up('w');
+ let f27Vanquished=false;
+ for(let n=0;n<28;n++){
+  await page.keyboard.press('f');await sleep(560);
+  if(await page.locator('#encounter-title').filter({hasText:'ÚLTIMO DESVÍO'}).isVisible()){
+   f27Vanquished=true;break;
+  }
+ }
+ const f27Hp=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')).chapterSix.doubleHealth);
+ assert.equal(f27Vanquished,true,'El combate físico no permite derrotar al Doble; HP='+f27Hp+'; '+await page.locator('#prompt').innerText());
+ await page.screenshot({path:'artifacts/f27-doble-derrotado.png'});
+ await page.getByRole('button',{name:/ABANDONAR LA CARRETERA/}).click();
+ await page.locator('#encounter-title').filter({hasText:'AMANECER PRESTADO'}).waitFor();
+ await page.getByRole('button',{name:/GUARDAR FINAL Y REGRESAR/}).click();
+ await page.locator('#status').filter({hasText:'CARRETERA'}).waitFor();
+ const f27Done=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f27Done.chapterSix.stage,'complete');
+ assert.equal(f27Done.chapterSix.relaysMask,3);
+ assert.equal(f27Done.chapterSix.codeAttempts,1);
+ assert.equal(f27Done.chapterSix.doubleHealth,0);
+ assert.equal(f27Done.ending,'dawn');
+ assert.equal(f27Done.campaign.completed.includes('road-end'),true);
+ await page.locator('#load').click();
+ const f27Saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(f27Saved.ending,'dawn');
+ assert.equal(f27Saved.chapterSix.stage,'complete');
+ assert.equal(await page.locator('#road-end').isEnabled(),false,'Final registrado debe bloquear el capítulo');
+ assert.equal(errors.length,0,'Errores JS en final F27: '+errors.join('; '));
+ console.log('PASS Chromium F27: KM120, peaje PSX, ambos relés, panel 1204, Doble, Amanecer Prestado y recuperación.');
  console.log('PASS Chromium F26: KM96 real, registrador, balizas, código, Agrimensor, decisión y guardado.');
  console.log('PASS Chromium F25: emisora WXR-404, bunker UMBRAL, dos codigos y persistencia, portada pulp, opciones, capítulos, pausa real, PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}

@@ -1,4 +1,4 @@
-/** Progressive campaign: chapters I–V are playable; VI remains locked. */
+/** Six-chapter playable campaign; historical epilogue migration remains separate. */
 import type {MissionProgress} from './mission.ts';
 import type {EndingId} from './roadStory.ts';
 
@@ -12,7 +12,7 @@ export const CHAPTERS=[
 ] as const;
 export type ChapterId=typeof CHAPTERS[number]['id'];
 /** Each new chapter unlocks only when its implementation and QA exist. */
-export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing','nameless','dead-frequency','impossible-mile']);
+export const PLAYABLE_CHAPTERS:ReadonlySet<ChapterId>=new Set<ChapterId>(['last-stop','missing','nameless','dead-frequency','impossible-mile','road-end']);
 export const MILESTONES={
  station:'Entraste en la gasolinera SUNSPUR',
  radio:'Escuchaste la frecuencia 404',
@@ -70,7 +70,15 @@ export const MILESTONES={
  mileDial:'Resolviste la distancia entre KM 72 y KM 96',
  mileHunter:'Sobreviviste al Agrimensor',
  mileSupplies:'Recuperaste la maleta de la patrulla',
- mileDecision:'Decidiste qué memoria dejar en el KM 96'
+ mileDecision:'Decidiste qué memoria dejar en el KM 96',
+ endArrival:'Llegaste al último desvío, KM 120',
+ endSign:'Leíste el cartel que cuenta las cifras del final',
+ endLedger:'Recuperaste el registro de peajes de 1992',
+ endRelay:'Activaste un relé del desvío',
+ endRelays:'Activaste los dos relés de la barrera',
+ endCode:'Abriste la última barrera mediante 1204',
+ endDouble:'Sobreviviste a tu Doble en la carretera',
+ endSupplies:'Recuperaste el botiquín del peaje'
 } as const;
 export type MilestoneId=keyof typeof MILESTONES;
 export interface CampaignProgress {current:ChapterId;completed:ChapterId[];milestones:MilestoneId[]}
@@ -117,7 +125,8 @@ export function normalizeCampaign(data:unknown,legacy?:LegacyCampaignState):Camp
    if(raw===expected&&PLAYABLE_CHAPTERS.has(raw as ChapterId))validCompleted.push(raw as ChapterId);
   }
  }
- const normalizedCurrent=v.current==='impossible-mile'&&validCompleted.includes('dead-frequency')?'impossible-mile':
+ const normalizedCurrent=v.current==='road-end'&&validCompleted.includes('impossible-mile')?'road-end':
+  v.current==='impossible-mile'&&validCompleted.includes('dead-frequency')?'impossible-mile':
   v.current==='dead-frequency'&&validCompleted.includes('nameless')?'dead-frequency':
   v.current==='nameless'&&validCompleted.includes('missing')?'nameless':
   v.current==='missing'&&validCompleted.includes('last-stop')?'missing':'last-stop';

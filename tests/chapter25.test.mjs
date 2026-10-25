@@ -132,7 +132,7 @@ test('una partida nueva debe concluir IV antes del final de KM120',()=>{
  assert.equal(shouldOfferFinale(s),false);
  const ended=concludeRadio(toDecision(),'sever');
  assert.equal(shouldOfferFinale({...ended,km:120}),false);
- assert.equal(shouldOfferFinale({...ended,km:120,chapterFive:{...ended.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'}}),true);
+ assert.equal(shouldOfferFinale({...ended,km:120,chapterFive:{...ended.chapterFive,stage:'complete',hunterHealth:0,decision:'remember'},chapterSix:{...ended.chapterSix,stage:'choice',doubleHealth:0}}),true);
 });
 test('guardar y recuperar respeta Nora, dos errores y salud del Operador',()=>{
  let s=active();s=speakNora(s,'help');s=inspectRadioSign(s);s=powerRadioRelay(s);

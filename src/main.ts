@@ -23,6 +23,9 @@ import {radioCollision} from './radioCollision.ts';
 import {beginMile,canEnterMile,mileObjective,nearMile,inspectMileSign,inspectMileLog,activateMileBeacon,tuneMileDial,defeatMileHunter,takeMileSupplies,concludeMile,MILE_POSITIONS,MILE_CODES,type MileDecision} from './chapterFive.ts';
 import {freshMileHunter,stepMileHunter,strikeMileHunter} from './mileHunter.ts';
 import {mileCollision} from './mileCollision.ts';
+import {beginRoadEnd,canEnterRoadEnd,endObjective,nearRoadEnd,readEndSign,readEndLedger,enableEndRelay,enterEndCode,defeatRoadDouble,takeEndSupplies,END_POSITIONS,END_CODES} from './chapterSix.ts';
+import {freshRoadDouble,stepRoadDouble,strikeRoadDouble} from './roadDouble.ts';
+import {roadEndCollision} from './roadEndCollision.ts';
 import {townCollision} from './townCollision.ts';
 import {dinerCollision} from './dinerCollision.ts';
 import {ITEMS,addItem,inventoryTotal,useItem,openSupplyCache,CACHE_POSITION,type ItemId} from './inventory.ts';
@@ -53,7 +56,7 @@ const store=safeStorage();
 const $=(id:string)=>document.getElementById(id)!;
 const canvas=$('scene') as HTMLCanvasElement,world=new GameWorld(canvas);
 let graphics:GraphicsPreset=graphicsPreset(readPreference(store,'dead-road-404-psx-graphics'));world.setGraphics(graphics);
-let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let warden=freshWarden();let dinerThreat=freshDinerThreat();let townGuardian=freshGuardian();let radioOperator=freshRadioOperator();let mileHunter=freshMileHunter();let inMile=false;let inDiner=false;let inTown=false;let inRadio=false;let radioUnderground=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
+let headlights=true;let flashlightOn=false;let stamina=100;let journalOpen=false;let inventoryOpen=false;let warden=freshWarden();let dinerThreat=freshDinerThreat();let townGuardian=freshGuardian();let radioOperator=freshRadioOperator();let mileHunter=freshMileHunter();let roadDouble=freshRoadDouble();let inRoadEnd=false;let inMile=false;let inDiner=false;let inTown=false;let inRadio=false;let radioUnderground=false;let state:GameState=fresh(),mode:Mode='map',yaw=0,pitch=0,carYaw=0,speed=0,elapsed=0,last=performance.now(),toastUntil=0;
 let cameraMode:CameraMode=validCamera(readPreference(store,'dead-road-404-camera'));
 let filmLook:FilmLook=normalizeFilmLook(readPreference(store,'dead-road-404-film-look'));
 let steering=0;let helpOpen=false;let impactCooldown=0;let pulpUi:PulpUI|null=null;let lastPauseDraw=0;
@@ -73,10 +76,12 @@ function notify(message:string){
  else if(/(EL CAMPANERO CAE|LA CAMARERA HUECA CAE|EL CELADOR CAE)/.test(message))
   pulpUi?.flash('ÚLTIMA TOMA');
 }
-function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].label+' · [G] CAMBIAR';const text=`🪓 ${inMile?'KM 96 · EL KILÓMETRO IMPOSIBLE':inRadio?'WXR-404 · FRECUENCIA MUERTA':inTown?'EL PUEBLO SIN NOMBRE':inDiner?'THE LAST LIGHT':enemy.alive?'AMENAZA':'DESPEJADO'}  |  ⛽ ${state.fuel.toFixed(1)} L  |  🍞 ${state.food}  |  ♥ ${state.health}  |  🔧 ${state.parts}  |  🚗 ${state.carCondition.toFixed(0)}%  |  ${state.km} km  |  🎒 ${inventoryTotal(state.inventory)} objetos`;$('stats').textContent=text;$('camera-label').textContent=mode==='drive'?`CÁMARA: ${CAMERA_LABELS[cameraMode]} · [C] CAMBIAR · [L] LUCES`:'';$('dashboard').classList.toggle('visible',mode==='drive');$('stamina-wrap').classList.toggle('visible',mode==='explore');($('diner') as HTMLButtonElement).disabled=!dinerAvailable(state)||state.chapterTwo.stage==='complete';
+function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].label+' · [G] CAMBIAR';const text=`🪓 ${inRoadEnd?'KM 120 · ÚLTIMO DESVÍO':inMile?'KM 96 · EL KILÓMETRO IMPOSIBLE':inRadio?'WXR-404 · FRECUENCIA MUERTA':inTown?'EL PUEBLO SIN NOMBRE':inDiner?'THE LAST LIGHT':enemy.alive?'AMENAZA':'DESPEJADO'}  |  ⛽ ${state.fuel.toFixed(1)} L  |  🍞 ${state.food}  |  ♥ ${state.health}  |  🔧 ${state.parts}  |  🚗 ${state.carCondition.toFixed(0)}%  |  ${state.km} km  |  🎒 ${inventoryTotal(state.inventory)} objetos`;$('stats').textContent=text;$('camera-label').textContent=mode==='drive'?`CÁMARA: ${CAMERA_LABELS[cameraMode]} · [C] CAMBIAR · [L] LUCES`:'';$('dashboard').classList.toggle('visible',mode==='drive');$('stamina-wrap').classList.toggle('visible',mode==='explore');($('diner') as HTMLButtonElement).disabled=!dinerAvailable(state)||state.chapterTwo.stage==='complete';
  ($('town') as HTMLButtonElement).disabled=!canEnterTown(state)||state.chapterThree.stage==='complete';
  ($('radio') as HTMLButtonElement).disabled=!canEnterRadio(state)||state.chapterFour.stage==='complete';
  ($('mile') as HTMLButtonElement).disabled=!canEnterMile(state)||state.chapterFive.stage==='complete';
+ ($('road-end') as HTMLButtonElement).disabled=!canEnterRoadEnd(state)||state.chapterSix.stage==='complete';
+ $('road-end').textContent=state.chapterSix.stage==='complete'?'CAPÍTULO VI COMPLETADO · [J] FINALES':canEnterRoadEnd(state)?'KM 120 · DONDE TERMINA LA CARRETERA · CAPÍTULO VI':'KM 120 · ÚLTIMO DESVÍO · DESDE KM 120';
  $('mile').textContent=state.chapterFive.stage==='complete'?'CAPÍTULO V COMPLETADO · [J] ARCHIVO':canEnterMile(state)?'KM 96 · EL KILÓMETRO IMPOSIBLE · CAPÍTULO V':'KM 96 · EL KILÓMETRO IMPOSIBLE · DESDE KM 96';
  $('radio').textContent=state.chapterFour.stage==='complete'?'CAPÍTULO IV COMPLETADO · [J] ARCHIVO':
   canEnterRadio(state)?'EMISORA WXR-404 · CAPÍTULO IV':'WXR-404 · FRECUENCIA MUERTA · DESDE KM 72';
@@ -84,11 +89,11 @@ function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].
   canEnterTown(state)?'ENTRAR EN EL PUEBLO SIN NOMBRE · CAPÍTULO III':'EL PUEBLO SIN NOMBRE · DESDE KM 48';
  $('diner').textContent=state.chapterTwo.stage==='complete'?'CAPÍTULO II COMPLETADO · [J] DIARIO':
   dinerAvailable(state)?'ENTRAR EN THE LAST LIGHT · CAPÍTULO II':'RESTAURANTE THE LAST LIGHT · DESDE KM 24';
- $('objective').textContent=(mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
-function switchMode(next:Mode){const previous=mode;input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore'){inDiner=false;inTown=false;inRadio=false;inMile=false;radioUnderground=false;}panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inMile?'KM 96 · CAPÍTULO V':inRadio?(radioUnderground?'REFUGIO UMBRAL · NIVEL -1':'WXR-404 · CAPÍTULO IV'):inTown?'EL PUEBLO SIN NOMBRE · CAPÍTULO III':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inMile?MILE_POSITIONS.entry.x:inRadio?RADIO_POSITIONS.entry.x:inTown?TOWN_LOCATIONS.entry.x:inDiner?DINER_POSITIONS.entry.x:6,1.7,inMile?MILE_POSITIONS.entry.z:inRadio?RADIO_POSITIONS.entry.z:inTown?TOWN_LOCATIONS.entry.z:inDiner?DINER_POSITIONS.entry.z:6);yaw=inMile||inRadio||inTown||inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);world.setTownVisible(next==='explore'&&inTown);world.setRadioStage(state.chapterFour.stage,state.chapterFour.nora!==null,state.chapterFour.cacheTaken,state.chapterFour.breakersMask);world.setRadioUnderground(radioUnderground);world.setRadioVisible(next==='explore'&&inRadio);world.setMileStage(state.chapterFive.stage,state.chapterFive.beaconsMask,state.chapterFive.cacheTaken);world.setMileVisible(next==='explore'&&inMile);hud();
+ $('objective').textContent=(endObjective(state)||mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');}
+function switchMode(next:Mode){const previous=mode;input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore'){inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;}panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inRoadEnd?'KM 120 · CAPÍTULO VI':inMile?'KM 96 · CAPÍTULO V':inRadio?(radioUnderground?'REFUGIO UMBRAL · NIVEL -1':'WXR-404 · CAPÍTULO IV'):inTown?'EL PUEBLO SIN NOMBRE · CAPÍTULO III':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inRoadEnd?END_POSITIONS.entry.x:inMile?MILE_POSITIONS.entry.x:inRadio?RADIO_POSITIONS.entry.x:inTown?TOWN_LOCATIONS.entry.x:inDiner?DINER_POSITIONS.entry.x:6,1.7,inRoadEnd?END_POSITIONS.entry.z:inMile?MILE_POSITIONS.entry.z:inRadio?RADIO_POSITIONS.entry.z:inTown?TOWN_LOCATIONS.entry.z:inDiner?DINER_POSITIONS.entry.z:6);yaw=inRoadEnd||inMile||inRadio||inTown||inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);world.setTownVisible(next==='explore'&&inTown);world.setRadioStage(state.chapterFour.stage,state.chapterFour.nora!==null,state.chapterFour.cacheTaken,state.chapterFour.breakersMask);world.setRadioUnderground(radioUnderground);world.setRadioVisible(next==='explore'&&inRadio);world.setMileStage(state.chapterFive.stage,state.chapterFive.beaconsMask,state.chapterFive.cacheTaken);world.setMileVisible(next==='explore'&&inMile);world.setRoadEndStage(state.chapterSix.stage,state.chapterSix.relaysMask,state.chapterSix.suppliesTaken);world.setRoadEndVisible(next==='explore'&&inRoadEnd);hud();
  pulpUi?.setMode(next);
  if(pulpUi&&previous!==next){
-  const card=titleForLocation(next,inMile?'mile':inRadio?'radio':inTown?'town':inDiner?'diner':'station');
+  const card=titleForLocation(next,inRoadEnd?'road-end':inMile?'mile':inRadio?'radio':inTown?'town':inDiner?'diner':'station');
   pulpUi.title(card.eyebrow,card.title,card.subtitle);
  }
 }
@@ -97,7 +102,7 @@ $('show-controls').addEventListener('click',toggleHelp);$('close-controls').addE
 function toggleJournal(){
  journalOpen=!journalOpen;
  const journal=$('journal');journal.classList.toggle('hidden',!journalOpen);
- $('journal-stage').textContent=mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission);
+ $('journal-stage').textContent=endObjective(state)||mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission);
  $('journal-record').textContent=(state.motelTape?'CINTA DEL MOTEL: Recuperada · +1 pieza y +2 comida.\n':'')+(state.phoneHeard?'CABINA TELEFÓNICA: la voz conocía una fecha que todavía no ha llegado.\n':'')+(state.mission.stage==='resolved' ? 'Decisión registrada: '+({rescue:'Vera viaja contigo',take:'Cobraste por ayudar',leave:'Vera permanece en el motel'}[state.mission.choice!]||'Desconocida') : 'Pista: los secretos de la estación se descubren explorando y escuchando.');
  const chapters=$('journal-chapters');chapters.replaceChildren();
  for(const chapter of CHAPTERS){
@@ -163,7 +168,10 @@ function showFinale(){
  encounterOpen=true;input.reset();document.exitPointerLock?.();
  const dialog=$('encounter'),choices=$('encounter-choices');
  $('encounter-title').textContent='CARRETERA 404 · ÚLTIMO DESVÍO';
- $('encounter-text').textContent='Son las 02:17. Otra vez. El asfalto se divide en dos: una salida sin señales y una antena que emite tu propia voz. Vera te mira en silencio. ¿Qué haces?';
+ $('encounter-text').textContent='Son las 02:17. Otra vez. El asfalto se divide en dos: una salida sin señales y una antena que emite tu propia voz. '+
+ (state.mission.choice==='rescue'?'Vera aprieta tu mano. ':state.mission.choice==='leave'?'Vera no está, pero su voz ocupa el asiento vacío. ':'Vera recuerda lo que le exigiste por ayudarla. ')+
+ (state.chapterFive.decision==='remember'?'Los nombres del mapa todavía tienen rostros. ':'El mapa enterrado deja un hueco en tus recuerdos. ')+
+ '¿Abandonas el asfalto o escuchas la última transmisión?';
  choices.replaceChildren();
  for(const option of FINALE_OPTIONS){
   const button=document.createElement('button');button.type='button';button.textContent=option.label+' — '+option.description;
@@ -172,7 +180,7 @@ function showFinale(){
    const ending=state.ending?ENDINGS[state.ending]:null;
    if(!ending)return;
    $('encounter-title').textContent=ending.title;
-   $('encounter-text').textContent=ending.text;
+   $('encounter-text').textContent=ending.text+' '+(state.chapterFour.decision==='broadcast'?'La voz de WXR-404 sigue viajando.':'La emisora WXR-404 permanece muda.')+' '+(state.chapterFive.decision==='forget'?'Alguien olvidará por qué emprendiste el viaje.':'Conservas los nombres de quienes no pudieron salir.');
    choices.replaceChildren();saveQuietly();hud();
    const close=document.createElement('button');close.type='button';close.textContent='GUARDAR FINAL Y REGRESAR AL MENÚ';
    close.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');switchMode('map');notify('FINAL REGISTRADO · '+ending.title);});
@@ -690,30 +698,92 @@ function milePrompt(x:number,z:number):string{
  if(stage==='choice')return '[E] DECIDIR DESTINO DEL MAPA';
  return '[J] DIARIO · [M] REGRESAR AL FIREBIRD';
 }
+/** F27 — playable final toll-road with physical triggers and four real endings. */
+function syncRoadEndView(){
+ world.setRoadEndStage(state.chapterSix.stage,state.chapterSix.relaysMask,state.chapterSix.suppliesTaken);
+ hud();
+}
+function showRoadEndCipher(){
+ if(encounterOpen||state.chapterSix.stage!=='cipher')return;
+ encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const dialog=$('encounter'),choices=$('encounter-choices');
+ $('encounter-title').textContent='PEAJE 404 · PANEL DE LA ÚLTIMA BARRERA';
+ $('encounter-text').textContent='El cartel decía: «KM 120 / CARRETERA 404». Toma las tres cifras del kilómetro y la primera del número de carretera.';
+ choices.replaceChildren();
+ for(const code of END_CODES){
+  const button=document.createElement('button');button.type='button';button.textContent=code;
+  button.addEventListener('click',()=>{
+   state=enterEndCode(state,code);saveQuietly();syncRoadEndView();notify(state.message);
+   if(state.chapterSix.stage==='double'){
+    encounterOpen=false;dialog.classList.add('hidden');
+    roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);
+    world.setRoadDouble(roadDouble.x,roadDouble.z,true,false,elapsed);
+    yaw=Math.atan2(roadDouble.x-world.player.x,-(roadDouble.z-world.player.z));pitch=0;
+    pulpUi?.title('CAPÍTULO VI · ÚLTIMA PROYECCIÓN','EL DOBLE','YA ESTUVISTE AQUÍ · TE ESTABAS ESPERANDO');
+    beep(61,.35);
+   }else $('encounter-text').textContent=state.message+' · INTENTOS: '+state.chapterSix.codeAttempts;
+  });choices.append(button);
+ }
+ const back=document.createElement('button');back.type='button';back.textContent='ABANDONAR EL PANEL';
+ back.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');});
+ choices.append(back);
+ dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
+}
+function interactRoadEnd(){
+ const x=world.player.x,z=world.player.z,stage=state.chapterSix.stage;
+ if(!state.chapterSix.suppliesTaken&&nearRoadEnd(x,z,END_POSITIONS.supplies,2.4)){
+  state=takeEndSupplies(state);
+ }else if(stage==='arrival'&&nearRoadEnd(x,z,END_POSITIONS.sign,2.7)){
+  state=readEndSign(state);
+ }else if(stage==='ledger'&&nearRoadEnd(x,z,END_POSITIONS.ledger,2.8)){
+  state=readEndLedger(state);
+ }else if(stage==='relays'&&(state.chapterSix.relaysMask&1)===0&&nearRoadEnd(x,z,END_POSITIONS.relayA,2.5)){
+  state=enableEndRelay(state,'A');
+ }else if(stage==='relays'&&(state.chapterSix.relaysMask&2)===0&&nearRoadEnd(x,z,END_POSITIONS.relayB,2.5)){
+  state=enableEndRelay(state,'B');
+ }else if(stage==='cipher'&&nearRoadEnd(x,z,END_POSITIONS.console,3)){
+  showRoadEndCipher();return;
+ }else if(stage==='choice'){
+  showFinale();return;
+ }else{notify('La señal no responde. Consulta las pistas del diario [J].');return;}
+ saveQuietly();syncRoadEndView();notify(state.message);
+}
+function roadEndPrompt(x:number,z:number):string{
+ const stage=state.chapterSix.stage;
+ if(!state.chapterSix.suppliesTaken&&nearRoadEnd(x,z,END_POSITIONS.supplies,2.4))return '[E] RECOGER BOTIQUÍN DE PEAJE';
+ if(stage==='arrival'&&nearRoadEnd(x,z,END_POSITIONS.sign,2.7))return '[E] LEER ÚLTIMA SEÑAL KM 120';
+ if(stage==='ledger'&&nearRoadEnd(x,z,END_POSITIONS.ledger,2.8))return '[E] LEER REGISTRO DE PEAJES';
+ if(stage==='relays'&&(state.chapterSix.relaysMask&1)===0&&nearRoadEnd(x,z,END_POSITIONS.relayA,2.5))return '[E] ACTIVAR RELÉ A';
+ if(stage==='relays'&&(state.chapterSix.relaysMask&2)===0&&nearRoadEnd(x,z,END_POSITIONS.relayB,2.5))return '[E] ACTIVAR RELÉ B';
+ if(stage==='cipher'&&nearRoadEnd(x,z,END_POSITIONS.console,3))return '[E] ABRIR BARRERA DEL PEAJE';
+ if(stage==='double')return 'EL DOBLE · '+roadDouble.health+'/140 · [F] GOLPEAR · [SHIFT] ESQUIVAR';
+ if(stage==='choice')return '[E] DECIDIR DESTINO DEFINITIVO · O CONTINÚA LA ESCENA';
+ return '[J] DIARIO · [M] REGRESAR AL FIREBIRD';
+}
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
-function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);mileHunter=freshMileHunter(state.chapterFive.hunterHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
+function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);mileHunter=freshMileHunter(state.chapterFive.hunterHealth);roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
 $('drive').addEventListener('click',()=>{try{soundscape.start();}catch{}if(state.ending){notify('Historia concluida · Empieza una nueva partida para volver a la carretera.');return;}if(state.carCondition<=0){notify('Repara el Firebird antes de conducir.');return;}if(state.fuel<2){notify('Te falta gasolina. Explora la gasolinera.');return;}switchMode('drive');notify('Gira la llave. El V8 ruge bajo un cielo sin estrellas.');});
-$('explore').addEventListener('click',()=>{try{soundscape.start();}catch{}inDiner=false;inTown=false;inRadio=false;inMile=false;radioUnderground=false;state.visited=true;state.campaign=recordMilestone(state.campaign,'station');switchMode('explore');notify('La puerta de la estación golpea tres veces. No hay viento.');});
+$('explore').addEventListener('click',()=>{try{soundscape.start();}catch{}inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;state.visited=true;state.campaign=recordMilestone(state.campaign,'station');switchMode('explore');notify('La puerta de la estación golpea tres veces. No hay viento.');});
 $('diner').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
  if(!dinerAvailable(state)){notify('Completa La Última Parada y conduce hasta el KM 24.');return;}
  if(state.chapterTwo.stage==='complete'){notify('El capítulo del restaurante ya ha terminado.');return;}
- state=beginDiner(state);inTown=false;inRadio=false;inMile=false;radioUnderground=false;inDiner=true;dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);
+ state=beginDiner(state);inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;inDiner=true;dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);
  switchMode('explore');saveQuietly();notify(state.message);
 });
 $('town').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
  if(!canEnterTown(state)){notify('Completa LOS QUE NO REGRESAN y conduce hasta el KM 48.');return;}
  if(state.chapterThree.stage==='complete'){notify('El capítulo del pueblo ya ha terminado.');return;}
- state=beginTown(state);inDiner=false;inRadio=false;inMile=false;radioUnderground=false;inTown=true;townGuardian=freshGuardian(state.chapterThree.guardianHealth);
+ state=beginTown(state);inDiner=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;inTown=true;townGuardian=freshGuardian(state.chapterThree.guardianHealth);
  switchMode('explore');saveQuietly();notify(state.message);
 });
 $('radio').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
  if(!canEnterRadio(state)){notify('Termina EL PUEBLO SIN NOMBRE y conduce hasta el KM 72.');return;}
  if(state.chapterFour.stage==='complete'){notify('Esta cinta ya está archivada.');return;}
- state=beginRadio(state);inTown=false;inDiner=false;inMile=false;inRadio=true;radioUnderground=false;
+ state=beginRadio(state);inTown=false;inDiner=false;inMile=false;inRoadEnd=false;inRadio=true;radioUnderground=false;
  radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);
  switchMode('explore');saveQuietly();notify(state.message);
 });
@@ -721,12 +791,20 @@ $('mile').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
  if(!canEnterMile(state)){notify('Termina FRECUENCIA MUERTA y conduce hasta el KM 96.');return;}
  if(state.chapterFive.stage==='complete'){notify('El KM 96 ya no vuelve a repetirse.');return;}
- state=beginMile(state);inTown=false;inDiner=false;inRadio=false;inMile=true;radioUnderground=false;
+ state=beginMile(state);inTown=false;inDiner=false;inRadio=false;inRoadEnd=false;inMile=true;radioUnderground=false;
  mileHunter=freshMileHunter(state.chapterFive.hunterHealth);
  switchMode('explore');saveQuietly();notify(state.message);
 });
+$('road-end').addEventListener('click',()=>{
+ try{soundscape.start();}catch{}
+ if(!canEnterRoadEnd(state)){notify('Completa EL KILÓMETRO IMPOSIBLE y conduce hasta KM 120.');return;}
+ if(state.chapterSix.stage==='complete'){notify('La carretera ya tiene un desenlace guardado.');return;}
+ state=beginRoadEnd(state);inTown=false;inDiner=false;inRadio=false;inMile=false;inRoadEnd=true;radioUnderground=false;
+ roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);
+ switchMode('explore');saveQuietly();notify(state.message);
+});
 $('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
-$('save').addEventListener('click',save);$('load').addEventListener('click',load);$('new').addEventListener('click',()=>{enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();townGuardian=freshGuardian();radioOperator=freshRadioOperator();mileHunter=freshMileHunter();inDiner=false;inTown=false;inRadio=false;inMile=false;radioUnderground=false;world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');notify('Nueva partida. Las malas decisiones todavía están por llegar.');});
+$('save').addEventListener('click',save);$('load').addEventListener('click',load);$('new').addEventListener('click',()=>{enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();townGuardian=freshGuardian();radioOperator=freshRadioOperator();mileHunter=freshMileHunter();roadDouble=freshRoadDouble();inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;world.setTapeVisible(true);world.setCacheVisible(true);switchMode('map');notify('Nueva partida. Las malas decisiones todavía están por llegar.');});
 window.addEventListener('keydown',e=>{
  const k=normalizeKey(e.key);
  const target=e.target as HTMLElement|null;
@@ -744,7 +822,7 @@ window.addEventListener('keydown',e=>{
  if(mode!=='map'||!['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))input.press(k);
  if(e.repeat)return;
 if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen){toggleJournal();return;}if(journalOpen){if(k==='escape')toggleJournal();return;}if(encounterOpen)return;if(k==='m'){state.carX=clamp(world.car.position.x,-3.7,3.7);state.carZ=clamp(world.car.position.z,-150,24);switchMode('map');}if(k==='p')save();if(k==='f3'){showPerformance=!showPerformance;$('perf-panel').classList.toggle('hidden',!showPerformance);notify(showPerformance?'Diagnóstico de rendimiento activado.':'Diagnóstico de rendimiento oculto.');}if(k==='v'){filmLook=toggleFilmLook(filmLook);writePreference(store,'dead-road-404-film-look',filmLook);pulpUi?.setGrain(filmLook==='suave');applyFilmLook();notify(filmLook==='suave'?'Filtro VHS suave activado.':'Filtro VHS desactivado.');return;}if(k==='g'){adaptiveQuality.defer(performance.now());graphics=nextGraphicsPreset(graphics);world.setGraphics(graphics);applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('Calidad visual: '+GRAPHICS[graphics].label);hud();}if(k==='c'&&mode==='drive'){cameraMode=nextCamera(cameraMode);writePreference(store,'dead-road-404-camera',cameraMode);notify('Cámara: '+CAMERA_LABELS[cameraMode]);}if(k==='t'&&mode==='explore'){flashlightOn=!flashlightOn;notify(flashlightOn?'Linterna encendida. La oscuridad retrocede.':'Linterna apagada.');}if(k==='l'&&mode==='drive'){headlights=!headlights;world.firebird.setHeadlights(headlights);notify(headlights?'Faros encendidos':'Faros apagados');}if(k==='r'&&mode==='explore'&&!inDiner&&!inTown&&!inRadio){if(world.player.distanceTo(radioPosition)<4){state.mission=advanceMission(state.mission,'radio');state.campaign=recordMilestone(state.campaign,'radio');saveQuietly();notify('RADIO 404: «Vera está en el motel. La llave está tras las neveras». Una voz idéntica a la tuya.');hud();}else notify('Solo escuchas estática. La radio está detrás del mostrador.');}if(k==='e'&&mode==='explore'){
- if(inMile){interactMile();}else if(inRadio){interactRadio();}else if(inTown){interactTown();}else if(inDiner){interactDiner();}else{
+ if(inRoadEnd){interactRoadEnd();}else if(inMile){interactMile();}else if(inRadio){interactRadio();}else if(inTown){interactTown();}else if(inDiner){interactDiner();}else{
  const px=world.player.x,pz=world.player.z;
  if(state.chapterOne.stage==='fuse'&&nearChapterProp(px,pz,FUSE_POSITION)){
   state=collectChapterFuse(state);saveQuietly();world.setChapterOneStage(state.chapterOne.stage);
@@ -764,7 +842,20 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
  world.setCacheVisible(false);saveQuietly();notify(cache.message);hud();
  }else if(isAtPhone(world.player.x,world.player.z)){const result=answerPhone(state.mission.stage,state.phoneHeard);if(canAnswerPhone(state.mission.stage,state.phoneHeard)){state.phoneHeard=true;state.campaign=recordMilestone(state.campaign,'phone');saveQuietly();beep(450,.12);}notify(result.message);hud();}else if(!state.motelTape&&isNearTape(world.player.x,world.player.z)){const result=collectTape(state);state={...state,motelTape:result.motelTape,parts:result.parts,food:result.food,inventory:addItem(state.inventory,'motelTape')};state.campaign=recordMilestone(state.campaign,'tape');world.setTapeVisible(false);saveQuietly();notify('CINTA MAGNÉTICA: «Las habitaciones no tienen número. Tienen fecha». +2 comida y +1 pieza.');hud();}else if(world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'){showMissionDialogue();}else if(world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'){state.mission=advanceMission(state.mission,'key');state.inventory=addItem(state.inventory,'key404');state.campaign=recordMilestone(state.campaign,'key');saveQuietly();notify('Obtienes la LLAVE 404. En su etiqueta pone: «NO ABRIR DESDE DENTRO».');hud();}else if(world.player.distanceTo(new THREE.Vector3(11,1.7,1))<3){const old=state.hasCan;state=pickFuel(state);if(!old)notify(state.message);else notify('Ya recogiste el bidón.');hud();}else notify('No hay nada a tu alcance.');}}if((k===' '||k==='f')&&mode==='explore'&&attackCooldown===0&&state.health>0){
  attackCooldown=.48;
- if(inMile){
+ if(inRoadEnd){
+  if(state.chapterSix.stage==='double'){
+   const strike=strikeRoadDouble(roadDouble,world.player.x,world.player.z,yaw);
+   roadDouble=strike.double;state.chapterSix={...state.chapterSix,doubleHealth:roadDouble.health};
+   beep(strike.hit?72:210,.14);world.flashHit(strike.hit);
+   if(strike.hit){
+    notify(strike.defeated?'EL DOBLE SE DESVANECE EN LA NIEBLA.':'EL DOBLE · '+roadDouble.health+'/140 · Su máscara anuncia cada ataque.');
+    if(strike.defeated){
+     state=defeatRoadDouble(state);world.setRoadDouble(roadDouble.x,roadDouble.z,false,false,elapsed);
+     syncRoadEndView();saveQuietly();showFinale();
+    }else saveQuietly();
+   }else notify('La figura está demasiado lejos. Acércate y mira hacia sus ojos.');
+  }else notify('No hay nadie aquí a quien golpear.');
+ }else if(inMile){
   if(state.chapterFive.stage==='hunter'){
    const strike=strikeMileHunter(mileHunter,world.player.x,world.player.z,yaw);
    mileHunter=strike.hunter;state.chapterFive={...state.chapterFive,hunterHealth:mileHunter.health};
@@ -851,7 +942,23 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');}
  world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(world.car.position.z<=-125){state=travel(state,24);world.car.position.z=20;state.carZ=20;switchMode('map');notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}}
  if(mode==='explore'){world.setFlashlight(flashlightOn,yaw,pitch);world.setMissionStage(state.mission.stage);
- if(inMile){
+ if(inRoadEnd){
+  world.setEnemy(enemy.x,enemy.z,false,elapsed);
+  world.setWarden(warden.x,warden.z,false,false,elapsed);
+  world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);
+  world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);
+  world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);
+  world.setMileHunter(mileHunter.x,mileHunter.z,false,false,elapsed);
+  if(state.chapterSix.stage==='double'){
+   const result=stepRoadDouble(roadDouble,world.player.x,world.player.z,dt);
+   roadDouble=result.double;
+   if(result.hit&&state.health>0){
+    state.health=clamp(state.health-15,0,100);world.flashDanger();beep(73,.22);saveQuietly();
+    notify(state.health===0?'Tu Doble te ha alcanzado. Cura tus heridas desde [I].':'¡TU DOBLE TE GOLPEA! −15 salud. Esquiva la mirada ámbar.');
+   }
+   world.setRoadDouble(roadDouble.x,roadDouble.z,true,result.telegraph,elapsed);
+  }else world.setRoadDouble(roadDouble.x,roadDouble.z,false,false,elapsed);
+ }else if(inMile){
   world.setEnemy(enemy.x,enemy.z,false,elapsed);
   world.setWarden(warden.x,warden.z,false,false,elapsed);
   world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);
@@ -922,8 +1029,8 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
   }
   world.setWarden(warden.x,warden.z,true,warden.phase==='telegraph',elapsed);
  }else world.setWarden(warden.x,warden.z,false,false,elapsed);}
- const forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);const strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);if(document.pointerLockElement!==canvas){if(keys.has('arrowleft'))yaw+=dt*1.6;if(keys.has('arrowright'))yaw-=dt*1.6;}const dir=new THREE.Vector3(Math.sin(yaw)*forward+Math.cos(yaw)*strafe,0,-Math.cos(yaw)*forward+Math.sin(yaw)*strafe);const moving=dir.lengthSq()>0;const sprinting=canSprint(stamina,moving,keys.has('shift'));stamina=stepStamina(stamina,sprinting,dt);$('stamina-bar').style.width=stamina.toFixed(1)+'%';$('stamina-value').textContent=Math.round(stamina)+'%';if(moving)dir.normalize().multiplyScalar(dt*movementSpeed(sprinting));const position=walkWithSlide(world.player.x,world.player.z,dir.x,dir.z,inMile?mileCollision:inRadio?radioCollision:inTown?townCollision:inDiner?dinerCollision:motelCollision);
- world.player.x=position.x;world.player.z=position.z;world.camera.position.copy(world.player);world.camera.rotation.order='YXZ';world.camera.rotation.set(pitch,yaw,0);$('exploration-tip').textContent=explorationHint(state.mission.stage,flashlightOn);prompt.textContent=inMile?milePrompt(world.player.x,world.player.z):inRadio?radioPrompt(world.player.x,world.player.z):inTown?townPrompt(world.player.x,world.player.z):inDiner?dinerPrompt(world.player.x,world.player.z):state.chapterOne.stage==='fuse'&&nearChapterProp(world.player.x,world.player.z,FUSE_POSITION)?'[E] RECOGER FUSIBLE DEL GENERADOR':
+ const forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);const strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);if(document.pointerLockElement!==canvas){if(keys.has('arrowleft'))yaw+=dt*1.6;if(keys.has('arrowright'))yaw-=dt*1.6;}const dir=new THREE.Vector3(Math.sin(yaw)*forward+Math.cos(yaw)*strafe,0,-Math.cos(yaw)*forward+Math.sin(yaw)*strafe);const moving=dir.lengthSq()>0;const sprinting=canSprint(stamina,moving,keys.has('shift'));stamina=stepStamina(stamina,sprinting,dt);$('stamina-bar').style.width=stamina.toFixed(1)+'%';$('stamina-value').textContent=Math.round(stamina)+'%';if(moving)dir.normalize().multiplyScalar(dt*movementSpeed(sprinting));const position=walkWithSlide(world.player.x,world.player.z,dir.x,dir.z,inRoadEnd?roadEndCollision:inMile?mileCollision:inRadio?radioCollision:inTown?townCollision:inDiner?dinerCollision:motelCollision);
+ world.player.x=position.x;world.player.z=position.z;world.camera.position.copy(world.player);world.camera.rotation.order='YXZ';world.camera.rotation.set(pitch,yaw,0);$('exploration-tip').textContent=explorationHint(state.mission.stage,flashlightOn);prompt.textContent=inRoadEnd?roadEndPrompt(world.player.x,world.player.z):inMile?milePrompt(world.player.x,world.player.z):inRadio?radioPrompt(world.player.x,world.player.z):inTown?townPrompt(world.player.x,world.player.z):inDiner?dinerPrompt(world.player.x,world.player.z):state.chapterOne.stage==='fuse'&&nearChapterProp(world.player.x,world.player.z,FUSE_POSITION)?'[E] RECOGER FUSIBLE DEL GENERADOR':
  state.chapterOne.stage==='panel'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] INSERTAR FUSIBLE EN CUADRO 404':
  state.chapterOne.stage==='tuning'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] SINTONIZAR RADIO 02:17':
  state.chapterOne.stage==='hatch'&&nearChapterProp(world.player.x,world.player.z,HATCH_POSITION,2.7)?'[E] ABRIR ESCOTILLA DEL MOTEL':
@@ -934,7 +1041,7 @@ function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(f
  if(!pulpUi?.isPaused){
   metrics.add(frameMs);update(dt);world.setAtmosphere(now/1000);world.render();
  }else if(now-lastPauseDraw>100){lastPauseDraw=now;world.render();}
-const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!document.hidden&&!pulpUi?.isPaused&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
+const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!document.hidden&&!pulpUi?.isPaused&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&mode==='explore'){const debug=$('perf-panel');debug.dataset.playerX=world.player.x.toFixed(3);debug.dataset.playerZ=world.player.z.toFixed(3);}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
  storage:store,
  onSave:()=>save(),
  onLoad:()=>load(),
