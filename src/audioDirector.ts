@@ -42,6 +42,29 @@ export class AudioDirector {
   this.windGain?.gain.setTargetAtTime(mix.wind,t,.4);
   this.tensionGain?.gain.setTargetAtTime(mix.tension,t,.65);
  }
+ /** Small original analog-synth UI cues; scheduled with the AudioContext clock.
+  * No sound samples or melodies taken from films or commercial soundtracks.
+  */
+ uiCue(kind:'select'|'confirm'|'back'|'error'){
+  const a=this.ctx;if(!a)return;
+  const tones={
+   select:[[300,0],[375,.055]],
+   confirm:[[185,0],[247,.075],[330,.15]],
+   back:[[255,0],[180,.09]],
+   error:[[94,0],[83,.11]]
+  }[kind];
+  for(const [frequency,delay] of tones){
+   const t=a.currentTime+delay,osc=a.createOscillator(),gain=a.createGain();
+   osc.type=kind==='error'?'sawtooth':'triangle';
+   osc.frequency.setValueAtTime(frequency,t);
+   gain.gain.setValueAtTime(.0001,t);
+   gain.gain.exponentialRampToValueAtTime(.028,t+.008);
+   gain.gain.exponentialRampToValueAtTime(.0001,t+.105);
+   osc.connect(gain).connect(this.master??a.destination);
+   osc.start(t);osc.stop(t+.112);
+   osc.onended=()=>{osc.disconnect();gain.disconnect();};
+  }
+ }
  beep(frequency:number,duration=.12){
   const a=this.ctx;if(!a)return;
   const osc=a.createOscillator(),gain=a.createGain(),t=a.currentTime;

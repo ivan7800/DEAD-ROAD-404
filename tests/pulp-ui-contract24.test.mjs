@@ -43,6 +43,7 @@ test('ajustes se almacenan por separado del progreso y reducen animaciones',()=>
 test('opción de volumen controla música/ambiente y también beeps',()=>{
  const audio=read('src/audioDirector.ts');
  assert.match(audio,/setVolume\(value:number\)/);
+ assert.match(audio,/uiCue\(kind:/);
  assert.match(audio,/master\.gain\.value=\.42\*this\.volume/);
  assert.match(audio,/osc\.connect\(gain\)\.connect\(this\.master\?\?a\.destination\)/);
 });

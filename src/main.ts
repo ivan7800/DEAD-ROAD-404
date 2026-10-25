@@ -610,8 +610,7 @@ const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!document.
  setVolume:value=>soundscape.setVolume(value),
  uiSound:kind=>{
   try{soundscape.start();}catch{return;}
-  const pitch={select:360,confirm:220,back:155,error:88}[kind];
-  soundscape.beep(pitch,kind==='confirm'?.08:.05);
+  soundscape.uiCue(kind);
  }
 });
 switchMode('map');addLog(state.message);requestAnimationFrame(frame);
