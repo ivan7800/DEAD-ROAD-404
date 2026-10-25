@@ -1,5 +1,6 @@
 /** Road-act progression and persistent endings. Pure rules, independently testable. */
 import type {GameState} from './state.ts';
+import {completeChapter,recordMilestone} from './campaign.ts';
 export type EndingId='dawn'|'toll'|'loop';
 export type FinalApproach='escape'|'listen';
 export const ENDINGS:Record<EndingId,{title:string;text:string}>={
@@ -29,5 +30,5 @@ export function roadObjective(s:GameState):string {
 export function resolveFinale(s:GameState,choice:FinalApproach):GameState {
  if(!shouldOfferFinale(s)||!['escape','listen'].includes(choice))return {...s};
  const ending:EndingId=choice==='listen'?'loop':s.mission.choice==='rescue'&&s.fuel>=4&&s.parts>=1?'dawn':'toll';
- return {...s,ending,message:ENDINGS[ending].title+' · La transmisión ha terminado.'};
+ return {...s,ending,campaign:completeChapter(recordMilestone(s.campaign,'junction'),'last-stop'),message:ENDINGS[ending].title+' · La transmisión ha terminado.'};
 }

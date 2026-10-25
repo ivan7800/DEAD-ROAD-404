@@ -128,3 +128,34 @@ html.psx-mode .brand,html.psx-mode .panel h1{font-family:Consolas,'Courier New',
 html.psx-mode .panel,html.psx-mode .dashboard,html.psx-mode .encounter-card,html.psx-mode .journal{background:#171320f0;box-shadow:4px 4px 0 #080810;border-radius:0;backdrop-filter:none}
 html.psx-mode .controls-guide{backdrop-filter:none}
 html.psx-mode .actions button,html.psx-mode .encounter-choices button{transition:none;border-radius:0;box-shadow:none}
+
+/* Fase 20: compact accessible survival inventory and campaign timeline, PSX aesthetic. */
+.inventory-access{position:absolute;z-index:8;left:16px;bottom:15px;cursor:pointer;
+ background:#181623;border:2px solid #b38e5a;color:#ffe8ba;padding:9px 13px;
+ font:700 11px Consolas,monospace;letter-spacing:1px}
+.inventory-access:hover,.inventory-access:focus-visible{outline:2px solid #ffcc80;background:#4d3442}
+.inventory-panel{position:absolute;inset:0;z-index:19;display:grid;place-items:center;
+ background:#080911de;padding:16px}
+.inventory-panel.hidden{display:none}
+.inventory-card{width:min(650px,96vw);max-height:90vh;overflow-y:auto;background:#191622;
+ border:3px solid #b49262;padding:clamp(16px,3vw,28px);box-shadow:7px 7px 0 #04040a;color:#f7e4c5}
+.inventory-card h2{font:800 clamp(22px,4vw,31px) Consolas,monospace;color:#f7d29b;margin:8px 0}
+.inventory-card p{font:13px/1.6 Consolas,monospace;color:#c9baa3}
+.inventory-list{display:grid;gap:8px;margin:18px 0}
+.inventory-item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+ background:#292432;border:1px solid #745e50;padding:10px}
+.inventory-item strong{display:block;color:#ffe1a6;font:700 13px Consolas,monospace}
+.inventory-item small{display:block;margin-top:4px;color:#c2b4ae;font:12px/1.4 Consolas,monospace}
+.inventory-item button,.inventory-card>button{background:#49323a;color:#fff0ce;
+ border:1px solid #c39a69;padding:9px 12px;cursor:pointer;font:700 12px Consolas,monospace}
+.inventory-item button:disabled{opacity:.46;cursor:not-allowed}
+.inventory-item button:focus-visible,.inventory-card>button:focus-visible{outline:2px solid #ffe5a5}
+.journal-chapters,.journal-timeline{display:grid;gap:5px;margin:10px 0 16px}
+.journal-chapter{border-left:3px solid #a28a6b;background:#24202b;padding:8px 11px;
+ font:12px/1.4 Consolas,monospace;color:#f0dac0}
+.journal-chapter.locked{opacity:.55;border-color:#544a55}
+.journal-chapter.completed{border-color:#86b494}
+.journal-chapter small{display:block;color:#bdae9b}
+.journal-timeline p{margin:2px 0;font:12px/1.4 Consolas,monospace;color:#d0bda7}
+@media(max-width:640px){.inventory-access{bottom:54px;left:9px;font-size:10px}
+.inventory-item{grid-template-columns:1fr}.inventory-card{padding:16px}}
