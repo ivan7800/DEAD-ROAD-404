@@ -267,7 +267,63 @@ try{
  assert.equal(townSave.chapterThree.stage,'chapel');
  assert.equal(townSave.chapterThree.attempts,1);
  assert.equal(townSave.campaign.current,'nameless');
+
+ // F25: Chromium navigation in both original PSX scenes and both real cipher modals.
+ // Valid chapter-III checkpoint avoids replaying three bosses for every CI build.
+ await page.evaluate(()=>{
+  const key='dead-road-404-f19-v2',s=JSON.parse(localStorage.getItem(key));
+  s.km=72;s.ending=null;s.encounterResolved=true;
+  s.mission={stage:'resolved',choice:'rescue'};
+  s.chapterOne={stage:'complete',attempts:0,wardenHealth:0,decision:'destroy'};
+  s.chapterTwo={stage:'complete',codeAttempts:1,stalkerHealth:0,mara:'avoid',ending:'silence',legacyFinaleAllowed:false};
+  s.chapterThree={stage:'complete',witness:'doubt',attempts:1,guardianHealth:0,cacheTaken:false,decision:'seal',legacyFinaleAllowed:false};
+  s.campaign.completed=['last-stop','missing','nameless'];s.campaign.current='nameless';
+  s.chapterFour={stage:'tuning',nora:'refuse',attempts:0,subcodeAttempts:0,
+   breakersMask:0,operatorHealth:150,cacheTaken:false,decision:null,legacyFinaleAllowed:false};
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ await page.locator('#objective').filter({hasText:'mezclador'}).waitFor({timeout:12000});
+ assert.equal(await page.locator('#radio').isEnabled(),true,'WXR-404 debe desbloquearse en KM72 tras concluir III');
+ await page.locator('#radio').click();
+ await page.locator('#status').filter({hasText:'WXR-404'}).waitFor({timeout:12000});
+ await page.screenshot({path:'artifacts/emisora-wxr404-f25.png'});
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'SINTONIZAR WXR-404'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#encounter-title').filter({hasText:'MESA DE MEZCLAS'}).waitFor({timeout:10000});
+ await page.screenshot({path:'artifacts/mezclador-f25.png'});
+ await page.getByRole('button',{name:'1992',exact:true}).click();
+ await page.locator('#encounter-text').filter({hasText:'CÓDIGO 1992 INVÁLIDO'}).waitFor();
+ await page.getByRole('button',{name:'0217',exact:true}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'Abre la escotilla'}).waitFor();
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'DESCENDER AL REFUGIO UMBRAL'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#status').filter({hasText:'REFUGIO UMBRAL'}).waitFor({timeout:12000});
+ await page.screenshot({path:'artifacts/refugio-umbral-f25.png'});
+ await page.keyboard.down('w');
+ try{await page.locator('#prompt').filter({hasText:'DESCIFRAR TERMINAL UMBRAL'}).waitFor({timeout:30000});}
+ finally{await page.keyboard.up('w');}
+ await page.keyboard.press('e');
+ await page.locator('#encounter-title').filter({hasText:'TERMINAL DE CONTENCIÓN'}).waitFor({timeout:10000});
+ await page.getByRole('button',{name:'0000',exact:true}).click();
+ await page.locator('#encounter-text').filter({hasText:'NO RECONOCIDO'}).waitFor();
+ await page.getByRole('button',{name:'0313',exact:true}).click();
+ await page.locator('#encounter:not(.hidden)').waitFor({state:'hidden'});
+ await page.locator('#objective').filter({hasText:'DOS interruptores'}).waitFor();
+ await page.screenshot({path:'artifacts/circuitos-umbral-f25.png'});
+ await page.keyboard.press('m');
+ await page.locator('#load').click();
+ const radioSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
+ assert.equal(radioSave.chapterFour.stage,'breaker');
+ assert.equal(radioSave.chapterFour.attempts,1);
+ assert.equal(radioSave.chapterFour.subcodeAttempts,1);
+ assert.equal(radioSave.campaign.current,'dead-frequency');
  assert.equal(errors.length,0,'Errores JS durante el juego: '+errors.join('; '));
- console.log('PASS Chromium F24: portada pulp, opciones, capítulos, pausa real, PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
+ console.log('PASS Chromium F25: emisora WXR-404, bunker UMBRAL, dos codigos y persistencia, portada pulp, opciones, capítulos, pausa real, PSX, inventario, conduccion '+velocity+' km/h, capítulo I, THE LAST LIGHT 3D, cerradura 4040→1992, guardado del capítulo II, pueblo sin nombre 3D, reloj 0404→0313 y persistencia del capítulo III.');
 }catch(error){console.error(error);console.error('Vite:',logs.slice(-3000));process.exitCode=1;}
 finally{await browser?.close();try{if(process.platform==='win32')server.kill('SIGTERM');else process.kill(-server.pid,'SIGTERM');}catch{}server.stdout?.destroy();server.stderr?.destroy();}
