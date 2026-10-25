@@ -2,6 +2,16 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 27 — Donde termina la carretera (v0.21.0)
+
+**Los seis capítulos de la historia principal ya tienen un recorrido jugable**. Al completar el KM 96 y conducir hasta el **KM 120**, el mapa permite entrar en el último desvío. El nuevo peaje PSX incluye señal del final, registro de 1992, dos relés A/B, barrera con el código **1204** y encuentro contra **El Doble** (140 PV, ataque anunciado y dos ritmos). Desde la elección final se obtienen cuatro desenlaces persistentes, incluido **El coro de los ausentes** si transmitiste el registro desde el pueblo (III), emitiste los nombres desde WXR-404 (IV) y conservaste el mapa del KM 96 (V).
+
+Las acciones de final no se repiten al recargar. La compatibilidad con partidas anteriores a F27 se mantiene en la misma clave `dead-road-404-f19-v2`; los guardados F26 que carecen del sexto capítulo conservan el epílogo clásico. Se mantiene la estética PSX y el juego no necesita archivos GLB externos durante la partida.
+
+**Validación automatizada:** 259 pruebas Node y ruta Chromium real hasta el final I, incluidos puzle, combate y persistencia: [CI fase 27](https://github.com/ivan7800/DEAD-ROAD-404/actions/runs/40220104885). Los otros desenlaces tienen pruebas unitarias. La validación manual de imagen, accesibilidad, FPS y sesiones largas en Windows 11 y Linux Mint sigue pendiente; no declarar 9,5/10 ni versión 1.0 sin ella.
+
+Ficha: [Fase 27](docs/FASE_27_DONDE_TERMINA_LA_CARRETERA.md).
+
 ## Fase 26 — El kilómetro imposible (v0.20.0)
 
 El capítulo V está implementado en el **KM 96**: abre el mapa al completar IV, conduce hasta 96 km y entra en **EL KILÓMETRO IMPOSIBLE**. El nuevo escenario PSX contiene una carretera repetida, tres señales de distancia, un registrador de patrulla y dos balizas. Investiga el poste y la patrulla con [E], activa A/B, descifra **2496** (24 km entre KM72 y KM96) y enfréntate al **Agrimensor** (120 PV; [F] golpear, [SHIFT] esquivar). La elección final guarda nombres (+12 L) o entierra el mapa (+3 piezas). La maleta opcional otorga +18 salud y +2 comida una sola vez.
