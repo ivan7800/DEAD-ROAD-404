@@ -168,7 +168,10 @@ function showFinale(){
  encounterOpen=true;input.reset();document.exitPointerLock?.();
  const dialog=$('encounter'),choices=$('encounter-choices');
  $('encounter-title').textContent='CARRETERA 404 · ÚLTIMO DESVÍO';
- $('encounter-text').textContent='Son las 02:17. Otra vez. El asfalto se divide en dos: una salida sin señales y una antena que emite tu propia voz. Vera te mira en silencio. ¿Qué haces?';
+ $('encounter-text').textContent='Son las 02:17. Otra vez. El asfalto se divide en dos: una salida sin señales y una antena que emite tu propia voz. '+
+ (state.mission.choice==='rescue'?'Vera aprieta tu mano. ':state.mission.choice==='leave'?'Vera no está, pero su voz ocupa el asiento vacío. ':'Vera recuerda lo que le exigiste por ayudarla. ')+
+ (state.chapterFive.decision==='remember'?'Los nombres del mapa todavía tienen rostros. ':'El mapa enterrado deja un hueco en tus recuerdos. ')+
+ '¿Abandonas el asfalto o escuchas la última transmisión?';
  choices.replaceChildren();
  for(const option of FINALE_OPTIONS){
   const button=document.createElement('button');button.type='button';button.textContent=option.label+' — '+option.description;
@@ -177,7 +180,7 @@ function showFinale(){
    const ending=state.ending?ENDINGS[state.ending]:null;
    if(!ending)return;
    $('encounter-title').textContent=ending.title;
-   $('encounter-text').textContent=ending.text;
+   $('encounter-text').textContent=ending.text+' '+(state.chapterFour.decision==='broadcast'?'La voz de WXR-404 sigue viajando.':'La emisora WXR-404 permanece muda.')+' '+(state.chapterFive.decision==='forget'?'Alguien olvidará por qué emprendiste el viaje.':'Conservas los nombres de quienes no pudieron salir.');
    choices.replaceChildren();saveQuietly();hud();
    const close=document.createElement('button');close.type='button';close.textContent='GUARDAR FINAL Y REGRESAR AL MENÚ';
    close.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');switchMode('map');notify('FINAL REGISTRADO · '+ending.title);});
@@ -777,7 +780,20 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
  world.setCacheVisible(false);saveQuietly();notify(cache.message);hud();
  }else if(isAtPhone(world.player.x,world.player.z)){const result=answerPhone(state.mission.stage,state.phoneHeard);if(canAnswerPhone(state.mission.stage,state.phoneHeard)){state.phoneHeard=true;state.campaign=recordMilestone(state.campaign,'phone');saveQuietly();beep(450,.12);}notify(result.message);hud();}else if(!state.motelTape&&isNearTape(world.player.x,world.player.z)){const result=collectTape(state);state={...state,motelTape:result.motelTape,parts:result.parts,food:result.food,inventory:addItem(state.inventory,'motelTape')};state.campaign=recordMilestone(state.campaign,'tape');world.setTapeVisible(false);saveQuietly();notify('CINTA MAGNÉTICA: «Las habitaciones no tienen número. Tienen fecha». +2 comida y +1 pieza.');hud();}else if(world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'){showMissionDialogue();}else if(world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'){state.mission=advanceMission(state.mission,'key');state.inventory=addItem(state.inventory,'key404');state.campaign=recordMilestone(state.campaign,'key');saveQuietly();notify('Obtienes la LLAVE 404. En su etiqueta pone: «NO ABRIR DESDE DENTRO».');hud();}else if(world.player.distanceTo(new THREE.Vector3(11,1.7,1))<3){const old=state.hasCan;state=pickFuel(state);if(!old)notify(state.message);else notify('Ya recogiste el bidón.');hud();}else notify('No hay nada a tu alcance.');}}if((k===' '||k==='f')&&mode==='explore'&&attackCooldown===0&&state.health>0){
  attackCooldown=.48;
- if(inMile){
+ if(inRoadEnd){
+  if(state.chapterSix.stage==='double'){
+   const strike=strikeRoadDouble(roadDouble,world.player.x,world.player.z,yaw);
+   roadDouble=strike.double;state.chapterSix={...state.chapterSix,doubleHealth:roadDouble.health};
+   beep(strike.hit?72:210,.14);world.flashHit(strike.hit);
+   if(strike.hit){
+    notify(strike.defeated?'EL DOBLE SE DESVANECE EN LA NIEBLA.':'EL DOBLE · '+roadDouble.health+'/140 · Su máscara anuncia cada ataque.');
+    if(strike.defeated){
+     state=defeatRoadDouble(state);world.setRoadDouble(roadDouble.x,roadDouble.z,false,false,elapsed);
+     syncRoadEndView();saveQuietly();showFinale();
+    }else saveQuietly();
+   }else notify('La figura está demasiado lejos. Acércate y mira hacia sus ojos.');
+  }else notify('No hay nadie aquí a quien golpear.');
+ }else if(inMile){
   if(state.chapterFive.stage==='hunter'){
    const strike=strikeMileHunter(mileHunter,world.player.x,world.player.z,yaw);
    mileHunter=strike.hunter;state.chapterFive={...state.chapterFive,hunterHealth:mileHunter.health};
@@ -864,7 +880,23 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');}
  world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(world.car.position.z<=-125){state=travel(state,24);world.car.position.z=20;state.carZ=20;switchMode('map');notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}}
  if(mode==='explore'){world.setFlashlight(flashlightOn,yaw,pitch);world.setMissionStage(state.mission.stage);
- if(inMile){
+ if(inRoadEnd){
+  world.setEnemy(enemy.x,enemy.z,false,elapsed);
+  world.setWarden(warden.x,warden.z,false,false,elapsed);
+  world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);
+  world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);
+  world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);
+  world.setMileHunter(mileHunter.x,mileHunter.z,false,false,elapsed);
+  if(state.chapterSix.stage==='double'){
+   const result=stepRoadDouble(roadDouble,world.player.x,world.player.z,dt);
+   roadDouble=result.double;
+   if(result.hit&&state.health>0){
+    state.health=clamp(state.health-15,0,100);world.flashDanger();beep(73,.22);saveQuietly();
+    notify(state.health===0?'Tu Doble te ha alcanzado. Cura tus heridas desde [I].':'¡TU DOBLE TE GOLPEA! −15 salud. Esquiva la mirada ámbar.');
+   }
+   world.setRoadDouble(roadDouble.x,roadDouble.z,true,result.telegraph,elapsed);
+  }else world.setRoadDouble(roadDouble.x,roadDouble.z,false,false,elapsed);
+ }else if(inMile){
   world.setEnemy(enemy.x,enemy.z,false,elapsed);
   world.setWarden(warden.x,warden.z,false,false,elapsed);
   world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);
