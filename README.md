@@ -2,6 +2,12 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## Fase 29 — Optimización PSX (v0.21.2)
+
+La segunda pasada de agrupación une mallas Lambert de decorados que comparten exactamente apariencia tras la cuantización PSX. No agrupa actores, objetos interactivos ni superficies transparentes o texturizadas. El nuevo control de fotogramas mantiene la frecuencia completa durante el juego, limita el redibujado de menús/diálogos/pausa y evita renderizar cuando la pestaña está oculta. El diagnóstico FPS se refiere al juego activo.
+
+Las seis fases narrativas, controles y guardado siguen vigentes. [Evidencias y límites de F29](docs/FASE_29_RENDIMIENTO_Y_PULIDO.md). Una menor cantidad de draw calls no garantiza por sí sola una mejora de FPS; sigue pendiente el benchmark Windows/Linux con GPU física.
+
 ## Fase 28 — Guardados seguros y accesibilidad (v0.21.1)
 
 Esta revisión mejora la experiencia sin alterar la estructura de la campaña: «Nueva partida» muestra confirmación y escribe inmediatamente el nuevo guardado, cancelar no modifica la partida anterior, los diálogos del juego retienen el foco de Tab, el diario vuelve a permitir desplazamiento con teclado y los lectores de pantalla reciben avisos solo cuando cambia el objetivo. Se mantienen los seis capítulos y sus cuatro finales.
