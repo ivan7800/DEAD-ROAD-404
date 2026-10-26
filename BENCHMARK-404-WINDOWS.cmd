@@ -19,7 +19,7 @@ if not exist "node_modules\playwright" (
  goto :fail
 )
 if "%~1"=="" (
- call npm run benchmark:gpu -- --repeats=3 --seconds=10
+ call npm run benchmark:gpu -- --require-hardware --repeats=3 --seconds=60
 ) else (
  call npm run benchmark:gpu -- %*
 )
