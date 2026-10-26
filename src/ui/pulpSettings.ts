@@ -1,10 +1,10 @@
 /** F24 — visual/audio preferences separate from F19–F23 saved game state. */
 export type PulpSettings={
- grain:boolean;reducedMotion:boolean;highContrast:boolean;largeText:boolean;volume:number;mouseSensitivity:number;gamepadSensitivity:number;invertY:boolean
+ grain:boolean;reducedMotion:boolean;highContrast:boolean;largeText:boolean;volume:number;mouseSensitivity:number;gamepadSensitivity:number;invertY:boolean;gamepadDeadzone:number
 };
 export const PULP_PREF_KEY='dead-road-404-pulp-ui-v1';
 export const DEFAULT_PULP_SETTINGS:Readonly<PulpSettings>=Object.freeze({
- grain:true,reducedMotion:false,highContrast:false,largeText:false,volume:65,mouseSensitivity:100,gamepadSensitivity:100,invertY:false
+ grain:true,reducedMotion:false,highContrast:false,largeText:false,volume:65,mouseSensitivity:100,gamepadSensitivity:100,invertY:false,gamepadDeadzone:16
 });
 function normalizeSensitivity(value:unknown):number{return typeof value==='number'&&Number.isFinite(value)?Math.max(25,Math.min(200,Math.round(value))):100;}
 export function normalizePulpSettings(input:unknown):PulpSettings{
@@ -19,7 +19,8 @@ export function normalizePulpSettings(input:unknown):PulpSettings{
   volume,
   mouseSensitivity:normalizeSensitivity(obj.mouseSensitivity),
   gamepadSensitivity:normalizeSensitivity(obj.gamepadSensitivity),
-  invertY:typeof obj.invertY==='boolean'?obj.invertY:false
+  invertY:typeof obj.invertY==='boolean'?obj.invertY:false,
+  gamepadDeadzone:typeof obj.gamepadDeadzone==='number'&&Number.isFinite(obj.gamepadDeadzone)?Math.max(5,Math.min(40,Math.round(obj.gamepadDeadzone))):16
  };
 }
 export function parsePulpSettings(json:string|null):PulpSettings{
