@@ -23,9 +23,10 @@ const value=(name,fallback,min,max)=>{
  if(!Number.isFinite(n)||n<min||n>max)throw new Error('Opción inválida: '+token);
  return n;
 };
-const seconds=value('--seconds',8,2,30);
+const seconds=value('--seconds',8,2,1200);
 const repeats=Math.trunc(value('--repeats',2,1,5));
 const headless=flag('--headless'),software=flag('--swiftshader'),requireHardware=flag('--require-hardware');
+const minFps=value('--min-fps',0,0,240);
 const width=1280,height=800,base='http://127.0.0.1:4174/DEAD-ROAD-404/';
 const argsBrowser=['--enable-webgl'];
 if(software)argsBrowser.push('--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader');
@@ -84,14 +85,15 @@ try{
  await page.locator('#perf-panel').filter({hasText:'draw calls'}).waitFor({timeout:10000});
  const gpu=await page.evaluate(()=>{
   const gl=document.querySelector('#scene')?.getContext('webgl2');
-  if(!gl)return {webgl:'unavailable',vendor:'unknown',renderer:'unknown'};
+  if(!gl)return {webgl:'unavailable',vendor:'unknown',renderer:'unknown',unmasked:false};
   const info=gl.getExtension('WEBGL_debug_renderer_info');
-  return {webgl:'webgl2',
+  return {webgl:'webgl2',unmasked:!!info,
    vendor:String(info?gl.getParameter(info.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR)),
    renderer:String(info?gl.getParameter(info.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER))};
  });
- const softwareRenderer=/swiftshader|llvmpipe|softpipe|software rasterizer|mesa offscreen/i.test(gpu.renderer);
- if(requireHardware&&(software||softwareRenderer||gpu.webgl==='unavailable'))
+ const softwareRenderer=/swiftshader|llvmpipe|softpipe|software rasterizer|mesa offscreen|microsoft basic render/i.test(gpu.renderer);
+ const identifiableGpu=gpu.unmasked&&gpu.renderer!=='unknown'&&!/^webgl\s/i.test(gpu.renderer);
+ if(requireHardware&&(headless||software||softwareRenderer||!identifiableGpu||gpu.webgl==='unavailable'))
   throw Error('GPU física NO verificada: '+gpu.renderer+'. Revisa los drivers o quita --require-hardware.');
  console.log('[F30] '+gpu.renderer+(softwareRenderer?' (renderizador software)':' (aceleración no certificada)'));
  const rows=[];
@@ -103,30 +105,34 @@ try{
  await page.locator('#explore').click();
  await page.locator('#status').filter({hasText:'EXPLORACIÓN'}).waitFor();
  for(let i=1;i<=repeats;i++)rows.push(await measure(page,'explore','Exploración quieta',i));
+ if(minFps>0){
+  const failed=rows.filter(x=>x.meanFps<minFps||x.low1Fps<minFps);
+  if(failed.length)throw Error('F36 umbral '+minFps+' FPS incumplido (media o 1% bajo): '+failed.map(x=>x.scene+' #'+x.repeat+' '+x.meanFps+'/'+x.low1Fps).join(', '));
+ }
  assert.equal(pageErrors.length,0,'Excepciones JS: '+pageErrors.join('; '));
  const timestamp=new Date().toISOString(),folder=resolve('artifacts','benchmarks');
  mkdirSync(folder,{recursive:true});
  const stamp=timestamp.replace(/[:.]/g,'-');
  const file=resolve(folder,'f30-'+stamp+'.json');
  const report={
-  phase:30,version:'0.21.3',timestamp,url:base,viewport:{width,height},
-  options:{repeats,seconds,headless,requestedSwiftShader:software,requireHardware},
+  phase:36,version:'0.21.8',timestamp,url:base,viewport:{width,height},
+  options:{repeats,seconds,headless,requestedSwiftShader:software,requireHardware,minFps},
   environment:{platform:process.platform,arch:process.arch,osRelease:os.release(),
    node:process.version,browser:browser.version(),cpuLogical:os.cpus().length,
-   ...gpu,softwareRenderer},
-  caveat:'Medidas locales rAF en primer plano, no GPU timings ni garantía de 45 FPS sostenidos.',
+   ...gpu,softwareRenderer,identifiableGpu},
+  caveat:'Medidas de rAF, no tiempos de GPU. La identidad del renderizador no prueba por sí sola aceleración sostenida ni validez del equipo físico.',
   results:rows,errors:pageErrors
  };
  writeFileSync(file,JSON.stringify(report,null,2)+'\n');
  const md=resolve(folder,'f30-'+stamp+'.md');
  writeFileSync(md,
-  '# DEAD ROAD 404 — Benchmark F30\n\n'+
+  '# DEAD ROAD 404 — Benchmark F36\n\n'+
   `Fecha: ${timestamp}. GPU declarada: ${gpu.renderer}. Perfil: ${headless?'headless':'con ventana'}.\n\n`+
   '| Escenario | Repetición | FPS medios | 1% bajo | p95 ms | Draw calls | Triángulos |\n'+
   '|---|---:|---:|---:|---:|---:|---:|\n'+
   rows.map(x=>`| ${x.scene} | ${x.repeat} | ${x.meanFps} | ${x.low1Fps} | ${x.p95FrameMs} | ${x.drawCalls} | ${x.triangles} |`).join('\n')+
   '\n\nLa frecuencia de requestAnimationFrame aproxima la cadencia, no mide tiempo de GPU.\n');
- console.log('[F30] Resultado JSON: '+file);
+ console.log('[F36] Resultado JSON: '+file);
  console.log('[F30] Informe Markdown: '+md);
 }catch(err){
  console.error('[F30] ERROR:',err instanceof Error?err.message:String(err));
