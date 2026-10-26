@@ -73,6 +73,7 @@ const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adap
 const keyPosition=new THREE.Vector3(17.2,1.7,-8.4),veraPosition=new THREE.Vector3(-20,1.7,-40.5),radioPosition=new THREE.Vector3(14.4,1.7,-2.4);
 let padInput:PadInput=readPad(null);
 let previousPadButtons=new Set<string>();
+let suppressPadUntilRelease=false;
 function pollGamepad(){
  const pads=navigator.getGamepads?.();
  const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
@@ -80,6 +81,10 @@ function pollGamepad(){
  // When a menu owns focus, handle the controller directly instead of triggering gameplay.
  const overlay=['pulp-pause','pulp-options','pulp-chapters','pulp-credits','encounter','inventory-panel','journal','controls-guide',...(mode==='map'?['panel']:[])].map(id=>document.getElementById(id)).find(el=>el&&!el.classList.contains('hidden')&&!el.hasAttribute('hidden'));
  const buttons=gamepad?.buttons;
+ if(suppressPadUntilRelease){
+  if(buttons?.some(b=>b.pressed)){padInput=readPad(null);return;}
+  suppressPadUntilRelease=false;previousPadButtons.clear();
+ }
  if(overlay&&buttons){
   const edge=(id:string,pressed:boolean)=>pressed&&!previousPadButtons.has(id);
   const active=new Set<string>();
@@ -88,7 +93,10 @@ function pollGamepad(){
   if(edge('nav-up',active.has('nav-up')))navigateController(overlay,'previous');
   if(edge('confirm',active.has('confirm')))navigateController(overlay,'confirm');
   if(edge('cancel',active.has('cancel'))){const closer=overlay.querySelector<HTMLButtonElement>('button[id$="close"],#pulp-resume,#inventory-close,#journal-close,#close-controls');closer?.click();}
-  previousPadButtons=active;padInput=readPad(null);return;
+  const actionPressed=active.has('confirm')||active.has('cancel');
+  previousPadButtons=active;padInput=readPad(null);
+  if(actionPressed)suppressPadUntilRelease=true;
+  return;
  }
  // Gamepad actions use the same key handler as the keyboard and never auto-repeat.
  for(const key of padInput.buttons)if(!previousPadButtons.has(key)&&!document.hidden){
