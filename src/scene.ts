@@ -44,7 +44,9 @@ export class GameWorld {
   this.flashlight.target = this.flashlightTarget;
   this.flashlight.visible=false;
   this.scene.add(this.flashlight,this.flashlightTarget);
-  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.buildChapterOneProps();this.scene.add(this.diner.group,this.town.group,this.radio.group,this.mile.group,this.roadEnd.group);this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
+  this.scene.add(this.stationFallback,this.motelFallback);this.buildLandscape();this.buildDistantHorizon();this.buildRoadDressing();this.buildStation();this.buildStationInterior();this.buildAtmosphere();this.buildNeonSet();this.buildEnemy();this.buildStoryProps();this.buildChapterOneProps();// Prevent inactive chapter groups from selecting the wrong atmosphere on startup.
+  for(const chapter of [this.diner.group,this.town.group,this.radio.group,this.mile.group,this.roadEnd.group])chapter.visible=false;
+  this.scene.add(this.diner.group,this.town.group,this.radio.group,this.mile.group,this.roadEnd.group);this.scene.add(createPSXSignage());this.scene.add(this.architecturalPass.group);this.scene.add(this.roadsideArt.group);this.scene.add(this.americana1992.group);this.scene.add(this.roadsideDetail14.group);this.scene.add(this.car);this.driveDust=new DriveDust(this.scene);this.car.position.set(0,.18,19);
   // Batch only directly-owned noninteractive scenery; game actors live in groups.
   this.sceneryBatch=batchStaticModel(this.scene,{directOnly:true,cellSize:30});
   for(const group of [this.stationFallback,this.motelFallback,this.diner.scenery,this.town.scenery,this.radio.surfaceScenery,this.radio.bunkerScenery,this.mile.scenery,this.roadEnd.scenery]){
