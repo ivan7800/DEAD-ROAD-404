@@ -13,6 +13,6 @@ fi
 if (( $# )); then
  npm run benchmark:gpu -- "$@"
 else
- npm run benchmark:gpu -- --repeats=3 --seconds=10
+ npm run benchmark:gpu -- --require-hardware --repeats=3 --seconds=60
 fi
 echo "Informes locales: ./artifacts/benchmarks/"
