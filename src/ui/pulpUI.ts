@@ -159,14 +159,18 @@ export class PulpUI {
    reducedMotion:input('pulp-reduce-motion').checked,
    highContrast:input('pulp-high-contrast').checked,
    largeText:input('pulp-large-text').checked,
-   volume:Number(input('pulp-volume').value)
+   volume:Number(input('pulp-volume').value),
+   mouseSensitivity:Number(input('pulp-mouse-sensitivity').value),
+   gamepadSensitivity:Number(input('pulp-gamepad-sensitivity').value),
+   invertY:input('pulp-invert-y').checked
   });
-  for(const id of ['pulp-grain','pulp-reduce-motion','pulp-high-contrast','pulp-large-text','pulp-volume'])
+  for(const id of ['pulp-grain','pulp-reduce-motion','pulp-high-contrast','pulp-large-text','pulp-volume','pulp-mouse-sensitivity','pulp-gamepad-sensitivity','pulp-invert-y'])
    input(id).addEventListener('change',change);
   input('pulp-volume').addEventListener('input',()=>{
    get('pulp-volume-value').textContent=input('pulp-volume').value+'%';
    change();
   });
+  for(const id of ['pulp-mouse-sensitivity','pulp-gamepad-sensitivity'])input(id).addEventListener('input',change);
   select('pulp-graphics').addEventListener('change',()=>{
    const choice=select('pulp-graphics').value as GraphicsPreset;
    if(!['psx','rendimiento','equilibrado','cine'].includes(choice))return;
@@ -215,6 +219,9 @@ export class PulpUI {
   input('pulp-high-contrast').checked=this.settings.highContrast;
   input('pulp-large-text').checked=this.settings.largeText;
   input('pulp-volume').value=String(this.settings.volume);
+  input('pulp-mouse-sensitivity').value=String(this.settings.mouseSensitivity);
+  input('pulp-gamepad-sensitivity').value=String(this.settings.gamepadSensitivity);
+  input('pulp-invert-y').checked=this.settings.invertY;
   get('pulp-volume-value').textContent=this.settings.volume+'%';
  }
  private update(changes:Partial<PulpSettings>){
