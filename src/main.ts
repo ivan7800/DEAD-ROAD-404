@@ -1,6 +1,7 @@
 import {InputController,capturesGameKey,normalizeKey} from './inputController.ts';
 import {cameraYawForMovement} from './controlOrientation.ts';
 import {readPad,type PadInput} from './gamepadControls.ts';
+import {navigateController} from './controllerMenu.ts';
 import {chooseAxis} from './dualInput.ts';
 import {safeStorage,readPreference,writePreference,writeSave,readLatestValidSave} from './saveStorage.ts';
 import {shouldOfferFinale,resolveFinale,roadObjective,ENDINGS,FINALE_OPTIONS,type FinalApproach} from './roadStory.ts';
@@ -76,6 +77,19 @@ function pollGamepad(){
  const pads=navigator.getGamepads?.();
  const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
  padInput=readPad(gamepad,(pulpUi?.preferences.gamepadDeadzone??16)/100);
+ // When a menu owns focus, handle the controller directly instead of triggering gameplay.
+ const overlay=['pulp-pause','pulp-options','pulp-chapters','pulp-credits','encounter','inventory-panel','journal','controls-guide'].map(id=>document.getElementById(id)).find(el=>el&&!el.classList.contains('hidden')&&!el.hasAttribute('hidden'));
+ const buttons=gamepad?.buttons;
+ if(overlay&&buttons){
+  const edge=(id:string,pressed:boolean)=>pressed&&!previousPadButtons.has(id);
+  const active=new Set<string>();
+  for(const [id,n] of [['nav-up',12],['nav-down',13],['confirm',0],['cancel',1]] as const)if(buttons[n]?.pressed)active.add(id);
+  if(edge('nav-down',active.has('nav-down')))navigateController(overlay,'next');
+  if(edge('nav-up',active.has('nav-up')))navigateController(overlay,'previous');
+  if(edge('confirm',active.has('confirm')))navigateController(overlay,'confirm');
+  if(edge('cancel',active.has('cancel'))){const closer=overlay.querySelector<HTMLButtonElement>('button[id$="close"],#pulp-resume,#inventory-close,#journal-close,#close-controls');closer?.click();}
+  previousPadButtons=active;padInput=readPad(null);return;
+ }
  // Gamepad actions use the same key handler as the keyboard and never auto-repeat.
  for(const key of padInput.buttons)if(!previousPadButtons.has(key)&&!document.hidden){
   window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
