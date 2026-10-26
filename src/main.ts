@@ -78,7 +78,7 @@ function pollGamepad(){
  const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
  padInput=readPad(gamepad,(pulpUi?.preferences.gamepadDeadzone??16)/100);
  // When a menu owns focus, handle the controller directly instead of triggering gameplay.
- const overlay=['pulp-pause','pulp-options','pulp-chapters','pulp-credits','encounter','inventory-panel','journal','controls-guide'].map(id=>document.getElementById(id)).find(el=>el&&!el.classList.contains('hidden')&&!el.hasAttribute('hidden'));
+ const overlay=['pulp-pause','pulp-options','pulp-chapters','pulp-credits','encounter','inventory-panel','journal','controls-guide',...(mode==='map'?['panel']:[])].map(id=>document.getElementById(id)).find(el=>el&&!el.classList.contains('hidden')&&!el.hasAttribute('hidden'));
  const buttons=gamepad?.buttons;
  if(overlay&&buttons){
   const edge=(id:string,pressed:boolean)=>pressed&&!previousPadButtons.has(id);
