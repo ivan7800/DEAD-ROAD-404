@@ -71,16 +71,21 @@ const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adap
 const keyPosition=new THREE.Vector3(17.2,1.7,-8.4),veraPosition=new THREE.Vector3(-20,1.7,-40.5),radioPosition=new THREE.Vector3(14.4,1.7,-2.4);
 let padInput:PadInput=readPad(null);
 let previousPadButtons=new Set<string>();
-function pollGamepad(){
+function pollGamepad(blocked:boolean){
  const pads=navigator.getGamepads?.();
  const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
- padInput=readPad(gamepad);
- // Gamepad actions use the same key handler as the keyboard and never auto-repeat.
- for(const key of padInput.buttons)if(!previousPadButtons.has(key)){
+ const observed=readPad(gamepad);
+ // Never replay a held button after a dialog, pause, or window focus transition.
+ const newlyPressed=[...observed.buttons].filter(key=>!previousPadButtons.has(key));
+ previousPadButtons=new Set(observed.buttons);
+ padInput=blocked?readPad(null):observed;
+ if(blocked)return;
+ // One discrete action per press. Pauses opened by this action block the rest.
+ for(const key of newlyPressed){
   window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
   window.dispatchEvent(new KeyboardEvent('keyup',{key,bubbles:true}));
+  if(pulpUi?.isPaused||encounterOpen||journalOpen||helpOpen||inventoryOpen)break;
  }
- previousPadButtons=new Set(padInput.buttons);
 }
 const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('status'),prompt=$('prompt'),cross=$('crosshair');
 const addLog=(message:string)=>{$('log').textContent=message;};
@@ -1114,7 +1119,7 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);if(world.camera.fov!==73){world.camera.fov=73;world.camera.updateProjectionMatrix();}world.camera.position.lerp(MAP_CAMERA_POSITION,Math.min(1,dt*2));world.camera.lookAt(8,0,0);}if(performance.now()>toastUntil)$('toast').classList.remove('show');}
 function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;
  const visible=!document.hidden,paused=Boolean(pulpUi?.isPaused);
- if(visible)pollGamepad();else {padInput=readPad(null);previousPadButtons.clear();}
+ if(visible)pollGamepad(paused||encounterOpen||journalOpen||helpOpen||inventoryOpen);else {padInput=readPad(null);previousPadButtons.clear();}
  const interactive=visible&&!paused&&mode!=='map'&&!encounterOpen&&!journalOpen&&!helpOpen&&!inventoryOpen;
  const draw=renderPacer.shouldRender(now,visible,interactive);
  // Advance static menu/overlay animations only on their redraws; never simulate
