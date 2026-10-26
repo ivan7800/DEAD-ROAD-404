@@ -162,15 +162,16 @@ export class PulpUI {
    volume:Number(input('pulp-volume').value),
    mouseSensitivity:Number(input('pulp-mouse-sensitivity').value),
    gamepadSensitivity:Number(input('pulp-gamepad-sensitivity').value),
-   invertY:input('pulp-invert-y').checked
+   invertY:input('pulp-invert-y').checked,
+   gamepadDeadzone:Number(input('pulp-gamepad-deadzone').value)
   });
-  for(const id of ['pulp-grain','pulp-reduce-motion','pulp-high-contrast','pulp-large-text','pulp-volume','pulp-mouse-sensitivity','pulp-gamepad-sensitivity','pulp-invert-y'])
+  for(const id of ['pulp-grain','pulp-reduce-motion','pulp-high-contrast','pulp-large-text','pulp-volume','pulp-mouse-sensitivity','pulp-gamepad-sensitivity','pulp-invert-y','pulp-gamepad-deadzone'])
    input(id).addEventListener('change',change);
   input('pulp-volume').addEventListener('input',()=>{
    get('pulp-volume-value').textContent=input('pulp-volume').value+'%';
    change();
   });
-  for(const id of ['pulp-mouse-sensitivity','pulp-gamepad-sensitivity'])input(id).addEventListener('input',change);
+  for(const id of ['pulp-mouse-sensitivity','pulp-gamepad-sensitivity','pulp-gamepad-deadzone'])input(id).addEventListener('input',change);
   select('pulp-graphics').addEventListener('change',()=>{
    const choice=select('pulp-graphics').value as GraphicsPreset;
    if(!['psx','rendimiento','equilibrado','cine'].includes(choice))return;
@@ -222,6 +223,7 @@ export class PulpUI {
   input('pulp-mouse-sensitivity').value=String(this.settings.mouseSensitivity);
   input('pulp-gamepad-sensitivity').value=String(this.settings.gamepadSensitivity);
   input('pulp-invert-y').checked=this.settings.invertY;
+  input('pulp-gamepad-deadzone').value=String(this.settings.gamepadDeadzone);
   get('pulp-volume-value').textContent=this.settings.volume+'%';
  }
  private update(changes:Partial<PulpSettings>){
