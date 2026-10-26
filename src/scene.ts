@@ -1,4 +1,5 @@
 import {AmericanaLighting17} from './lighting17.ts';
+import {chapterAtmosphere35} from './atmosphere35.ts';
 import {loadArtAssets, type ArtLoadReport} from './artAssets.ts';
 import {ArchitecturalPass} from './architecturalPass.ts';
 import {Americana1992} from './americana1992.ts';
@@ -32,11 +33,11 @@ export class GameWorld {
  readonly scene=new THREE.Scene();readonly lighting17=new AmericanaLighting17();readonly stationFallback=new THREE.Group();readonly motelFallback=new THREE.Group();readonly legacyEnvironment=new THREE.Group();
  artStatus:'cargando'|'glb'|'parcial'|'reserva'|'psx'='cargando';artReport:ArtLoadReport|null=null;readonly camera=new THREE.PerspectiveCamera(73,1,.07,200);readonly renderer:THREE.WebGLRenderer;
  readonly architecturalPass=new ArchitecturalPass();readonly americana1992=new Americana1992();readonly roadsideDetail14=new RoadsideDetail14(); readonly driveDust:DriveDust;readonly firebird=new Firebird();readonly car=this.firebird.group; readonly roadsideArt=new RoadsideArt(); readonly player=new THREE.Vector3(0,1.7,7); readonly can=new THREE.Vector3(11,0,1);
- readonly diner=new DinerScene();readonly town=new TownScene();readonly radio=new RadioScene();readonly mile=new MileScene();readonly roadEnd=new RoadEndScene();readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private readonly flashlightDirection=new THREE.Vector3(); private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private fuseVisual=new THREE.Group();private consoleVisual=new THREE.Group();private hatchVisual=new THREE.Group();readonly wardenVisual=new THREE.Group();private wardenEye:THREE.Mesh|null=null;private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
+ readonly diner=new DinerScene();readonly town=new TownScene();readonly radio=new RadioScene();readonly mile=new MileScene();readonly roadEnd=new RoadEndScene();readonly sceneryBatch:{before:number;after:number;merged:number};private graphicsPreset:GraphicsPreset='psx';private psxMaterialReady=false;private moonLight:THREE.DirectionalLight; private hemisphereLight:THREE.HemisphereLight; private atmosphereKey=''; private flashlight:THREE.SpotLight; private flashlightTarget:THREE.Object3D; private readonly flashlightDirection=new THREE.Vector3(); private neon:THREE.PointLight|null=null; private sky:THREE.Color; private lastAtmosphereTime=0; private enemyHead:THREE.Mesh|null=null; private dangerLight=new THREE.PointLight(0xec1e33,0,7); private hitLight=new THREE.PointLight(0xffb968,0,6); readonly enemyVisual=new THREE.Group(); private enemyArms:THREE.Group[]=[];private enemyLegs:THREE.Group[]=[]; private enemyEyes:THREE.Mesh[]=[]; private missionKey=new THREE.Group(); private supplyCacheVisual=new THREE.Group();private fuseVisual=new THREE.Group();private consoleVisual=new THREE.Group();private hatchVisual=new THREE.Group();readonly wardenVisual=new THREE.Group();private wardenEye:THREE.Mesh|null=null;private vera=new THREE.Group(); private motelTapeVisual=new THREE.Group();
  constructor(canvas:HTMLCanvasElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(1);this.renderer.shadowMap.enabled=false;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.sky=new THREE.Color(0x10121c);this.scene.background=this.sky;this.scene.fog=new THREE.FogExp2(0x423340,.019);
-  this.scene.add(new THREE.HemisphereLight(0x887baa,0x4c2824,1.5));const moon=new THREE.DirectionalLight(0x9e9fc9,1.9);moon.position.set(-15,24,-18);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-65;moon.shadow.camera.right=65;moon.shadow.camera.top=65;moon.shadow.camera.bottom=-65;this.scene.add(moon);this.moonLight=moon;
+  this.hemisphereLight=new THREE.HemisphereLight(0x887baa,0x4c2824,1.5);this.scene.add(this.hemisphereLight);const moon=new THREE.DirectionalLight(0x9e9fc9,1.9);moon.position.set(-15,24,-18);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-65;moon.shadow.camera.right=65;moon.shadow.camera.top=65;moon.shadow.camera.bottom=-65;this.scene.add(moon);this.moonLight=moon;
   this.scene.add(this.dangerLight,this.hitLight,this.lighting17.group);
   this.flashlight = new THREE.SpotLight(0xffedcf,45,26,Math.PI/7,.65,1.2);
   this.flashlightTarget = new THREE.Object3D();
@@ -82,7 +83,7 @@ export class GameWorld {
   this.lighting17.group.visible=false;
   this.renderer.toneMapping=THREE.NoToneMapping;
   this.camera.far=88;this.camera.updateProjectionMatrix();
-  this.sky.setHex(0x171523);this.scene.fog=new THREE.FogExp2(0x211b2c,.039);
+  this.atmosphereKey='';this.updateChapterAtmosphere35();
   this.scene.traverse(o=>{if(o instanceof THREE.PointLight)o.visible=false;});
   if(!this.psxMaterialReady){
    applyPSXMaterials(this.scene);
@@ -100,7 +101,7 @@ export class GameWorld {
    }
    this.psxMaterialReady=true;
   }
-  this.lighting17.setGraphics(preset);const settings=GRAPHICS[preset];this.driveDust.setPreset(preset);this.renderer.shadowMap.enabled=settings.shadows;this.moonLight.castShadow=settings.shadows;this.moonLight.shadow.mapSize.set(settings.shadowSize,settings.shadowSize);this.moonLight.shadow.map?.dispose();this.moonLight.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;this.renderer.toneMappingExposure=settings.exposure;this.resize();}
+  this.updateChapterAtmosphere35();this.lighting17.setGraphics(preset);const settings=GRAPHICS[preset];this.driveDust.setPreset(preset);this.renderer.shadowMap.enabled=settings.shadows;this.moonLight.castShadow=settings.shadows;this.moonLight.shadow.mapSize.set(settings.shadowSize,settings.shadowSize);this.moonLight.shadow.map?.dispose();this.moonLight.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;this.renderer.toneMappingExposure=settings.exposure;this.resize();}
  resize(){const w=this.renderer.domElement.clientWidth||innerWidth,h=this.renderer.domElement.clientHeight||innerHeight;this.renderer.setPixelRatio(renderPixelRatio(this.graphicsPreset,window.devicePixelRatio||1,w,h));this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
  private buildLandscape(){block(this.scene,250,.15,250,0,-.15,0,sand);block(this.scene,9,.03,230,0,-.04,-15,asphalt);for(let z=-113;z<104;z+=9){block(this.scene,.15,.01,3,0,-.018,z,mat(0xbda27f));}for(let z=-110;z<105;z+=12){for(const side of [-1,1]){const x=side*(15+(Math.sin(z*4.2)+1)*8);const s=1+Math.abs(Math.sin(z*.42))*3;const stone=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),mat(0x42353e));stone.position.set(x,s*.25,z);stone.scale.set(1,.38,1.1);this.scene.add(stone);}}for(let i=0;i<15;i++){let z=-108+i*14;let x=i%2===0?-31:33;let cactus=mat(0x374737);cylinder(this.scene,.3,3.3,x,1.3,z,cactus,6);block(this.scene,.26,1.7,.26,x+.8,1.2,z,cactus);block(this.scene,.8,.25,.25,x+.5,1.55,z,cactus);} }
  private buildDistantHorizon(){
@@ -318,9 +319,20 @@ export class GameWorld {
    this.wardenEye.scale.x=telegraph?1.7:1;
   }
  }
- setRadioVisible(visible:boolean){this.radio.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.mile.group.visible&&!this.roadEnd.group.visible;}
- setMileVisible(visible:boolean){this.mile.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.radio.group.visible&&!this.roadEnd.group.visible;}
- setRoadEndVisible(visible:boolean){this.roadEnd.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.radio.group.visible&&!this.mile.group.visible;}
+ private updateChapterAtmosphere35(){
+  const chapter=this.roadEnd.group.visible?6:this.mile.group.visible?5:
+   this.radio.group.visible?4:this.town.group.visible?3:this.diner.group.visible?2:1;
+  if(this.atmosphereKey===String(chapter))return;
+  const profile=chapterAtmosphere35(chapter);this.atmosphereKey=String(chapter);
+  this.sky.setHex(profile.sky);this.scene.fog=new THREE.FogExp2(profile.fog,profile.density);
+  this.hemisphereLight.color.setHex(profile.hemisphereSky);
+  this.hemisphereLight.groundColor.setHex(profile.hemisphereGround);
+  this.hemisphereLight.intensity=profile.ambientIntensity;
+  this.moonLight.color.setHex(profile.moonColor);this.moonLight.intensity=profile.moonIntensity;
+ }
+ setRadioVisible(visible:boolean){this.radio.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.mile.group.visible&&!this.roadEnd.group.visible;this.updateChapterAtmosphere35();}
+ setMileVisible(visible:boolean){this.mile.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.radio.group.visible&&!this.roadEnd.group.visible;this.updateChapterAtmosphere35();}
+ setRoadEndVisible(visible:boolean){this.roadEnd.group.visible=visible;this.legacyEnvironment.visible=!visible&&!this.radio.group.visible&&!this.mile.group.visible;this.updateChapterAtmosphere35();}
  setRoadEndStage(stage:RoadEndStage,mask:number,suppliesTaken:boolean){this.roadEnd.setStage(stage,mask,suppliesTaken);}
  setRoadDouble(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.roadEnd.setDouble(x,z,visible,telegraph,time);}
  setMileStage(stage:MileStage,mask:number,cacheTaken:boolean){this.mile.setStage(stage,mask,cacheTaken);}
@@ -328,10 +340,10 @@ export class GameWorld {
  setRadioUnderground(value:boolean){this.radio.setUnderground(value);}
  setRadioStage(stage:RadioStage,noraMet:boolean,cacheTaken:boolean,breakersMask:number){this.radio.setStage(stage,noraMet,cacheTaken,breakersMask);}
  setRadioOperator(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.radio.setOperator(x,z,visible,telegraph,time);}
- setTownVisible(visible:boolean){this.town.group.visible=visible;}
+ setTownVisible(visible:boolean){this.town.group.visible=visible;this.updateChapterAtmosphere35();}
  setTownStage(stage:TownStage,witnessMet:boolean,cacheTaken:boolean){this.town.setStage(stage,witnessMet,cacheTaken);}
  setTownGuardian(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.town.setGuardian(x,z,visible,telegraph,time);}
- setDinerVisible(visible:boolean){this.diner.group.visible=visible;}
+ setDinerVisible(visible:boolean){this.diner.group.visible=visible;this.updateChapterAtmosphere35();}
  setDinerStage(stage:DinerStage,maraMet:boolean){this.diner.setStage(stage,maraMet);}
  setDinerThreat(x:number,z:number,visible:boolean,telegraph:boolean,time:number){this.diner.setThreat(x,z,visible,telegraph,time);}
  setTapeVisible(visible:boolean){this.motelTapeVisual.visible=visible;}
