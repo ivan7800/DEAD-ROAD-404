@@ -15,10 +15,10 @@ export const STATION_COLLIDERS:ReadonlyArray<Box2>=[
 export function collides(x:number,z:number,radius=.30,boxes:ReadonlyArray<Box2>=STATION_COLLIDERS):boolean {
  return boxes.some(b=>x+radius>b.minX&&x-radius<b.maxX&&z+radius>b.minZ&&z-radius<b.maxZ);
 }
-export function walkWithSlide(x:number,z:number,dx:number,dz:number,external:(x:number,z:number)=>boolean=()=>false):{x:number;z:number} {
+export function walkWithSlide(x:number,z:number,dx:number,dz:number,external:(x:number,z:number)=>boolean=()=>false,boxes:ReadonlyArray<Box2>=STATION_COLLIDERS):{x:number;z:number} {
  // Swept movement: small substeps prevent tunnelling through walls on slow frames.
  if(![x,z,dx,dz].every(Number.isFinite))return {x:0,z:0};
- const blocked=(a:number,b:number)=>collides(a,b)||external(a,b);
+ const blocked=(a:number,b:number)=>collides(a,b,.30,boxes)||external(a,b);
  const steps=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dz))/.12));
  const sx=dx/steps,sz=dz/steps;
  let px=x,pz=z;
