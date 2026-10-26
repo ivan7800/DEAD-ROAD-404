@@ -75,7 +75,7 @@ let previousPadButtons=new Set<string>();
 function pollGamepad(){
  const pads=navigator.getGamepads?.();
  const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
- padInput=readPad(gamepad);
+ padInput=readPad(gamepad,(pulpUi?.preferences.gamepadDeadzone??16)/100);
  // Gamepad actions use the same key handler as the keyboard and never auto-repeat.
  for(const key of padInput.buttons)if(!previousPadButtons.has(key)&&!document.hidden){
   window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
