@@ -76,7 +76,7 @@ function pollGamepad(){
  const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
  padInput=readPad(gamepad);
  // Gamepad actions use the same key handler as the keyboard and never auto-repeat.
- for(const key of padInput.buttons)if(!previousPadButtons.has(key)){
+ for(const key of padInput.buttons)if(!previousPadButtons.has(key)&&!document.hidden){
   window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
   window.dispatchEvent(new KeyboardEvent('keyup',{key,bubbles:true}));
  }
@@ -1002,7 +1002,7 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
  }
 }if(k==='escape'&&mode==='drive')switchMode('map');});
 window.addEventListener('keyup',e=>input.release(e.key));window.addEventListener('blur',()=>{input.reset();metrics.reset();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)input.reset();});canvas.addEventListener('click',()=>{try{soundscape.start();}catch{}if(mode==='explore'&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&mode==='explore'){yaw+=e.movementX*.0022;pitch=clamp(pitch-e.movementY*.0018,-1.1,1.1);}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){input.reset();padInput=readPad(null);previousPadButtons.clear();}});canvas.addEventListener('click',()=>{try{soundscape.start();}catch{}if(mode==='explore'&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&mode==='explore'){yaw+=e.movementX*.0022;pitch=clamp(pitch-e.movementY*.0018,-1.1,1.1);}});
 function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-dt);if(encounterOpen||journalOpen||helpOpen||inventoryOpen)return;if(mode==='drive'){const accel=clamp(input.axis(['w','arrowup'],['s','arrowdown'])+padInput.forward,-1,1);
  const turn=clamp(input.axis(['a','arrowleft'],['d','arrowright'])-padInput.strafe,-1,1);
  const handbrake=keys.has(' ');
