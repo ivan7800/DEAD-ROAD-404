@@ -23,7 +23,7 @@ export function updateEnemy(e:EnemyState,px:number,pz:number,dt:number,obstacles
  return {enemy:n,hit,alert};
 }
 export function strike(e:EnemyState,px:number,pz:number,damage=25,yaw?:number):{enemy:EnemyState;hit:boolean;defeated:boolean}{
- const d=distance(e.x,e.z,px,pz);if(!e.alive||d>2.7||d<.001)return {enemy:{...e},hit:false,defeated:false};
+ const d=distance(e.x,e.z,px,pz);if(!e.alive||d>2.7||d<.001||!clearSight(px,pz,e.x,e.z))return {enemy:{...e},hit:false,defeated:false};
  if(yaw!==undefined){const facingX=Math.sin(yaw),facingZ=-Math.cos(yaw);if(((e.x-px)*facingX+(e.z-pz)*facingZ)/d<.45)return {enemy:{...e},hit:false,defeated:false};}
  const health=Math.max(0,e.health-damage);const awayX=(e.x-px)/d,awayZ=(e.z-pz)/d;
  const nx=e.x+awayX*.42,nz=e.z+awayZ*.42;
