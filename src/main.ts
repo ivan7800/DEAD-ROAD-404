@@ -1,5 +1,6 @@
 import {InputController,capturesGameKey,normalizeKey} from './inputController.ts';
 import {cameraYawForMovement} from './controlOrientation.ts';
+import {readPad,type PadInput} from './gamepadControls.ts';
 import {safeStorage,readPreference,writePreference,writeSave,readLatestValidSave} from './saveStorage.ts';
 import {shouldOfferFinale,resolveFinale,roadObjective,ENDINGS,FINALE_OPTIONS,type FinalApproach} from './roadStory.ts';
 import {stepArcadeDrive} from './arcadeDrive.ts';
@@ -68,6 +69,16 @@ const MAP_CAMERA_POSITION=new THREE.Vector3(28,19,32);
 const FUEL_CAN_CHECK_POSITION=new THREE.Vector3(11,1.7,1);
 const soundscape=new AudioDirector();const metrics=new FrameMetrics();const adaptiveQuality=new AdaptiveQuality();const renderPacer=new RenderPacer(12);let showPerformance=false;let lastMetrics=0;let encounterOpen=false;let newGameConfirmationOpen=false;let enemy:EnemyState=createEnemy();let attackCooldown=0;
 const keyPosition=new THREE.Vector3(17.2,1.7,-8.4),veraPosition=new THREE.Vector3(-20,1.7,-40.5),radioPosition=new THREE.Vector3(14.4,1.7,-2.4);
+let padInput:PadInput=readPad(null);
+let previousPadButtons=new Set<string>();
+function pollGamepad(){
+ const pads=navigator.getGamepads?.();
+ const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
+ padInput=readPad(gamepad);
+ // Gamepad actions use the same key handler as the keyboard and never auto-repeat.
+ for(const key of padInput.buttons)if(!previousPadButtons.has(key))window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
+ previousPadButtons=new Set(padInput.buttons);
+}
 const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('status'),prompt=$('prompt'),cross=$('crosshair');
 const addLog=(message:string)=>{$('log').textContent=message;};
 $('art-status').textContent='ARTE PSX · 240P · SIN GLB PESADOS';
@@ -988,9 +999,9 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
  }
 }if(k==='escape'&&mode==='drive')switchMode('map');});
 window.addEventListener('keyup',e=>input.release(e.key));window.addEventListener('blur',()=>{input.reset();metrics.reset();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)input.reset();});canvas.addEventListener('click',()=>{try{soundscape.start();}catch{}if(mode==='explore'&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&mode==='explore'){yaw-=e.movementX*.0022;pitch=clamp(pitch-e.movementY*.0018,-1.1,1.1);}});
-function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-dt);if(encounterOpen||journalOpen||helpOpen||inventoryOpen)return;if(mode==='drive'){const accel=input.axis(['w','arrowup'],['s','arrowdown']);
- const turn=input.axis(['a','arrowleft'],['d','arrowright']);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)input.reset();});canvas.addEventListener('click',()=>{try{soundscape.start();}catch{}if(mode==='explore'&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&mode==='explore'){yaw+=e.movementX*.0022;pitch=clamp(pitch-e.movementY*.0018,-1.1,1.1);}});
+function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-dt);if(encounterOpen||journalOpen||helpOpen||inventoryOpen)return;if(mode==='drive'){const accel=clamp(input.axis(['w','arrowup'],['s','arrowdown'])+padInput.forward,-1,1);
+ const turn=clamp(input.axis(['a','arrowleft'],['d','arrowright'])-padInput.strafe,-1,1);
  const handbrake=keys.has(' ');
  const drive=stepArcadeDrive({speed,heading:carYaw,steering},{throttle:state.fuel>0&&state.carCondition>0?accel:0,steer:turn,handbrake},dt);
  speed=drive.speed;carYaw=drive.heading;steering=drive.steering;
@@ -1090,7 +1101,7 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
   }
   world.setWarden(warden.x,warden.z,true,warden.phase==='telegraph',elapsed);
  }else world.setWarden(warden.x,warden.z,false,false,elapsed);}
- const forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);const strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);if(document.pointerLockElement!==canvas){if(keys.has('arrowleft'))yaw+=dt*1.6;if(keys.has('arrowright'))yaw-=dt*1.6;}const dir=new THREE.Vector3(Math.sin(yaw)*forward+Math.cos(yaw)*strafe,0,-Math.cos(yaw)*forward+Math.sin(yaw)*strafe);const moving=dir.lengthSq()>0;const sprinting=canSprint(stamina,moving,keys.has('shift'));stamina=stepStamina(stamina,sprinting,dt);$('stamina-bar').style.width=stamina.toFixed(1)+'%';$('stamina-value').textContent=Math.round(stamina)+'%';if(moving)dir.normalize().multiplyScalar(dt*movementSpeed(sprinting));const position=walkWithSlide(world.player.x,world.player.z,dir.x,dir.z,inRoadEnd?roadEndCollision:inMile?mileCollision:inRadio?radioCollision:inTown?townCollision:inDiner?dinerCollision:motelCollision);
+ const forward=clamp(Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'))+padInput.forward,-1,1);const strafe=clamp(Number(keys.has('d'))-Number(keys.has('a'))+padInput.strafe,-1,1);if(document.pointerLockElement!==canvas){if(keys.has('arrowleft'))yaw-=dt*1.6;if(keys.has('arrowright'))yaw+=dt*1.6;}yaw+=padInput.lookX*dt*2.35;pitch=clamp(pitch-padInput.lookY*dt*1.75,-1.1,1.1);const dir=new THREE.Vector3(Math.sin(yaw)*forward+Math.cos(yaw)*strafe,0,-Math.cos(yaw)*forward+Math.sin(yaw)*strafe);const moving=dir.lengthSq()>0;const sprinting=canSprint(stamina,moving,(keys.has('shift')||padInput.sprint));stamina=stepStamina(stamina,sprinting,dt);$('stamina-bar').style.width=stamina.toFixed(1)+'%';$('stamina-value').textContent=Math.round(stamina)+'%';if(moving)dir.normalize().multiplyScalar(dt*movementSpeed(sprinting));const position=walkWithSlide(world.player.x,world.player.z,dir.x,dir.z,inRoadEnd?roadEndCollision:inMile?mileCollision:inRadio?radioCollision:inTown?townCollision:inDiner?dinerCollision:motelCollision);
  world.player.x=position.x;world.player.z=position.z;world.camera.position.copy(world.player);world.camera.rotation.order='YXZ';world.camera.rotation.set(pitch,cameraYawForMovement(yaw),0);$('exploration-tip').textContent=explorationHint(state.mission.stage,flashlightOn);prompt.textContent=inRoadEnd?roadEndPrompt(world.player.x,world.player.z):inMile?milePrompt(world.player.x,world.player.z):inRadio?radioPrompt(world.player.x,world.player.z):inTown?townPrompt(world.player.x,world.player.z):inDiner?dinerPrompt(world.player.x,world.player.z):state.chapterOne.stage==='fuse'&&nearChapterProp(world.player.x,world.player.z,FUSE_POSITION)?'[E] RECOGER FUSIBLE DEL GENERADOR':
  state.chapterOne.stage==='panel'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] INSERTAR FUSIBLE EN CUADRO 404':
  state.chapterOne.stage==='tuning'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] SINTONIZAR RADIO 02:17':
@@ -1100,6 +1111,7 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);if(world.camera.fov!==73){world.camera.fov=73;world.camera.updateProjectionMatrix();}world.camera.position.lerp(MAP_CAMERA_POSITION,Math.min(1,dt*2));world.camera.lookAt(8,0,0);}if(performance.now()>toastUntil)$('toast').classList.remove('show');}
 function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;
  const visible=!document.hidden,paused=Boolean(pulpUi?.isPaused);
+ if(visible)pollGamepad();else {padInput=readPad(null);previousPadButtons.clear();}
  const interactive=visible&&!paused&&mode!=='map'&&!encounterOpen&&!journalOpen&&!helpOpen&&!inventoryOpen;
  const draw=renderPacer.shouldRender(now,visible,interactive);
  // Advance static menu/overlay animations only on their redraws; never simulate
