@@ -76,7 +76,10 @@ function pollGamepad(){
  const gamepad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard')??null:null;
  padInput=readPad(gamepad);
  // Gamepad actions use the same key handler as the keyboard and never auto-repeat.
- for(const key of padInput.buttons)if(!previousPadButtons.has(key))window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
+ for(const key of padInput.buttons)if(!previousPadButtons.has(key)){
+  window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
+  window.dispatchEvent(new KeyboardEvent('keyup',{key,bubbles:true}));
+ }
  previousPadButtons=new Set(padInput.buttons);
 }
 const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('status'),prompt=$('prompt'),cross=$('crosshair');
