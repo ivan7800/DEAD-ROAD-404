@@ -27,14 +27,16 @@ export const ROAD_EVENTS:Readonly<Record<RoadEventId,RoadEventDef>>={
  'headlights':{id:'headlights',title:'FAROS EN EL RETROVISOR',intro:'Dos faros aparecen detrás, a gran distancia, y se acercan sin ruido de motor. La distancia se acorta aunque vas a fondo.',choices:[{id:'speed-up',label:'ACELERAR'},{id:'pull-over',label:'PARAR Y DEJARLO PASAR'},{id:'lights-off',label:'APAGAR LOS FAROS'}]},
 };
 /** Probabilidad de que un tramo tenga evento. El primer tramo (km 0) queda limpio como tutorial. */
-export const ROAD_EVENT_CHANCE=.7;
+export const ROAD_EVENT_BASE_CHANCE=.7;
+export const ROAD_EVENT_MIN_CHANCE=.48;
 export function canRollRoadEvent(s:GameState):boolean {
  return s.km>=24&&s.health>0&&s.ending===null&&s.mode!=='explore';
 }
 /** `rng` en [0,1). Evita repetir el último evento y favorece los aún no vistos. */
 export function pickRoadEvent(s:GameState,rng:()=>number):RoadEventId|null {
  if(!canRollRoadEvent(s))return null;
- if(rng()>=ROAD_EVENT_CHANCE)return null;
+ const chance=Math.max(ROAD_EVENT_MIN_CHANCE,ROAD_EVENT_BASE_CHANCE-Math.min(.22,s.roadEvents.count*.03));
+ if(rng()>=chance)return null;
  const prev=s.roadEvents.last;
  let pool=ROAD_EVENT_IDS.filter(id=>id!==prev);
  const unseen=pool.filter(id=>!s.roadEvents.seen.includes(id));
@@ -53,17 +55,17 @@ export function resolveRoadEvent(s:GameState,id:RoadEventId,choice:string,rng:()
  const roll=rng();
  switch(id+':'+choice){
   case 'hitchhiker:pickup':
-   if(roll<.5){n.food=s.food+2;n.health=hp(s.health+5);msg='Viaja callado. Antes de bajar te deja dos raciones y dice: «Gracias por parar». +2 comida, +5 salud.';}
-   else{n.health=hp(s.health-10);n.carCondition=clamp(s.carCondition-6,0,100);msg='Al mirar el retrovisor el asiento está vacío y mojado. La tapicería queda destrozada. −10 salud, −6% Firebird.';}
+   if(roll<.6){n.food=s.food+2;n.health=hp(s.health+6);msg='Viaja callado. Antes de bajar te deja dos raciones y dice: «Gracias por parar». +2 comida, +6 salud.';}
+   else{n.health=hp(s.health-8);n.carCondition=clamp(s.carCondition-5,0,100);msg='Al mirar el retrovisor el asiento está vacío y mojado. La tapicería queda destrozada. −8 salud, −5% Firebird.';}
    break;
   case 'hitchhiker:ignore':n.food=lose(s.food,1);msg='En el retrovisor sigue con el pulgar levantado hasta perderse. Notas el estómago vacío: −1 comida.';break;
   case 'abandoned-car:search':
-   if(roll<.65){n.parts=s.parts+1;n.food=s.food+1;msg='Entre los asientos hay una pieza útil y una barrita. +1 pieza, +1 comida.';}
-   else{n.health=hp(s.health-12);msg='La puerta del maletero se cierra sola sobre tu mano. Dentro no había nada. −12 salud.';}
+   if(roll<.72){n.parts=s.parts+1;n.food=s.food+1;msg='Entre los asientos hay una pieza útil y una barrita. +1 pieza, +1 comida.';}
+   else{n.health=hp(s.health-9);msg='La puerta del maletero se cierra sola sobre tu mano. Dentro no había nada. −9 salud.';}
    break;
   case 'abandoned-car:siphon':n.fuel=clamp(s.fuel+10,0,MAX_FUEL);n.carCondition=clamp(s.carCondition-3,0,100);msg='Chupas gasolina con una manguera vieja. Sabe a metal. +10 L, −3% Firebird por el mal rato.';break;
   case 'abandoned-car:leave':msg='Sigues. Los faros del sedán se apagan justo cuando dejas de verlos.';break;
-  case 'roadkill:swerve':n.carCondition=clamp(s.carCondition-8,0,100);msg='Esquivas el bulto y rozas el arcén. −8% Firebird. Algo golpea el techo desde dentro del maletero... o desde fuera.';break;
+  case 'roadkill:swerve':n.carCondition=clamp(s.carCondition-6,0,100);msg='Esquivas el bulto y rozas el arcén. −6% Firebird. Algo golpea el techo desde dentro del maletero... o desde fuera.';break;
   case 'roadkill:drive-over':n.carCondition=clamp(s.carCondition-4,0,100);n.health=hp(s.health-6);msg='Un golpe blando. Algo se agarra a los bajos un segundo. −4% Firebird, −6 salud.';break;
   case 'roadkill:inspect':
    if(roll<.5){n.parts=s.parts+1;msg='No era un animal: era un fardo con herramientas atado con cuerda. +1 pieza.';}
@@ -71,7 +73,7 @@ export function resolveRoadEvent(s:GameState,id:RoadEventId,choice:string,rng:()
    break;
   case 'shoulder-figure:highbeams':
    if(roll<.5){msg='La luz la atraviesa y no queda nadie. Solo un poste doblado.';}
-   else{n.carCondition=clamp(s.carCondition-10,0,100);msg='Está ya junto a la ventanilla. Un golpe seco en la chapa. −10% Firebird.';}
+   else{n.carCondition=clamp(s.carCondition-8,0,100);msg='Está ya junto a la ventanilla. Un golpe seco en la chapa. −8% Firebird.';}
    break;
   case 'shoulder-figure:honk':n.health=hp(s.health-5);msg='El claxon suena de forma distinta, como un grito conocido. −5 salud.';break;
   case 'shoulder-figure:floor-it':n.fuel=clamp(s.fuel-3,0,MAX_FUEL);msg='Aceleras a fondo y no miras. En el espejo la silueta no se ha movido. −3 L de gasolina.';break;
@@ -81,7 +83,7 @@ export function resolveRoadEvent(s:GameState,id:RoadEventId,choice:string,rng:()
    break;
   case 'wrong-sign:read-back':n.health=hp(s.health-4);msg='En el reverso, escrito a mano: «ÉL TAMBIÉN LA LEYÓ». −4 salud.';break;
   case 'wrong-sign:ignore':msg='La ignoras. En el retrovisor la señal ya no está.';break;
-  case 'headlights:speed-up':n.fuel=clamp(s.fuel-4,0,MAX_FUEL);msg='Aceleras hasta que los faros se desvanecen. −4 L de gasolina.';break;
+  case 'headlights:speed-up':n.fuel=clamp(s.fuel-3,0,MAX_FUEL);msg='Aceleras hasta que los faros se desvanecen. −3 L de gasolina.';break;
   case 'headlights:pull-over':
    if(roll<.5){msg='El coche pasa de largo sin conductor y desaparece en la curva.';}
    else{n.health=hp(s.health-8);n.carCondition=clamp(s.carCondition-5,0,100);msg='Se detiene detrás de ti. Nadie baja. Arranca de golpe contra tu parachoques. −8 salud, −5% Firebird.';}
