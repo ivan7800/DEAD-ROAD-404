@@ -112,6 +112,12 @@ const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('st
 const addLog=(message:string)=>{$('log').textContent=message;};
 $('art-status').textContent='ARTE PSX · 240P · SIN GLB PESADOS';
 function beep(freq:number,duration=.12){soundscape.beep(freq,duration);}
+function roadEventCue(id:RoadEventId,phase:'spawn'|'open'|'resolve'){
+ const base={hitchhiker:162,'abandoned-car':148,roadkill:136,'shoulder-figure':172,'wrong-sign':196,headlights:124}[id];
+ if(phase==='spawn'){beep(base,.09);return;}
+ if(phase==='open'){beep(base*.75,.12);beep(base*1.12,.1);return;}
+ beep(base*1.35,.08);
+}
 function notify(message:string){
  $('toast').textContent=message;$('toast').classList.add('show');
  toastUntil=performance.now()+3400;addLog(message);
@@ -222,11 +228,11 @@ function rollRoadEvent(){
  if(state.carZ<10)return;
  const id=pickRoadEvent(state,Math.random);if(!id)return;
  const triggerZ=-50-Math.random()*45;
- roadEvent={id,triggerZ};world.roadEventProps.show(id,triggerZ-(id==='headlights'?0:8));
+ roadEvent={id,triggerZ};world.roadEventProps.show(id,triggerZ-(id==='headlights'?0:8));roadEventCue(id,'spawn');
 }
 function showRoadEvent(){
  if(!roadEvent||encounterOpen)return;
- const ev=ROAD_EVENTS[roadEvent.id];encounterOpen=true;input.reset();document.exitPointerLock?.();
+ const ev=ROAD_EVENTS[roadEvent.id];encounterOpen=true;input.reset();document.exitPointerLock?.();roadEventCue(ev.id,'open');
  const dialog=$('encounter'),eyebrow=dialog.querySelector('.eyebrow'),prevEyebrow=eyebrow?.textContent??'';
  if(eyebrow)eyebrow.textContent='EVENTO DE CARRETERA · KM '+state.km;
  $('encounter-title').textContent=ev.title;$('encounter-text').textContent=ev.intro;
@@ -236,7 +242,7 @@ function showRoadEvent(){
    const r=resolveRoadEvent(state,ev.id,option.id,Math.random);
    state=r.state;roadEvent=null;world.roadEventProps.show(null,0);saveQuietly();
    if(eyebrow)eyebrow.textContent=prevEyebrow;encounterOpen=false;dialog.classList.add('hidden');
-   notify(r.message);hud();
+   roadEventCue(ev.id,'resolve');notify(r.message);hud();
    if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');}
   });choices.append(btn);}
  dialog.classList.remove('hidden');(choices.querySelector('button') as HTMLButtonElement|null)?.focus();
@@ -1066,7 +1072,7 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  const impact=roadEdgeImpact({condition:state.carCondition,cooldown:impactCooldown},speed,desiredX<-3.7||desiredX>3.7,dt);
  impactCooldown=impact.cooldown;state.carCondition=impact.condition;if(impact.hit){speed=impact.speed;notify('¡Golpe contra el arcén! Firebird: '+Math.round(state.carCondition)+'%');}
  if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');}
- world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(roadEvent&&world.car.position.z<=roadEvent.triggerZ){speed=0;showRoadEvent();}else if(world.car.position.z<=-125){roadEvent=null;world.roadEventProps.show(null,0);state=travel(state,24);world.car.position.z=20;state.carZ=20;switchMode('map');notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}}
+ world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));world.roadEventProps.animate(elapsed);updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(roadEvent&&world.car.position.z<=roadEvent.triggerZ){speed=0;showRoadEvent();}else if(world.car.position.z<=-125){roadEvent=null;world.roadEventProps.show(null,0);state=travel(state,24);world.car.position.z=20;state.carZ=20;switchMode('map');notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}}
  if(mode==='explore'){world.setFlashlight(flashlightOn,yaw,pitch);world.setMissionStage(state.mission.stage);
  if(inRoadEnd){
   world.setEnemy(enemy.x,enemy.z,false,elapsed);
