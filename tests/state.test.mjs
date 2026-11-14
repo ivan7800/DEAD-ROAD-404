@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {fresh,travel,pickFuel,normalizeSave,clamp} from '../src/state.ts';
+import {SceneTransition, SCENE_TRANSITIONS} from '../src/sceneTransition.ts';
 test('partida inicial independiente',()=>{const a=fresh(),b=fresh();a.food=0;assert.equal(b.food,14);assert.equal(b.version,2)});
 test('viajar consume comida y combustible',()=>{let s=travel(fresh());assert.equal(s.km,24);assert.equal(s.food,13);assert.ok(s.fuel<44)});
 test('sin combustible no hay viaje',()=>{let s=fresh();s.fuel=0;let r=travel(s);assert.equal(r.km,0);assert.match(r.message,/combustible/)});
@@ -7,3 +8,29 @@ test('la salud cae al viajar sin comida',()=>{let s=fresh();s.food=0;assert.equa
 test('rechaza partidas incompatibles y malformadas',()=>{assert.equal(normalizeSave({version:1}),null);assert.equal(normalizeSave({version:2,mode:'map',fuel:Infinity}),null);assert.equal(normalizeSave(null),null)});
 test('recupera guardado válido y acota recursos',()=>{let s=fresh();s.fuel=500;s.health=-30;let r=normalizeSave(JSON.parse(JSON.stringify(s)));assert.equal(r?.fuel,80);assert.equal(r?.health,0)});
 test('clamp acota valores',()=>{assert.equal(clamp(-4,0,10),0);assert.equal(clamp(14,0,10),10)});
+
+test('la transición cambia de escenario una sola vez bajo cobertura completa',()=>{
+ const transition=new SceneTransition();
+ let mode='drive';
+ assert.equal(transition.start('bunker',()=>{mode='bunker';},true),true);
+ assert.equal(transition.start('map',()=>{mode='map';},true),false);
+ const {cover,reveal}=SCENE_TRANSITIONS.bunker;
+ assert.equal(transition.advance(cover/2),.5);
+ assert.equal(mode,'drive');
+ assert.equal(transition.advance(cover+reveal),1);
+ assert.equal(mode,'bunker');
+ assert.equal(transition.advance(reveal/2),.5);
+ assert.equal(transition.advance(reveal/2),0);
+ assert.equal(transition.active,false);
+});
+
+test('movimiento reducido aplica el destino inmediatamente',()=>{
+ const transition=new SceneTransition();
+ transition.start('station',()=>{},true);
+ transition.advance(SCENE_TRANSITIONS.station.cover);
+ let destination='';
+ transition.start('map',()=>{destination='map';},false);
+ assert.equal(destination,'map');
+ assert.equal(transition.active,false);
+ assert.equal(transition.advance(500),0);
+});

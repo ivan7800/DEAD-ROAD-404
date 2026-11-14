@@ -14,12 +14,12 @@ import {resolve} from 'node:path';
 const base='http://127.0.0.1:4178/DEAD-ROAD-404/';
 const saveKey='dead-road-404-f19-v2';
 const chapters=[
- {id:'last-stop',control:'explore',title:'LA ÚLTIMA PARADA',status:'EXPLORACIÓN'},
- {id:'missing',control:'diner',title:'LOS QUE NO REGRESAN',status:'THE LAST LIGHT'},
- {id:'nameless',control:'town',title:'EL PUEBLO SIN NOMBRE',status:'PUEBLO SIN NOMBRE'},
- {id:'dead-frequency',control:'radio',title:'FRECUENCIA MUERTA',status:'WXR-404'},
- {id:'impossible-mile',control:'mile',title:'EL KILÓMETRO IMPOSIBLE',status:'KM 96'},
- {id:'road-end',control:'road-end',title:'DONDE TERMINA LA CARRETERA',status:'KM 120'}
+ {id:'last-stop',transition:'station',control:'explore',title:'LA ÚLTIMA PARADA',status:'EXPLORACIÓN'},
+ {id:'missing',transition:'diner',control:'diner',title:'LOS QUE NO REGRESAN',status:'THE LAST LIGHT'},
+ {id:'nameless',transition:'town',control:'town',title:'EL PUEBLO SIN NOMBRE',status:'PUEBLO SIN NOMBRE'},
+ {id:'dead-frequency',transition:'radio',control:'radio',title:'FRECUENCIA MUERTA',status:'WXR-404'},
+ {id:'impossible-mile',transition:'mile',control:'mile',title:'EL KILÓMETRO IMPOSIBLE',status:'KM 96'},
+ {id:'road-end',transition:'road-end',control:'road-end',title:'DONDE TERMINA LA CARRETERA',status:'KM 120'}
 ];
 const sizes=[{name:'escritorio',width:1280,height:800},
  {name:'movil',width:390,height:844},
@@ -46,7 +46,7 @@ async function serverReady(){
 }
 async function screenshotScene(chapter,index,size){
  const page=await browser.newPage({viewport:{width:size.width,height:size.height},
-  reducedMotion:'reduce'});
+  reducedMotion:size.width===320?'reduce':'no-preference'});
  const errors=[];page.on('pageerror',err=>errors.push(err.message));
  page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text());});
  try{
@@ -89,13 +89,34 @@ async function screenshotScene(chapter,index,size){
   await page.locator('#load').click();
   assert.equal(await page.locator('#'+chapter.control).isEnabled(),true,
    'La cinta '+chapter.title+' no está disponible con su checkpoint válido.');
+  // Restore animations after exercising the accessibility options on the first map.
+  if (index===0 && size.width!==320) {
+   await page.locator('#pulp-options-open').click();
+   await page.locator('#pulp-reduce-motion').uncheck();
+   await page.locator('#pulp-options-close').click();
+  }
+  await page.evaluate(()=>{
+   const layer=document.getElementById('scene-transition');
+   window.transitionFrames=[];
+   new MutationObserver(()=>{
+    window.transitionFrames.push(Number(layer.style.opacity));
+   }).observe(layer,{attributes:true,attributeFilter:['style']});
+  });
   await page.locator('#'+chapter.control).click();
   await page.locator('#panel:not(.hidden)').waitFor({state:'hidden',timeout:14000});
   await page.locator('#status').filter({hasText:chapter.status}).waitFor({timeout:16000});
-  // Avoid title-card overlays obscuring screenshots, regardless of RAF speed.
-  await page.waitForFunction(()=>!document.getElementById('pulp-transition')?.classList.contains('active'),
-   null,{timeout:13000});
-  await sleep(350);
+  assert.equal(await page.locator('#scene-transition').getAttribute('data-destination'),chapter.transition);
+  await page.waitForFunction(()=>{
+   const layer=document.getElementById('scene-transition');
+   return layer.style.opacity==='0'&&!document.getElementById('pulp-transition').classList.contains('active');
+  });
+  const frames=await page.evaluate(()=>window.transitionFrames);
+  if (size.width===320) assert.ok(frames.every(value=>value===0),'Movimiento reducido mostró una cortinilla');
+  else {
+   assert.ok(frames.includes(1),'Faltó cobertura completa al cambiar de escenario');
+   assert.ok(frames.some(value=>value>0&&value<1),'La transición no interpoló fotogramas');
+  }
+  await sleep(150);
   const diag=await page.evaluate(()=>{
    const canvas=document.querySelector('#scene');
    const status=document.getElementById('status');

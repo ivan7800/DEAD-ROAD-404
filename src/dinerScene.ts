@@ -19,7 +19,7 @@ export class DinerScene{
  private neon:THREE.Mesh;
  private readonly colors={
   wall:new THREE.MeshLambertMaterial({color:0x45404a,flatShading:true}),
-  tile:new THREE.MeshLambertMaterial({color:0x36363d,flatShading:true}),
+  tile:new THREE.MeshLambertMaterial({color:0x505057,flatShading:true}),
   roof:new THREE.MeshLambertMaterial({color:0x211d2a,flatShading:true}),
   booth:new THREE.MeshLambertMaterial({color:0x804b53,flatShading:true}),
   chrome:new THREE.MeshLambertMaterial({color:0x8d8890,flatShading:true}),
@@ -63,6 +63,11 @@ export class DinerScene{
   this.neon=b(this.scenery,6.4,.9,.14,-31,4.14,26.86,m.neon);
   this.sign('THE LAST LIGHT',6.15,.73,-31,4.13,26.98);
   this.sign('OPEN 24H · 1992',3.3,.46,-25.9,3.25,26.12,'#cc6886');
+  // The entrance and counter read as separate silhouettes in the PSX preset.
+  for(const x of [-32.15,-29.85]){
+   b(this.scenery,.09,1.75,.1,x,1.93,26.16,m.neon);
+  }
+  b(this.scenery,3.2,.08,.06,-25.12,1.03,16.1,m.chrome).rotation.y=Math.PI/2;
   // Inside: table seating, checkerboard floor, steel counter and stools.
   for(let x=-37.8;x<=-24.2;x+=2.4)for(let z=9.5;z<=24.2;z+=2.4){
    const alternate=(Math.round((x+37.8)/2.4)+Math.round((z-9.5)/2.4))%2===0;

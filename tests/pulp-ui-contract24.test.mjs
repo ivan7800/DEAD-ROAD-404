@@ -22,14 +22,15 @@ test('botones reales tienen listeners y navegación por teclado',()=>{
  assert.match(ui,/stopImmediatePropagation/);
 });
 test('escenas se congelan al pausar y el modo rendimiento sigue PSX',()=>{
- assert.match(main,/if\(visible&&!paused&&\(interactive\|\|draw\)\)update\(dt\)/);
+ assert.match(main,/if \(visible && !paused && \(interactive \|\| draw\)\)/);
+ assert.match(main,/if \(!wasCovered && !sceneTransition.covered\) update\(dt\)/);
  assert.match(main,/pulpUi\?\.togglePause\(\)/);
  assert.match(main,/interactive&&world\.artStatus==='psx'/);
  assert.match(main,/world\.setGraphics\(preset\)/);
 });
 test('cambio de modo emite cartelas sin consumir escenas GLB',()=>{
  assert.match(main,/titleForLocation\(next/);
- assert.match(main,/pulpUi\.title\(card\.eyebrow,card\.title,card\.subtitle\)/);
+ assert.match(main,/pulpUi\?\.title\(card\.eyebrow, card\.title, card\.subtitle\)/);
  assert.doesNotMatch(ui,/GLTFLoader|\.glb/);
 });
 test('ajustes se almacenan por separado del progreso y reducen animaciones',()=>{

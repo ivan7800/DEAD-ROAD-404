@@ -1,3 +1,4 @@
+import {SceneTransition, SCENE_TRANSITIONS, type SceneDestination} from './sceneTransition.ts';
 import {InputController,capturesGameKey,normalizeKey} from './inputController.ts';
 import {cameraYawForMovement} from './controlOrientation.ts';
 import {readPad,type PadInput} from './gamepadControls.ts';
@@ -81,6 +82,14 @@ function pollGamepad(){
  // When a menu owns focus, handle the controller directly instead of triggering gameplay.
  const overlay=['pulp-pause','pulp-options','pulp-chapters','pulp-credits','encounter','inventory-panel','journal','controls-guide',...(mode==='map'?['panel']:[])].map(id=>document.getElementById(id)).find(el=>el&&!el.classList.contains('hidden')&&!el.hasAttribute('hidden'));
  const buttons=gamepad?.buttons;
+ if (sceneTransition.covered && !pulpUi?.isPaused) {
+  const pause = padInput.buttons.has('escape');
+  if (pause && !previousPadButtons.has('escape') && mode !== 'map') pulpUi?.togglePause();
+  previousPadButtons = new Set(padInput.buttons);
+  padInput=readPad(null);
+  suppressPadUntilRelease=true;
+  return;
+ }
  if(suppressPadUntilRelease){
   if(buttons?.some(b=>b.pressed)){padInput=readPad(null);return;}
   suppressPadUntilRelease=false;previousPadButtons.clear();
@@ -92,8 +101,11 @@ function pollGamepad(){
   if(edge('nav-down',active.has('nav-down')))navigateController(overlay,'next');
   if(edge('nav-up',active.has('nav-up')))navigateController(overlay,'previous');
   if(edge('confirm',active.has('confirm')))navigateController(overlay,'confirm');
+  const start = Boolean(buttons[9]?.pressed);
+  if (start) active.add('start');
+  if (overlay.id==='pulp-pause' && edge('start',start)) pulpUi?.togglePause();
   if(edge('cancel',active.has('cancel'))){const closer=overlay.querySelector<HTMLButtonElement>('button[id$="close"],#pulp-resume,#inventory-close,#journal-close,#close-controls');closer?.click();}
-  const actionPressed=active.has('confirm')||active.has('cancel');
+  const actionPressed=active.has('confirm')||active.has('cancel')||start;
   previousPadButtons=active;padInput=readPad(null);
   if(actionPressed)suppressPadUntilRelease=true;
   return;
@@ -106,6 +118,32 @@ function pollGamepad(){
  previousPadButtons=new Set(padInput.buttons);
 }
 const input=new InputController(),keys=input.keys, panel=$('panel'),status=$('status'),prompt=$('prompt'),cross=$('crosshair');
+const sceneTransition = new SceneTransition();
+const transitionLayer = $('scene-transition');
+const sceneCover = (active: boolean) => document.documentElement.toggleAttribute('data-scene-cover', active);
+function cancelSceneChange() {
+ sceneTransition.cancel();
+ transitionLayer.style.opacity = '0';
+ sceneCover(false);
+}
+function changeScene(destination: SceneDestination, apply: () => void) {
+ if (sceneTransition.covered) return;
+ input.reset();
+ suppressPadUntilRelease = true;
+ padInput = readPad(null);
+ prompt.textContent = '';
+ const profile = SCENE_TRANSITIONS[destination];
+ const animated = pulpUi?.animationsEnabled ?? false;
+ transitionLayer.dataset.destination = destination;
+ transitionLayer.style.setProperty('--scene-color', profile.color);
+ sceneCover(animated);
+ sceneTransition.start(destination, () => {
+  apply();
+  sceneCover(false);
+  if (profile.cue) soundscape.beep(profile.cue, .22);
+ }, animated);
+ if (!animated) transitionLayer.style.opacity = '0';
+}
 const addLog=(message:string)=>{$('log').textContent=message;};
 $('art-status').textContent='ARTE PSX · 240P · SIN GLB PESADOS';
 function beep(freq:number,duration=.12){soundscape.beep(freq,duration);}
@@ -133,12 +171,42 @@ function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].
  const nextObjective=(endObjective(state)||mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');
  // Updating an unchanged live region every quarter-second floods screen readers.
  if($('objective').textContent!==nextObjective)$('objective').textContent=nextObjective;}
-function switchMode(next:Mode){const previous=mode;input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore'){inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;}panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inRoadEnd?'KM 120 · CAPÍTULO VI':inMile?'KM 96 · CAPÍTULO V':inRadio?(radioUnderground?'REFUGIO UMBRAL · NIVEL -1':'WXR-404 · CAPÍTULO IV'):inTown?'EL PUEBLO SIN NOMBRE · CAPÍTULO III':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inRoadEnd?END_POSITIONS.entry.x:inMile?MILE_POSITIONS.entry.x:inRadio?RADIO_POSITIONS.entry.x:inTown?TOWN_LOCATIONS.entry.x:inDiner?DINER_POSITIONS.entry.x:6,1.7,inRoadEnd?END_POSITIONS.entry.z:inMile?MILE_POSITIONS.entry.z:inRadio?RADIO_POSITIONS.entry.z:inTown?TOWN_LOCATIONS.entry.z:inDiner?DINER_POSITIONS.entry.z:6);yaw=inRoadEnd||inMile||inRadio||inTown||inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);world.setTownVisible(next==='explore'&&inTown);world.setRadioStage(state.chapterFour.stage,state.chapterFour.nora!==null,state.chapterFour.cacheTaken,state.chapterFour.breakersMask);world.setRadioUnderground(radioUnderground);world.setRadioVisible(next==='explore'&&inRadio);world.setMileStage(state.chapterFive.stage,state.chapterFive.beaconsMask,state.chapterFive.cacheTaken);world.setMileVisible(next==='explore'&&inMile);world.setRoadEndStage(state.chapterSix.stage,state.chapterSix.relaysMask,state.chapterSix.suppliesTaken);world.setRoadEndVisible(next==='explore'&&inRoadEnd);hud();
- pulpUi?.setMode(next);
- if(pulpUi&&previous!==next){
-  const card=titleForLocation(next,inRoadEnd?'road-end':inMile?'mile':inRadio?'radio':inTown?'town':inDiner?'diner':'station');
-  pulpUi.title(card.eyebrow,card.title,card.subtitle);
+function switchMode(next: Mode, after?: () => void) {
+ const place = inRoadEnd?'road-end':inMile?'mile':inRadio?'radio':inTown?'town':inDiner?'diner':'station';
+ if (mode === next) {
+  applyMode(next);
+  after?.();
+  return;
  }
+ changeScene(next === 'explore' ? place : next, () => {
+  applyMode(next);
+  after?.();
+  if (next === 'map') return;
+  const card = titleForLocation(next, place);
+  pulpUi?.title(card.eyebrow, card.title, card.subtitle);
+ });
+}
+function syncSceneCamera() {
+ if (mode === 'drive') {
+  updateDrivingCamera(world.camera, world.car, cameraMode, 0, true);
+  return;
+ }
+ if (world.camera.fov !== 73) {
+  world.camera.fov = 73;
+  world.camera.updateProjectionMatrix();
+ }
+ if (mode === 'explore') {
+  world.camera.position.copy(world.player);
+  world.camera.rotation.order = 'YXZ';
+  world.camera.rotation.set(pitch, cameraYawForMovement(yaw), 0);
+  return;
+ }
+ world.camera.position.copy(MAP_CAMERA_POSITION);
+ world.camera.lookAt(8, 0, 0);
+}
+function applyMode(next:Mode){input.reset();if(helpOpen){helpOpen=false;$('controls-guide').classList.add('hidden');}if(journalOpen){journalOpen=false;$('journal').classList.add('hidden');}if(inventoryOpen){inventoryOpen=false;$('inventory-panel').classList.add('hidden');}mode=next;state.mode=mode;if(next!=='explore'){inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;}panel.classList.toggle('hidden',mode!=='map');cross.style.display=mode==='explore'?'block':'none';status.textContent=next==='map'?'CARRETERA':next==='drive'?'FIREBIRD · CONDUCCIÓN':inRoadEnd?'KM 120 · CAPÍTULO VI':inMile?'KM 96 · CAPÍTULO V':inRadio?(radioUnderground?'REFUGIO UMBRAL · NIVEL -1':'WXR-404 · CAPÍTULO IV'):inTown?'EL PUEBLO SIN NOMBRE · CAPÍTULO III':inDiner?'THE LAST LIGHT · CAPÍTULO II':'A PIE · EXPLORACIÓN';prompt.textContent='';if(next!=='explore')document.exitPointerLock?.();if(next==='explore'){world.player.set(inRoadEnd?END_POSITIONS.entry.x:inMile?MILE_POSITIONS.entry.x:inRadio?RADIO_POSITIONS.entry.x:inTown?TOWN_LOCATIONS.entry.x:inDiner?DINER_POSITIONS.entry.x:6,1.7,inRoadEnd?END_POSITIONS.entry.z:inMile?MILE_POSITIONS.entry.z:inRadio?RADIO_POSITIONS.entry.z:inTown?TOWN_LOCATIONS.entry.z:inDiner?DINER_POSITIONS.entry.z:6);yaw=inRoadEnd||inMile||inRadio||inTown||inDiner?0:Math.PI/2;pitch=0;}else if(next==='drive'){carYaw=0;speed=0;steering=0;world.car.position.set(state.carX,.18,state.carZ);}world.setMode(next,state.carX,state.carZ,carYaw);world.setMissionStage(state.mission.stage);world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);world.setChapterOneStage(state.chapterOne.stage);world.setDinerStage(state.chapterTwo.stage,state.chapterTwo.mara!==null);world.setDinerVisible(next==='explore'&&inDiner);world.setTownStage(state.chapterThree.stage,state.chapterThree.witness!==null,state.chapterThree.cacheTaken);world.setTownVisible(next==='explore'&&inTown);world.setRadioStage(state.chapterFour.stage,state.chapterFour.nora!==null,state.chapterFour.cacheTaken,state.chapterFour.breakersMask);world.setRadioUnderground(radioUnderground);world.setRadioVisible(next==='explore'&&inRadio);world.setMileStage(state.chapterFive.stage,state.chapterFive.beaconsMask,state.chapterFive.cacheTaken);world.setMileVisible(next==='explore'&&inMile);world.setRoadEndStage(state.chapterSix.stage,state.chapterSix.relaysMask,state.chapterSix.suppliesTaken);world.setRoadEndVisible(next==='explore'&&inRoadEnd);hud();
+ pulpUi?.setMode(next);
+ syncSceneCamera();
 }
 function toggleHelp(){helpOpen=!helpOpen;$('controls-guide').classList.toggle('hidden',!helpOpen);input.reset();document.exitPointerLock?.();if(helpOpen)$('close-controls').focus();}
 $('show-controls').addEventListener('click',toggleHelp);$('close-controls').addEventListener('click',toggleHelp);
@@ -285,7 +353,7 @@ function showChapterOneDecision(){
    choices.replaceChildren();
    const close=document.createElement('button');close.type='button';close.textContent='REGRESAR AL FIREBIRD';
    close.addEventListener('click',()=>{
-    encounterOpen=false;dialog.classList.add('hidden');switchMode('map');if(shouldOfferFinale(state))showFinale();
+    encounterOpen=false;dialog.classList.add('hidden');switchMode('map',()=>{if(shouldOfferFinale(state))showFinale();});
    });choices.append(close);close.focus();
   });choices.append(b);
  }
@@ -575,27 +643,33 @@ function showRadioDecision(){
    choices.replaceChildren();
    const leave=document.createElement('button');leave.type='button';leave.textContent='REBOBINAR LA CINTA Y REGRESAR AL FIREBIRD';
    leave.addEventListener('click',()=>{
-    encounterOpen=false;dialog.classList.add('hidden');radioUnderground=false;switchMode('map');
-    if(shouldOfferFinale(state))showFinale();
+    encounterOpen=false;dialog.classList.add('hidden');
+    switchMode('map',()=>{if(shouldOfferFinale(state))showFinale();});
    });choices.append(leave);leave.focus();
   });choices.append(button);
  }
  dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();
 }
 function descendRadioBunker(){
+ changeScene('bunker', () => {
  radioUnderground=true;world.setRadioUnderground(true);
  world.player.set(RADIO_POSITIONS.undergroundEntry.x,1.7,RADIO_POSITIONS.undergroundEntry.z+1.7);
  yaw=Math.PI;pitch=0;input.reset();
  status.textContent='REFUGIO UMBRAL · NIVEL -1';
  pulpUi?.title('CAPÍTULO IV · SECTOR SUBTERRÁNEO','PROYECTO UMBRAL','NIVEL -1 · LA EMISIÓN SIGUE VIVA');
  notify('Desciendes bajo la emisora. El aire sabe a polvo y cinta magnética.');
+ syncSceneCamera();
+ });
 }
 function exitRadioBunker(){
+ changeScene('radio', () => {
  radioUnderground=false;world.setRadioUnderground(false);
  world.player.set(RADIO_POSITIONS.hatch.x,1.7,RADIO_POSITIONS.hatch.z+2.6);
  yaw=0;pitch=0;input.reset();
  status.textContent='WXR-404 · CAPÍTULO IV';
  pulpUi?.title('ESTACIÓN WXR-404 · 1992','VUELTA A LA SUPERFICIE','LA ANTENA APUNTA HACIA ABAJO');
+ syncSceneCamera();
+ });
 }
 function interactRadio(){
  const x=world.player.x,z=world.player.z,stage=state.chapterFour.stage;
@@ -813,7 +887,7 @@ function roadEndPrompt(x:number,z:number):string{
 }
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
-function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);mileHunter=freshMileHunter(state.chapterFive.hunterHealth);roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);switchMode('map');world.setTapeVisible(!state.motelTape);world.setCacheVisible(!state.supplyCacheTaken);notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}catch{notify('El guardado está dañado o no es accesible.');}}
+function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}cancelSceneChange();state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);mileHunter=freshMileHunter(state.chapterFive.hunterHealth);roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);switchMode('map',()=>{notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();});}catch{notify('El guardado está dañado o no es accesible.');}}
 $('drive').addEventListener('click',()=>{try{soundscape.start();}catch{}if(state.ending){notify('Historia concluida · Empieza una nueva partida para volver a la carretera.');return;}if(state.carCondition<=0){notify('Repara el Firebird antes de conducir.');return;}if(state.fuel<2){notify('Te falta gasolina. Explora la gasolinera.');return;}switchMode('drive');notify('Gira la llave. El V8 ruge bajo un cielo sin estrellas.');});
 $('explore').addEventListener('click',()=>{try{soundscape.start();}catch{}inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;state.visited=true;state.campaign=recordMilestone(state.campaign,'station');switchMode('explore');notify('La puerta de la estación golpea tres veces. No hay viento.');});
 $('diner').addEventListener('click',()=>{
@@ -821,14 +895,14 @@ $('diner').addEventListener('click',()=>{
  if(!dinerAvailable(state)){notify('Completa La Última Parada y conduce hasta el KM 24.');return;}
  if(state.chapterTwo.stage==='complete'){notify('El capítulo del restaurante ya ha terminado.');return;}
  state=beginDiner(state);inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;inDiner=true;dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);
- switchMode('explore');saveQuietly();notify(state.message);
+ switchMode('explore',()=>{saveQuietly();notify(state.message);});
 });
 $('town').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
  if(!canEnterTown(state)){notify('Completa LOS QUE NO REGRESAN y conduce hasta el KM 48.');return;}
  if(state.chapterThree.stage==='complete'){notify('El capítulo del pueblo ya ha terminado.');return;}
  state=beginTown(state);inDiner=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;inTown=true;townGuardian=freshGuardian(state.chapterThree.guardianHealth);
- switchMode('explore');saveQuietly();notify(state.message);
+ switchMode('explore',()=>{saveQuietly();notify(state.message);});
 });
 $('radio').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
@@ -836,7 +910,7 @@ $('radio').addEventListener('click',()=>{
  if(state.chapterFour.stage==='complete'){notify('Esta cinta ya está archivada.');return;}
  state=beginRadio(state);inTown=false;inDiner=false;inMile=false;inRoadEnd=false;inRadio=true;radioUnderground=false;
  radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);
- switchMode('explore');saveQuietly();notify(state.message);
+ switchMode('explore',()=>{saveQuietly();notify(state.message);});
 });
 $('mile').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
@@ -844,7 +918,7 @@ $('mile').addEventListener('click',()=>{
  if(state.chapterFive.stage==='complete'){notify('El KM 96 ya no vuelve a repetirse.');return;}
  state=beginMile(state);inTown=false;inDiner=false;inRadio=false;inRoadEnd=false;inMile=true;radioUnderground=false;
  mileHunter=freshMileHunter(state.chapterFive.hunterHealth);
- switchMode('explore');saveQuietly();notify(state.message);
+ switchMode('explore',()=>{saveQuietly();notify(state.message);});
 });
 $('road-end').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
@@ -852,7 +926,7 @@ $('road-end').addEventListener('click',()=>{
  if(state.chapterSix.stage==='complete'){notify('La carretera ya tiene un desenlace guardado.');return;}
  state=beginRoadEnd(state);inTown=false;inDiner=false;inRadio=false;inMile=false;inRoadEnd=true;radioUnderground=false;
  roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);
- switchMode('explore');saveQuietly();notify(state.message);
+ switchMode('explore',()=>{saveQuietly();notify(state.message);});
 });
 $('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
 $('save').addEventListener('click',save);$('load').addEventListener('click',load);/** New-game confirmation preserves the existing save until the player commits. */
@@ -902,6 +976,10 @@ window.addEventListener('keydown',e=>{
  const k=normalizeKey(e.key);
  const target=e.target instanceof HTMLElement?e.target:null;
  if(target?.matches('input,textarea,select,[contenteditable="true"]'))return;
+ if (sceneTransition.covered && k !== 'escape' && k !== 'f3') {
+  e.preventDefault();
+  return;
+ }
  // Dialogs and journal own their keyboard: allow native scrolling and focus.
  if(!encounterOpen&&!inventoryOpen&&!helpOpen&&!journalOpen&&capturesGameKey(k,mode)&&!target?.closest('button'))e.preventDefault();
  // Modal dialogs own the keyboard; keys never leak back into gameplay.
@@ -917,9 +995,9 @@ window.addEventListener('keydown',e=>{
   e.preventDefault();pulpUi?.togglePause();input.reset();document.exitPointerLock?.();return;
  }
  if(k==='h'&&!e.repeat){toggleHelp();return;}
- if(mode!=='map'||!['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))input.press(k);
  if(e.repeat)return;
-if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen){toggleJournal();return;}if(journalOpen){if(k==='escape')toggleJournal();return;}if(encounterOpen)return;if(k==='m'){state.carX=clamp(world.car.position.x,-3.7,3.7);state.carZ=clamp(world.car.position.z,-150,24);switchMode('map');}if(k==='p')save();if(k==='f3'){showPerformance=!showPerformance;$('perf-panel').classList.toggle('hidden',!showPerformance);notify(showPerformance?'Diagnóstico de rendimiento activado.':'Diagnóstico de rendimiento oculto.');}if(k==='v'){filmLook=toggleFilmLook(filmLook);writePreference(store,'dead-road-404-film-look',filmLook);pulpUi?.setGrain(filmLook==='suave');applyFilmLook();notify(filmLook==='suave'?'Filtro VHS suave activado.':'Filtro VHS desactivado.');return;}if(k==='g'){adaptiveQuality.defer(performance.now());graphics=nextGraphicsPreset(graphics);world.setGraphics(graphics);applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('Calidad visual: '+GRAPHICS[graphics].label);hud();}if(k==='c'&&mode==='drive'){cameraMode=nextCamera(cameraMode);writePreference(store,'dead-road-404-camera',cameraMode);notify('Cámara: '+CAMERA_LABELS[cameraMode]);}if(k==='t'&&mode==='explore'){flashlightOn=!flashlightOn;notify(flashlightOn?'Linterna encendida. La oscuridad retrocede.':'Linterna apagada.');}if(k==='l'&&mode==='drive'){headlights=!headlights;world.firebird.setHeadlights(headlights);notify(headlights?'Faros encendidos':'Faros apagados');}if(k==='r'&&mode==='explore'&&!inDiner&&!inTown&&!inRadio){if(world.player.distanceTo(radioPosition)<4){state.mission=advanceMission(state.mission,'radio');state.campaign=recordMilestone(state.campaign,'radio');saveQuietly();notify('RADIO 404: «Vera está en el motel. La llave está tras las neveras». Una voz idéntica a la tuya.');hud();}else notify('Solo escuchas estática. La radio está detrás del mostrador.');}if(k==='e'&&mode==='explore'){
+ if(mode!=='map'||!['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))input.press(k);
+if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen){toggleJournal();return;}if(journalOpen){if(k==='escape')toggleJournal();return;}if(encounterOpen)return;if(k==='m'&&mode!=='map'){state.carX=clamp(world.car.position.x,-3.7,3.7);state.carZ=clamp(world.car.position.z,-150,24);switchMode('map');}if(k==='p')save();if(k==='f3'){showPerformance=!showPerformance;$('perf-panel').classList.toggle('hidden',!showPerformance);notify(showPerformance?'Diagnóstico de rendimiento activado.':'Diagnóstico de rendimiento oculto.');}if(k==='v'){filmLook=toggleFilmLook(filmLook);writePreference(store,'dead-road-404-film-look',filmLook);pulpUi?.setGrain(filmLook==='suave');applyFilmLook();notify(filmLook==='suave'?'Filtro VHS suave activado.':'Filtro VHS desactivado.');return;}if(k==='g'){adaptiveQuality.defer(performance.now());graphics=nextGraphicsPreset(graphics);world.setGraphics(graphics);applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('Calidad visual: '+GRAPHICS[graphics].label);hud();}if(k==='c'&&mode==='drive'){cameraMode=nextCamera(cameraMode);writePreference(store,'dead-road-404-camera',cameraMode);notify('Cámara: '+CAMERA_LABELS[cameraMode]);}if(k==='t'&&mode==='explore'){flashlightOn=!flashlightOn;notify(flashlightOn?'Linterna encendida. La oscuridad retrocede.':'Linterna apagada.');}if(k==='l'&&mode==='drive'){headlights=!headlights;world.firebird.setHeadlights(headlights);notify(headlights?'Faros encendidos':'Faros apagados');}if(k==='r'&&mode==='explore'&&!inDiner&&!inTown&&!inRadio){if(world.player.distanceTo(radioPosition)<4){state.mission=advanceMission(state.mission,'radio');state.campaign=recordMilestone(state.campaign,'radio');saveQuietly();notify('RADIO 404: «Vera está en el motel. La llave está tras las neveras». Una voz idéntica a la tuya.');hud();}else notify('Solo escuchas estática. La radio está detrás del mostrador.');}if(k==='e'&&mode==='explore'){
  if(inRoadEnd){interactRoadEnd();}else if(inMile){interactMile();}else if(inRadio){interactRadio();}else if(inTown){interactTown();}else if(inDiner){interactDiner();}else{
  const px=world.player.x,pz=world.player.z;
  if(state.chapterOne.stage==='fuse'&&nearChapterProp(px,pz,FUSE_POSITION)){
@@ -1025,8 +1103,8 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
  }
 }if(k==='escape'&&mode==='drive')switchMode('map');});
 window.addEventListener('keyup',e=>input.release(e.key));window.addEventListener('blur',()=>{input.reset();metrics.reset();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){input.reset();padInput=readPad(null);previousPadButtons.clear();}});canvas.addEventListener('click',()=>{try{soundscape.start();}catch{}if(mode==='explore'&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&mode==='explore'){const prefs=pulpUi?.preferences;const mouseScale=(prefs?.mouseSensitivity??100)/100;const invert=prefs?.invertY?-1:1;yaw+=e.movementX*.0022*mouseScale;pitch=clamp(pitch-e.movementY*.0018*mouseScale*invert,-1.1,1.1);}});
-function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-dt);if(encounterOpen||journalOpen||helpOpen||inventoryOpen)return;if(mode==='drive'){const keyboardAccel=input.axis(['w','arrowup'],['s','arrowdown']);const accel=chooseAxis(keyboardAccel,padInput.forward);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){input.reset();padInput=readPad(null);previousPadButtons.clear();}});canvas.addEventListener('click',()=>{try{soundscape.start();}catch{}if(!sceneTransition.covered&&mode==='explore'&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});document.addEventListener('mousemove',e=>{if(!sceneTransition.covered&&document.pointerLockElement===canvas&&mode==='explore'){const prefs=pulpUi?.preferences;const mouseScale=(prefs?.mouseSensitivity??100)/100;const invert=prefs?.invertY?-1:1;yaw+=e.movementX*.0022*mouseScale;pitch=clamp(pitch-e.movementY*.0018*mouseScale*invert,-1.1,1.1);}});
+function update(dt:number){elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-dt);if(encounterOpen||journalOpen||helpOpen||inventoryOpen)return;if(mode==='drive'){const keyboardAccel=input.axis(['w','arrowup'],['s','arrowdown']);const accel=chooseAxis(keyboardAccel,padInput.forward);
  const keyboardTurn=input.axis(['a','arrowleft'],['d','arrowright']);const turn=chooseAxis(keyboardTurn,-padInput.strafe);
  const handbrake=keys.has(' ');
  const drive=stepArcadeDrive({speed,heading:carYaw,steering},{throttle:state.fuel>0&&state.carCondition>0?accel:0,steer:turn,handbrake},dt);
@@ -1037,8 +1115,8 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  world.car.position.z=clamp(oldZ-Math.cos(carYaw)*speed*dt,-150,24);
  const impact=roadEdgeImpact({condition:state.carCondition,cooldown:impactCooldown},speed,desiredX<-3.7||desiredX>3.7,dt);
  impactCooldown=impact.cooldown;state.carCondition=impact.condition;if(impact.hit){speed=impact.speed;notify('¡Golpe contra el arcén! Firebird: '+Math.round(state.carCondition)+'%');}
- if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');}
- world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(world.car.position.z<=-125){state=travel(state,24);world.car.position.z=20;state.carZ=20;switchMode('map');notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();}}
+ if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');return;}
+ world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(world.car.position.z<=-125){state=travel(state,24);state.carZ=20;switchMode('map',()=>{saveQuietly();notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();});return;}}
  if(mode==='explore'){world.setFlashlight(flashlightOn,yaw,pitch);world.setMissionStage(state.mission.stage);
  if(inRoadEnd){
   world.setEnemy(enemy.x,enemy.z,false,elapsed);
@@ -1134,23 +1212,37 @@ function update(dt:number){soundscape.update(mode,speed);elapsed+=dt;attackCoold
  state.chapterOne.stage==='hatch'&&nearChapterProp(world.player.x,world.player.z,HATCH_POSITION,2.7)?'[E] ABRIR ESCOTILLA DEL MOTEL':
  state.chapterOne.stage==='fight'&&Math.hypot(world.player.x-warden.x,world.player.z-warden.z)<5?'EL CELADOR · '+warden.health+'/120 · [F] ATACA · [SHIFT] ESQUIVA':
  !state.supplyCacheTaken&&Math.hypot(world.player.x-CACHE_POSITION.x,world.player.z-CACHE_POSITION.z)<2.2?'[E] REGISTRAR CAJA DE SUMINISTROS SUNSPUR':isAtPhone(world.player.x,world.player.z)?'[E] CABINA TELEFÓNICA · 1992':!state.motelTape&&isNearTape(world.player.x,world.player.z)?'[E] RECOGER CINTA DEL MOTEL':world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'?'[E] HABLAR CON VERA':world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'?'[E] RECOGER LLAVE 404':world.player.distanceTo(radioPosition)<4&&state.mission.stage==='arrival'?'[R] ESCUCHAR TRANSMISIÓN':world.player.distanceTo(FUEL_CAN_CHECK_POSITION)<3&&!state.hasCan?'[E] RECOGER BIDÓN DE GASOLINA':state.hasCan?'Bidón recogido · [ESPACIO] ATACAR · [M] FIREBIRD':'[CLICK] MIRAR · [ESPACIO] GOLPEAR · [R] RADIO · [M] FIREBIRD';}
- if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);if(world.camera.fov!==73){world.camera.fov=73;world.camera.updateProjectionMatrix();}world.camera.position.lerp(MAP_CAMERA_POSITION,Math.min(1,dt*2));world.camera.lookAt(8,0,0);}if(performance.now()>toastUntil)$('toast').classList.remove('show');}
+ if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);if(world.camera.fov!==73){world.camera.fov=73;world.camera.updateProjectionMatrix();}world.camera.position.lerp(MAP_CAMERA_POSITION,Math.min(1,dt*2));world.camera.lookAt(8,0,0);}}
 function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;
- const visible=!document.hidden,paused=Boolean(pulpUi?.isPaused);
+ const visible=!document.hidden;
+ if (now>toastUntil && $('toast').classList.contains('show')) $('toast').classList.remove('show');
  if(visible)pollGamepad();else {padInput=readPad(null);previousPadButtons.clear();}
+ const paused=Boolean(pulpUi?.isPaused);
+ if (paused) {
+  input.reset();
+  document.exitPointerLock?.();
+ }
+ const transitioning=sceneTransition.active;
+ const wasCovered=sceneTransition.covered;
+ if (visible && !paused && transitioning) {
+  transitionLayer.style.opacity=String(sceneTransition.advance(dt*1000));
+ }
  const interactive=visible&&!paused&&mode!=='map'&&!encounterOpen&&!journalOpen&&!helpOpen&&!inventoryOpen;
- const draw=renderPacer.shouldRender(now,visible,interactive);
+ const draw=renderPacer.shouldRender(now,visible,interactive||(!paused&&transitioning));
  // Advance static menu/overlay animations only on their redraws; never simulate
  // or render the hidden tab. Gameplay retains a full-rate requestAnimationFrame.
- if(visible&&!paused&&(interactive||draw))update(dt);
+ if (visible && !paused && (interactive || draw)) {
+  soundscape.update(mode,mode==='drive'?speed:0,Number(transitionLayer.style.opacity));
+  if (!wasCovered && !sceneTransition.covered) update(dt);
+ }
  if(draw){world.setAtmosphere(now/1000);world.render();}
- if(interactive)metrics.add(frameMs);
+ if(interactive&&!transitioning)metrics.add(frameMs);
  else metrics.reset();
-const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),interactive&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&mode==='explore'){const debug=$('perf-panel');debug.dataset.playerX=world.player.x.toFixed(3);debug.dataset.playerZ=world.player.z.toFixed(3);}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
+const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!transitioning&&interactive&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&mode==='explore'){const debug=$('perf-panel');debug.dataset.playerX=world.player.x.toFixed(3);debug.dataset.playerZ=world.player.z.toFixed(3);}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
  storage:store,
  onSave:()=>save(),
  onLoad:()=>load(),
- onMenu:()=>{saveQuietly();switchMode('map');},
+ onMenu:()=>{cancelSceneChange();saveQuietly();switchMode('map');},
  getGraphics:()=>graphics,
  setGraphics:(preset)=>{
   adaptiveQuality.defer(performance.now());graphics=preset;world.setGraphics(preset);

@@ -269,6 +269,7 @@ try{
  await page.locator('#load').click();
  await page.locator('#objective').filter({hasText:'Sintoniza el cuadro de radio'}).waitFor();
  await page.locator('#explore').click();
+ await page.locator('#status').filter({hasText:'EXPLORACIÓN'}).waitFor();
  // Spawn at (6,6), facing east: approach relay console at (14,5) on foot.
  await page.keyboard.down('w');
  try{await page.locator('#prompt').filter({hasText:'SINTONIZAR RADIO 02:17'}).waitFor({timeout:30000});}

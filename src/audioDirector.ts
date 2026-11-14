@@ -33,14 +33,15 @@ export class AudioDirector {
   if(this.ctx&&this.master)this.master.gain.setTargetAtTime(.42*this.volume,this.ctx.currentTime,.025);
  }
  getVolume(){return this.volume;}
- update(mode:SoundMode,speed:number){
+ update(mode:SoundMode,speed:number,cover=0){
   const a=this.ctx;if(!a)return;
   const t=a.currentTime,mix=soundMix(mode,speed),freq=engineFrequency(speed);
+  const level=1-cover*.82;
   this.engine?.frequency.setTargetAtTime(freq,t,.14);
   this.engineOvertone?.frequency.setTargetAtTime(freq*2.03,t,.14);
-  this.engineGain?.gain.setTargetAtTime(mix.engine,t,.24);
-  this.windGain?.gain.setTargetAtTime(mix.wind,t,.4);
-  this.tensionGain?.gain.setTargetAtTime(mix.tension,t,.65);
+  this.engineGain?.gain.setTargetAtTime(mix.engine*level,t,.24);
+  this.windGain?.gain.setTargetAtTime(mix.wind*level,t,.4);
+  this.tensionGain?.gain.setTargetAtTime(mix.tension*level,t,.65);
  }
  /** Small original analog-synth UI cues; scheduled with the AudioContext clock.
   * No sound samples or melodies taken from films or commercial soundtracks.
