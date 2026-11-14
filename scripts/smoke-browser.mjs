@@ -623,6 +623,8 @@ try{
  assert.equal(f27Done.chapterSix.doubleHealth,0);
  assert.equal(f27Done.ending,'dawn');
  assert.equal(f27Done.campaign.completed.includes('road-end'),true);
+ await page.locator("#pulp-credits:not(.hidden)").waitFor();
+ await page.locator("#pulp-credits-close").click();
  await page.locator('#load').click();
  const f27Saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('dead-road-404-f19-v2')));
  assert.equal(f27Saved.ending,'dawn');

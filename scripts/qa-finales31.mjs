@@ -91,7 +91,7 @@ try{
   assert.equal(state.chapterSix.stage,'complete');
   assert.equal(state.campaign.completed.includes('road-end'),true);
   await page.screenshot({path:resolve('artifacts','f31-final-'+ending.id+'.png')});
-  await page.getByRole('button',{name:/GUARDAR FINAL Y REGRESAR AL MENÚ/}).click();
+  await page.getByRole('button',{name:/GUARDAR FINAL Y REGRESAR/}).click();
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#art-status').filter({hasText:'ARTE PSX'}).waitFor({timeout:25000});
   await page.locator('#load').click();

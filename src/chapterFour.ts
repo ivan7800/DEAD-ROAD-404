@@ -89,7 +89,7 @@ export function speakNora(s:GameState,choice:NoraChoice):GameState{
   food:choice==='help'?Math.min(999,s.food+2):s.food,
   parts:choice==='refuse'?Math.min(999,s.parts+1):s.parts,
   message:choice==='help'?
-   'NORA, TÉCNICA WXR: «La antena transmite a quienes aún no han nacido». Te entrega 2 raciones. Conserva el código 02:17.':
+   'NORA, TÉCNICA WXR: «La antena transmite a quienes aún no han nacido». Te entrega 2 raciones. Conserva el código 02:17. Si el cuentakilómetros se repite, sigue las balizas.':
    'NORA: «Nadie mantiene abierta esta emisora. Se mantiene sola». Deja una pieza sobre el suelo y desaparece.'};
 }
 export function inspectRadioSign(s:GameState):GameState{

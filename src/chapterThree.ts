@@ -92,7 +92,7 @@ export function speakWitness(s:GameState,choice:WitnessChoice):GameState{
   food:choice==='believe'?Math.min(999,s.food+2):s.food,
   parts:choice==='doubt'?Math.min(999,s.parts+1):s.parts,
   message:choice==='believe'?
-   'ELÍAS: «Cada mañana escriben nuestros nombres en la piedra». Te deja dos raciones y huye.':
+   'ELÍAS: «Cada mañana escriben nuestros nombres en la piedra». Te deja dos raciones. «Los trece golpes eran la alarma de evacuación».':
    'ELÍAS: «Si no crees en este sitio, lleva este hierro». Obtienes una pieza. Sus pies no dejan huellas.'};
 }
 export function readMemorial(s:GameState):GameState{

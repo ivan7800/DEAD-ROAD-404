@@ -87,7 +87,7 @@ export function chooseMara(s:GameState,choice:MaraChoice):GameState{
   campaign:recordMilestone(s.campaign,'mara'),
   food:choice==='trust'?Math.min(999,s.food+2):s.food,
   message:choice==='trust'?
-   'MARA: «Yo serví la última cena aquí, en 1992». Te entrega dos raciones y señala una mesa vacía.':
+   'MARA: «Yo serví la última cena aquí, en 1992». Te deja dos raciones. «Busca mi nombre en el monumento del pueblo».':
    'MARA: «Desconfiarás de mí hasta que recuerdes quién apagó las luces». La silueta se disuelve.'};
 }
 export function readDinerTicket(s:GameState):GameState{
@@ -106,7 +106,7 @@ export function readDinerLedger(s:GameState):GameState{
  if(s.chapterTwo.stage!=='ledger')return s;
  return {...s,chapterTwo:{...s.chapterTwo,stage:'code'},
   campaign:recordMilestone(s.campaign,'ledger'),
-  message:'LIBRO DE HUÉSPEDES: seis nombres tachados, el último el tuyo. La cerradura de la cocina pide el AÑO DEL TICKET.'};
+  message:'LIBRO DE HUÉSPEDES: seis evacuados del mismo pueblo. El último nombre es el tuyo. La cocina pide el AÑO DEL TICKET.'};
 }
 export function tryDinerCode(s:GameState,code:number):GameState{
  if(s.chapterTwo.stage!=='code')return s;

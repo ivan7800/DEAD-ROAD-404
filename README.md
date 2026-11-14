@@ -2,6 +2,14 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## v0.22.0 — Campaña 1992
+
+El conductor busca a su hermana Vera. Las seis paradas reconstruyen la evacuación del pueblo y la emisión del Proyecto Umbral. Los diálogos de salida y el mapa indican qué investigación sigue. El diario conserva hechos, pistas, preguntas y decisiones de la partida. El último peaje explica las condiciones para escapar con Vera y abre los créditos tras registrar el desenlace.
+
+Cada parada principal debe resolverse para avanzar. El mapa ofrece auxilio si el Firebird queda inutilizado, falta combustible o el jugador cae sin poder combatir. Las decisiones pendientes tras los jefes pueden retomarse al volver a la localización. Se mantiene la clave de guardado y el epílogo de las partidas históricas que ya lo tenían habilitado.
+
+[Biblia de la campaña](docs/CAMPANA_1992.md) · [Pruebas de campaña](scripts/qa-campaign.mjs). Para ejecutarlas, compila con `GITHUB_REPOSITORY=ivan7800/DEAD-ROAD-404 npm run build` y ejecuta `npm run qa:campaign`. Chromium usa entradas de teclado y la interfaz del juego desde una partida nueva. El recorrido de pantalla móvil usa teclado emulado.
+
 ## v0.21.8 — Transiciones de carretera
 
 El mundo cambia cuando la imagen queda cubierta y revela la cámara ya colocada en el destino. Los seis capítulos, el mapa, el Firebird y el refugio Umbral tienen perfiles de color, duración y sonido. La pausa detiene el paso de escena y el ajuste de movimiento reducido permite entrar de inmediato. El capítulo II gana contraste en la entrada del restaurante y en el pavimento.

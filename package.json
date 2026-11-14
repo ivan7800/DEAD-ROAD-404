@@ -1,7 +1,7 @@
 {
   "name": "dead-road-404",
   "private": true,
-  "version": "0.21.8",
+  "version": "0.22.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -10,6 +10,7 @@
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "check": "npm run test && npm run build",
     "smoke": "node scripts/smoke-browser.mjs",
+    "qa:campaign": "node scripts/qa-campaign.mjs",
     "qa:finales": "node scripts/qa-finales31.mjs",
     "qa:stability": "node scripts/qa-stability32.mjs",
     "qa:visual": "node scripts/qa-visual33.mjs",

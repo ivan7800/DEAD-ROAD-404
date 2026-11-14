@@ -39,7 +39,7 @@ export function nearChapterProp(x:number,z:number,p:{x:number;z:number},radius=2
 export function beginChapterOne(s:GameState):GameState{
  if(s.mission.stage!=='resolved'||s.chapterOne.stage!=='sealed')return s;
  return {...s,chapterOne:{...s.chapterOne,stage:'fuse'},
-  message:'Vera señala un generador junto a SUNSPUR. La estación emite una segunda señal. Busca el fusible al este.'};
+  message:s.mission.choice==='rescue'?'Vera señala el generador de SUNSPUR. Busca el fusible al este.':'Vera te deja una nota: «El generador alimenta el registro. Busca el fusible al este».'};
 }
 export function chapterOneObjective(s:GameState):string{
  if(s.mission.stage!=='resolved')return '';
@@ -95,6 +95,6 @@ export function closeChapterOne(s:GameState,decision:ChapterOneDecision):GameSta
   health:Math.min(100,s.health+(destroyed?20:0)),
   parts:s.parts+(destroyed?0:2),
   message:destroyed?
-   'CAPÍTULO I COMPLETADO · Quemas la señal. +20 salud. Vera te mira como si ya hubieras tomado esta decisión.':
+   'CAPÍTULO I COMPLETADO · Quemas la señal. +20 salud. Aun sin corriente, el altavoz repite tu último suspiro.':
    'CAPÍTULO I COMPLETADO · Conservas la cinta. +2 piezas. En tu voz hay otra persona.'};
 }
