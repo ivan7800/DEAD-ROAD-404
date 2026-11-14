@@ -105,12 +105,10 @@ export class PulpUI {
   get('pulp-transition-subtitle').textContent=subtitle;
   if(this.transitionTimer!==undefined)window.clearTimeout(this.transitionTimer);
   card.classList.remove('active');
-  // restart animation without forcing synchronous reflow
-  this.animationTimer=window.setTimeout(()=>{
-   card.classList.add('active');
-   this.transitionTimer=window.setTimeout(()=>card.classList.remove('active'),this.animationsEnabled?1100:80);
-  },10);
-  this.actions.uiSound('confirm');
+  if(!this.animationsEnabled)return;
+  void card.offsetWidth;
+  card.classList.add('active');
+  this.transitionTimer=window.setTimeout(()=>card.classList.remove('active'),1100);
  }
  flash(label:string){
   if(!this.animationsEnabled)return;

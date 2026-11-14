@@ -149,19 +149,45 @@ html.psx-mode .dashboard{box-shadow:none}
 .pulp-intro .headline span{color:var(--pulp-red)}
 .pulp-intro .strip{padding:10px 23px;background:#a83b31;color:#f5dcbb;font:900 13px Consolas,monospace;letter-spacing:4px}
 .pulp-intro .late{margin-top:22px;font:800 12px Consolas,monospace;letter-spacing:4px;color:#a7b4ab}
-.pulp-transition{
- z-index:16;display:flex;flex-direction:column;align-items:center;justify-content:center;
- text-align:center;background:linear-gradient(110deg,#100c15f0,#4a151ded 56%,#0a0c12f1);
- opacity:0;visibility:hidden;transition:opacity .17s ease;
- border-top:0 solid var(--pulp-amber);
+#scene-transition {
+ position: absolute;
+ inset: 0;
+ z-index: 20;
+ pointer-events: none;
+ opacity: 0;
+ background: radial-gradient(ellipse at 48% 42%, var(--scene-color, #19111d), #09070d 85%);
 }
-.pulp-transition.active{opacity:1;visibility:visible;animation:pulp-cut 1.05s steps(3,end) both}
-.pulp-transition .kicker{font:800 clamp(11px,2vw,18px) Consolas,monospace;color:var(--pulp-amber);letter-spacing:5px;margin-bottom:18px}
-.pulp-transition .title{font:900 clamp(50px,9vw,140px)/.9 Impact,'Arial Narrow',sans-serif;
- letter-spacing:1px;color:#fff0d5;text-shadow:5px 5px 0 #8b2c2e,8px 8px #07050a;max-width:90vw}
-.pulp-transition .subtitle{background:#b33d32;color:#fff4d7;padding:10px 20px;
- letter-spacing:3px;font:900 13px Consolas,monospace;margin-top:24px}
-@keyframes pulp-cut{0%{opacity:0}9%,72%{opacity:1}100%{opacity:0}}
+html[data-scene-cover] #scene-transition { pointer-events: auto }
+#scene-transition[data-destination="drive"] {
+ background: linear-gradient(0deg, #09070d 12%, var(--scene-color) 58%, #09070d);
+}
+#scene-transition[data-destination="radio"],
+#scene-transition[data-destination="bunker"] {
+ background: repeating-linear-gradient(0deg, #08070d 0 2px, transparent 2px 5px), var(--scene-color);
+}
+#scene-transition[data-destination="road-end"] {
+ background: radial-gradient(ellipse at 50% 34%, #563332, var(--scene-color) 44%, #09070d 85%);
+}
+.pulp-transition {
+ z-index: 21;
+ inset: 25% 0 auto;
+ display: grid;
+ justify-items: center;
+ gap: 8px;
+ text-align: center;
+ opacity: 0;
+ visibility: hidden;
+}
+.pulp-transition.active { visibility: visible; animation: pulp-title 1.05s ease both }
+.pulp-transition .kicker { font: 800 clamp(10px, 1.6vw, 14px) Consolas, monospace; color: var(--pulp-amber); letter-spacing: 3px }
+.pulp-transition .title {
+ font: 900 clamp(26px, 6vw, 72px)/.95 Impact, 'Arial Narrow', sans-serif;
+ color: #fff0d5;
+ text-shadow: 0 2px 4px #09070d, 0 0 12px #09070d, 2px 2px #342024;
+ max-width: 88vw;
+}
+.pulp-transition .subtitle { color: #fff4d6; background: #120a17d9; padding: 5px 9px; font: 700 11px Consolas, monospace }
+@keyframes pulp-title { 0%, 100% { opacity: 0 } 20%, 63% { opacity: 1 } }
 .pulp-flash{
  z-index:17;display:grid;place-items:center;opacity:0;visibility:hidden;
  background:#e6d2a2;color:#601d27;text-align:center;letter-spacing:5px;

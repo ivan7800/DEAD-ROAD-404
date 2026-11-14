@@ -27,5 +27,6 @@ test('F24 se conserva: cartelas, pausa y archivo de capítulos integran IV',()=>
  const theme=read('src/ui/pulpSettings.ts');
  assert.match(theme,/FRECUENCIA MUERTA/);
  assert.match(main,/pulpUi\?\.title\('CAPÍTULO IV/);
- assert.match(main,/if\(visible&&!paused&&\(interactive\|\|draw\)\)update\(dt\)/);
+ assert.match(main,/if \(visible && !paused && \(interactive \|\| draw\)\)/);
+ assert.match(main,/if \(!wasCovered && !sceneTransition.covered\) update\(dt\)/);
 });

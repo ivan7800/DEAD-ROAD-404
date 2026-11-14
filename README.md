@@ -2,6 +2,12 @@
 
 Juego original de carretera, supervivencia y terror ambientado en 1992. TypeScript + Three.js + Vite, estética deliberadamente inspirada en los gráficos PS1 y la atmósfera de dungeon crawlers como Lunacid. No utiliza modelos de videojuegos comerciales.
 
+## v0.21.8 — Transiciones de carretera
+
+El mundo cambia cuando la imagen queda cubierta y revela la cámara ya colocada en el destino. Los seis capítulos, el mapa, el Firebird y el refugio Umbral tienen perfiles de color, duración y sonido. La pausa detiene el paso de escena y el ajuste de movimiento reducido permite entrar de inmediato. El capítulo II gana contraste en la entrada del restaurante y en el pavimento.
+
+La validación visual automatizada cubre las seis entradas en escritorio, móvil y móvil compacto. La suite Node recorre la lógica de la campaña desde KM 0 hasta los cuatro desenlaces, simulando la derrota de cada jefe y comprobando los guardados entre capítulos. La partida manual completa y las pruebas con GPU y mando físicos siguen pendientes.
+
 ## Fase 34 — Revisión visual basada en capturas reales (v0.21.7)
 
 La auditoría manual de las capturas generadas por GitHub Actions en F33 confirmó **solapamiento de capas del HUD en móvil**: cabecera, pausa, estadísticas, rótulos de gráficos, objetivo, mensaje narrativo, resistencia y botones inferiores. La solución reorganiza las franjas superiores e inferiores solo durante conducción/exploración a 640 px o menos, oculta etiquetas de diagnóstico redundantes sin perder las opciones de ajuste y conserva el menú original. Chromium comprueba ahora intersecciones geométricas reales en **18 capturas (6 capítulos × escritorio/móvil/móvil compacto)**; no basta con capturar la pantalla.
