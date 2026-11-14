@@ -76,7 +76,7 @@ export function readEndLedger(s:GameState):GameState{
  const map=s.chapterFive.decision==='remember'?'El mapa del Agrimensor guarda las caras de los desaparecidos.':'El lugar donde enterraste el mapa sigue manchando tus manos.';
  return {...s,chapterSix:{...s.chapterSix,stage:'relays'},
   campaign:recordMilestone(s.campaign,'endLedger'),
-  message:'REGISTRO 1992 · «Ninguna salida es gratuita». '+radio+' '+map+' Enciende ambos relés para liberar la barrera.'};
+  message:'REGISTRO 1992 · El último conductor figura con tu matrícula. La voz del canal pide que le respondas para repetir el viaje. '+radio+' '+map+' Enciende ambos relés para liberar la barrera.'};
 }
 export function enableEndRelay(s:GameState,id:'A'|'B'):GameState{
  if(s.chapterSix.stage!=='relays')return s;

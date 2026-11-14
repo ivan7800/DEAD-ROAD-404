@@ -1,3 +1,5 @@
+import {OPENING,journalStory,storyLink,storyOnArrival} from './campaignStory.ts';
+import {MIN_TRIP_FUEL,campaignObjective,canRecover,recoverAtFirebird,roadHold} from './campaignFlow.ts';
 import {SceneTransition, SCENE_TRANSITIONS, type SceneDestination} from './sceneTransition.ts';
 import {InputController,capturesGameKey,normalizeKey} from './inputController.ts';
 import {cameraYawForMovement} from './controlOrientation.ts';
@@ -5,30 +7,30 @@ import {readPad,type PadInput} from './gamepadControls.ts';
 import {navigateController} from './controllerMenu.ts';
 import {chooseAxis} from './dualInput.ts';
 import {safeStorage,readPreference,writePreference,writeSave,readLatestValidSave} from './saveStorage.ts';
-import {shouldOfferFinale,resolveFinale,roadObjective,ENDINGS,FINALE_OPTIONS,type FinalApproach} from './roadStory.ts';
+import {shouldOfferFinale,resolveFinale,ENDINGS,FINALE_OPTIONS,type FinalApproach} from './roadStory.ts';
 import {stepArcadeDrive} from './arcadeDrive.ts';
 import {roadEdgeImpact,repairVehicle} from './vehicleWear.ts';
-import {beginChapterOne,chapterOneObjective,nearChapterProp,collectChapterFuse,powerChapterConsole,tuneChapterFrequency,openChapterHatch,defeatChapterWarden,closeChapterOne,FUSE_POSITION,CONSOLE_POSITION,HATCH_POSITION,FREQUENCIES,type ChapterOneDecision} from './chapterOne.ts';
+import {beginChapterOne,nearChapterProp,collectChapterFuse,powerChapterConsole,tuneChapterFrequency,openChapterHatch,defeatChapterWarden,closeChapterOne,FUSE_POSITION,CONSOLE_POSITION,HATCH_POSITION,FREQUENCIES,type ChapterOneDecision} from './chapterOne.ts';
 import {freshWarden,stepWarden,strikeWarden} from './warden.ts';
-import {beginDiner,dinerAvailable,dinerObjective,nearDinerProp,chooseMara,readDinerTicket,restoreDinerNeon,readDinerLedger,tryDinerCode,openDinerFreezer,defeatDinerThreat,concludeDiner,DINER_POSITIONS,DINER_FREQUENCIES,type MaraChoice,type DinerEnding} from './chapterTwo.ts';
+import {beginDiner,dinerAvailable,nearDinerProp,chooseMara,readDinerTicket,restoreDinerNeon,readDinerLedger,tryDinerCode,openDinerFreezer,defeatDinerThreat,concludeDiner,DINER_POSITIONS,DINER_FREQUENCIES,type MaraChoice,type DinerEnding} from './chapterTwo.ts';
 import {freshDinerThreat,stepDinerThreat,strikeDinerThreat} from './dinerThreat.ts';
-import {beginTown,canEnterTown,townObjective,nearTownObject,speakWitness,readMemorial,
+import {beginTown,canEnterTown,nearTownObject,speakWitness,readMemorial,
  restoreTownPower,readTownArchive,enterTownCode,openTownChapel,defeatTownGuardian,
  takeTownSupplies,concludeTown,TOWN_LOCATIONS,TOWN_CODES,type WitnessChoice,type TownDecision
 } from './chapterThree.ts';
 import {freshGuardian,updateGuardian,strikeGuardian} from './townGuardian.ts';
 import {
- beginRadio,canEnterRadio,radioObjective,nearRadioProp,speakNora,inspectRadioSign,
+ beginRadio,canEnterRadio,nearRadioProp,speakNora,inspectRadioSign,
  powerRadioRelay,readRadioArchive,tuneRadioMixer,openRadioBunker,decodeRadioBunker,
  disableRadioBreaker,defeatRadioOperator,takeRadioSupplies,concludeRadio,
  RADIO_POSITIONS,RADIO_STUDIO_CODES,RADIO_BUNKER_CODES,type NoraChoice,type RadioDecision
 } from './chapterFour.ts';
 import {freshRadioOperator,updateRadioOperator,strikeRadioOperator} from './radioOperator.ts';
 import {radioCollision} from './radioCollision.ts';
-import {beginMile,canEnterMile,mileObjective,nearMile,inspectMileSign,inspectMileLog,activateMileBeacon,tuneMileDial,defeatMileHunter,takeMileSupplies,concludeMile,MILE_POSITIONS,MILE_CODES,type MileDecision} from './chapterFive.ts';
+import {beginMile,canEnterMile,nearMile,inspectMileSign,inspectMileLog,activateMileBeacon,tuneMileDial,defeatMileHunter,takeMileSupplies,concludeMile,MILE_POSITIONS,MILE_CODES,type MileDecision} from './chapterFive.ts';
 import {freshMileHunter,stepMileHunter,strikeMileHunter} from './mileHunter.ts';
 import {mileCollision} from './mileCollision.ts';
-import {beginRoadEnd,canEnterRoadEnd,endObjective,nearRoadEnd,readEndSign,readEndLedger,enableEndRelay,enterEndCode,defeatRoadDouble,takeEndSupplies,END_POSITIONS,END_CODES} from './chapterSix.ts';
+import {beginRoadEnd,canEnterRoadEnd,nearRoadEnd,readEndSign,readEndLedger,enableEndRelay,enterEndCode,defeatRoadDouble,takeEndSupplies,END_POSITIONS,END_CODES} from './chapterSix.ts';
 import {freshRoadDouble,stepRoadDouble,strikeRoadDouble} from './roadDouble.ts';
 import {roadEndCollision} from './roadEndCollision.ts';
 import {townCollision} from './townCollision.ts';
@@ -51,7 +53,7 @@ import {AudioDirector} from './audioDirector.ts';
 import {FrameMetrics} from './performance.ts';
 import {RenderPacer} from './renderPacer.ts';
 import {AdaptiveQuality} from './adaptiveQuality.ts';
-import {advanceMission,missionObjective,MISSION_CHOICES,type MissionChoice} from './mission.ts';
+import {advanceMission,MISSION_CHOICES,type MissionChoice} from './mission.ts';
 import {createEnemy,updateEnemy,strike,type EnemyState} from './combat.ts';
 import {ENCOUNTER,resolveEncounter,shouldOfferEncounter,type EncounterChoice} from './encounters.ts';
 import {updateDrivingCamera} from './cameras.ts';
@@ -149,6 +151,7 @@ function changeScene(destination: SceneDestination, apply: () => void) {
  }, animated);
  if (!animated) transitionLayer.style.opacity = '0';
 }
+$('chapter-intro').textContent=OPENING;
 const addLog=(message:string)=>{$('log').textContent=message;};
 $('art-status').textContent='ARTE PSX · 240P · SIN GLB PESADOS';
 function beep(freq:number,duration=.12){soundscape.beep(freq,duration);}
@@ -173,7 +176,11 @@ function hud(){$('graphics-label').textContent='GRÁFICOS: '+GRAPHICS[graphics].
   canEnterTown(state)?'ENTRAR EN EL PUEBLO SIN NOMBRE · CAPÍTULO III':'EL PUEBLO SIN NOMBRE · DESDE KM 48';
  $('diner').textContent=state.chapterTwo.stage==='complete'?'CAPÍTULO II COMPLETADO · [J] DIARIO':
   dinerAvailable(state)?'ENTRAR EN THE LAST LIGHT · CAPÍTULO II':'RESTAURANTE THE LAST LIGHT · DESDE KM 24';
- const nextObjective=(endObjective(state)||mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission))+(mode==='explore'?' · [F] atacar · [E] interactuar':mode==='drive'?' · [C] cámara · [L] luces':' · Explora y completa la misión');
+ const nextObjective=campaignObjective(state,mode,radioUnderground);
+ ($('recovery') as HTMLButtonElement).hidden=!canRecover(state);
+ const nextArrival=state.ending?'':storyOnArrival(state);
+ if($('road-briefing').textContent!==nextArrival)$('road-briefing').textContent=nextArrival;
+
  // Updating an unchanged live region every quarter-second floods screen readers.
  if($('objective').textContent!==nextObjective)$('objective').textContent=nextObjective;}
 function switchMode(next: Mode, after?: () => void) {
@@ -218,8 +225,25 @@ $('show-controls').addEventListener('click',toggleHelp);$('close-controls').addE
 function toggleJournal(){
  journalOpen=!journalOpen;
  const journal=$('journal');journal.classList.toggle('hidden',!journalOpen);
- $('journal-stage').textContent=endObjective(state)||mileObjective(state)||radioObjective(state)||townObjective(state)||dinerObjective(state)||chapterOneObjective(state)||roadObjective(state)||missionObjective(state.mission);
- $('journal-record').textContent=(state.motelTape?'CINTA DEL MOTEL: Recuperada · +1 pieza y +2 comida.\n':'')+(state.phoneHeard?'CABINA TELEFÓNICA: la voz conocía una fecha que todavía no ha llegado.\n':'')+(state.mission.stage==='resolved' ? 'Decisión registrada: '+({rescue:'Vera viaja contigo',take:'Cobraste por ayudar',leave:'Vera permanece en el motel'}[state.mission.choice!]||'Desconocida') : 'Pista: los secretos de la estación se descubren explorando y escuchando.');
+ $('journal-stage').textContent=campaignObjective(state,mode,radioUnderground);
+ const journalRecord=$('journal-record');
+ journalRecord.replaceChildren();
+ const story=journalStory(state);
+ for(const [title, entries] of [
+  ['Hechos confirmados',story.facts],['Preguntas abiertas',story.questions],
+  ['Pistas descubiertas',story.clues],['Decisiones tomadas',story.decisions]
+ ] as const){
+  if(!entries.length)continue;
+  const heading=document.createElement('h3');
+  heading.textContent=title;
+  const list=document.createElement('ul');
+  for(const entry of entries){
+   const row=document.createElement('li');
+   row.textContent=entry;
+   list.append(row);
+  }
+  journalRecord.append(heading,list);
+ }
  const chapters=$('journal-chapters');chapters.replaceChildren();
  for(const chapter of CHAPTERS){
   const row=document.createElement('div');
@@ -286,16 +310,16 @@ $('inventory-access').addEventListener('click',toggleInventory);
 $('inventory-open').addEventListener('click',toggleInventory);
 $('inventory-close').addEventListener('click',toggleInventory);
 function showEncounter(){if(!shouldOfferEncounter(state)||encounterOpen)return;encounterOpen=true;input.reset();document.exitPointerLock?.();const dialog=$('encounter');$('encounter-title').textContent=ENCOUNTER.title;$('encounter-text').textContent=ENCOUNTER.intro;const choices=$('encounter-choices');choices.replaceChildren();for(const option of ENCOUNTER.choices){const btn=document.createElement('button');btn.type='button';btn.textContent=option.label;btn.addEventListener('click',()=>{const next=resolveEncounter(state,option.id as EncounterChoice);if(!next.encounterResolved){notify(next.message);return;}state=next;state.campaign=recordMilestone(state.campaign,'traveller');saveQuietly();encounterOpen=false;dialog.classList.add('hidden');notify(next.message);hud();});choices.append(btn);}dialog.classList.remove('hidden');(choices.querySelector('button') as HTMLButtonElement|null)?.focus();}
-function showMissionDialogue(){if(encounterOpen)return;encounterOpen=true;input.reset();document.exitPointerLock?.();const dialog=$('encounter');$('encounter-title').textContent='VERA · LA ÚLTIMA CLIENTA';$('encounter-text').textContent='«El tipo de la radio llevaba muerto dos días antes de hablar. Tengo un mapa que no debería existir. ¿Me llevas o nos cobramos mutuamente por respirar?»';const choices=$('encounter-choices');choices.replaceChildren();for(const opt of MISSION_CHOICES){const b=document.createElement('button');b.type='button';b.textContent=opt.label+' — '+opt.description;b.addEventListener('click',()=>{const prior=state.mission;state.mission=advanceMission(prior,'talk',opt.id as MissionChoice);if(state.mission.stage==='resolved'&&prior.stage!=='resolved'){state.campaign=recordMilestone(state.campaign,'vera');if(opt.id==='rescue'){state.food=Math.max(0,state.food-3);state.parts+=1;}else if(opt.id==='take'){state.parts+=2;state.health=Math.max(0,state.health-10);}else state.food+=5;state=beginChapterOne(state);notify('DECISIÓN SOBRE VERA · '+opt.label+' · '+state.message);save();}encounterOpen=false;dialog.classList.add('hidden');hud();if(shouldOfferFinale(state))showFinale();});choices.append(b);}dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();}
+function showMissionDialogue(){if(encounterOpen)return;encounterOpen=true;input.reset();document.exitPointerLock?.();const dialog=$('encounter');$('encounter-title').textContent='VERA · LA ÚLTIMA CLIENTA';$('encounter-text').textContent='«Te llamé para que no vinieras. Yo llevaba las cintas a WXR-404. Anoche, una de ellas contestó con tu voz. El generador abre el registro del motel. ¿Nos vamos juntos cuando lo abras?»';const choices=$('encounter-choices');choices.replaceChildren();for(const opt of MISSION_CHOICES){const b=document.createElement('button');b.type='button';b.textContent=opt.label+' — '+opt.description;b.addEventListener('click',()=>{const prior=state.mission;state.mission=advanceMission(prior,'talk',opt.id as MissionChoice);if(state.mission.stage==='resolved'&&prior.stage!=='resolved'){state.campaign=recordMilestone(state.campaign,'vera');if(opt.id==='rescue'){state.food=Math.max(0,state.food-3);state.parts+=1;}else if(opt.id==='take'){state.parts+=2;state.health=Math.max(0,state.health-10);}else state.food+=5;state=beginChapterOne(state);saveQuietly();notify('DECISIÓN SOBRE VERA · '+opt.label+' · '+state.message);}encounterOpen=false;dialog.classList.add('hidden');hud();if(shouldOfferFinale(state))showFinale();});choices.append(b);}dialog.classList.remove('hidden');(choices.firstChild as HTMLButtonElement|null)?.focus();}
 function showFinale(){
  if(!shouldOfferFinale(state)||encounterOpen)return;
  encounterOpen=true;input.reset();document.exitPointerLock?.();
  const dialog=$('encounter'),choices=$('encounter-choices');
  $('encounter-title').textContent='CARRETERA 404 · ÚLTIMO DESVÍO';
  $('encounter-text').textContent='Son las 02:17. Otra vez. El asfalto se divide en dos: una salida sin señales y una antena que emite tu propia voz. '+
- (state.mission.choice==='rescue'?'Vera aprieta tu mano. ':state.mission.choice==='leave'?'Vera no está, pero su voz ocupa el asiento vacío. ':'Vera recuerda lo que le exigiste por ayudarla. ')+
+ (state.mission.choice==='rescue'?'Vera aprieta tu mano. ':state.mission.choice==='leave'?'Vera no está, pero su voz ocupa el asiento vacío. ':'La radio conserva las últimas palabras de Vera. El asiento sigue vacío. ')+
  (state.chapterFive.decision==='remember'?'Los nombres del mapa todavía tienen rostros. ':'El mapa enterrado deja un hueco en tus recuerdos. ')+
- '¿Abandonas el asfalto o escuchas la última transmisión?';
+ 'Si quieres atravesar la barrera con Vera, reserva 4 L y una pieza para el Firebird. ¿Abandonas el asfalto o escuchas la última transmisión?';
  choices.replaceChildren();
  for(const option of FINALE_OPTIONS){
   const button=document.createElement('button');button.type='button';button.textContent=option.label+' — '+option.description;
@@ -306,8 +330,8 @@ function showFinale(){
    $('encounter-title').textContent=ending.title;
    $('encounter-text').textContent=ending.text+' '+(state.chapterFour.decision==='broadcast'?'La voz de WXR-404 sigue viajando.':'La emisora WXR-404 permanece muda.')+' '+(state.chapterFive.decision==='forget'?'Alguien olvidará por qué emprendiste el viaje.':'Conservas los nombres de quienes no pudieron salir.');
    choices.replaceChildren();saveQuietly();hud();
-   const close=document.createElement('button');close.type='button';close.textContent='GUARDAR FINAL Y REGRESAR AL MENÚ';
-   close.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');switchMode('map');notify('FINAL REGISTRADO · '+ending.title);});
+   const close=document.createElement('button');close.type='button';close.textContent='GUARDAR FINAL Y REGRESAR · VER CRÉDITOS';
+   close.addEventListener('click',()=>{encounterOpen=false;dialog.classList.add('hidden');switchMode('map',()=>{notify('FINAL REGISTRADO · '+ending.title);pulpUi?.open('credits');});});
    choices.append(close);close.focus();
   });choices.append(button);
  }
@@ -354,7 +378,7 @@ function showChapterOneDecision(){
    state=closeChapterOne(state,option.id);saveQuietly();
    world.setChapterOneStage(state.chapterOne.stage);hud();notify(state.message);
    $('encounter-title').textContent='CAPÍTULO I COMPLETADO · LA ÚLTIMA PARADA';
-   $('encounter-text').textContent=state.message+' El Firebird aguarda. Fuera, la carretera continúa hasta un desvío que no figura en el mapa.';
+   $('encounter-text').textContent=state.message+' '+storyLink(state,1);
    choices.replaceChildren();
    const close=document.createElement('button');close.type='button';close.textContent='REGRESAR AL FIREBIRD';
    close.addEventListener('click',()=>{
@@ -423,7 +447,7 @@ function showDinerDecision(){
   button.addEventListener('click',()=>{
    state=concludeDiner(state,option.id);saveQuietly();hud();world.setDinerStage(state.chapterTwo.stage,true);
    $('encounter-title').textContent='CAPÍTULO II COMPLETADO · LOS QUE NO REGRESAN';
-   $('encounter-text').textContent=state.message+' El mapa señala una carretera hacia un pueblo sin nombre. Por ahora, el Firebird es tu única salida.';
+   $('encounter-text').textContent=state.message+' '+storyLink(state,2);
    choices.replaceChildren();
    const close=document.createElement('button');close.type='button';close.textContent='SALIR DEL RESTAURANTE Y REGRESAR AL FIREBIRD';
    close.addEventListener('click',()=>{
@@ -436,6 +460,7 @@ function showDinerDecision(){
 }
 function interactDiner(){
  const x=world.player.x,z=world.player.z,stage=state.chapterTwo.stage;
+ if(stage==='choice'){showDinerDecision();return;}
  if(state.chapterTwo.mara===null&&nearDinerProp(x,z,DINER_POSITIONS.mara,1.5)){
   showMaraDialogue();return;
  }
@@ -463,6 +488,7 @@ function dinerPrompt(x:number,z:number):string{
  if(stage==='ledger'&&nearDinerProp(x,z,DINER_POSITIONS.ledger))return '[E] EXAMINAR LIBRO DE HUÉSPEDES';
  if(stage==='code'&&nearDinerProp(x,z,DINER_POSITIONS.keypad,2.5))return '[E] INTRODUCIR CÓDIGO DE COCINA';
  if(stage==='freezer'&&nearDinerProp(x,z,DINER_POSITIONS.freezer,2.7))return '[E] ABRIR CONGELADOR · 1992';
+ if(stage==='choice')return '[E] DECIDIR EL DESTINO DE LA GRABACIÓN';
  if(stage==='stalker')return 'LA CAMARERA HUECA · '+dinerThreat.health+'/90 · [F] GOLPEAR · [SHIFT] CORRER · [I] CURARSE';
  return '[J] CONSULTA EL DIARIO · [M] REGRESAR AL FIREBIRD';
 }
@@ -515,7 +541,7 @@ function showTownDecision(){
  encounterOpen=true;input.reset();document.exitPointerLock?.();
  const dialog=$('encounter'),choices=$('encounter-choices');
  $('encounter-title').textContent='CAPÍTULO III · LOS NOMBRES OLVIDADOS';
- $('encounter-text').textContent='El Campanero se ha desvanecido. En su campana hay un registro con todos los nombres que dejó de pronunciar el pueblo. ¿Qué hacer con la memoria de los desaparecidos?';
+ $('encounter-text').textContent='El Campanero se ha desvanecido. En su campana hay un registro con todos los nombres que dejó de pronunciar el pueblo. Para que alguien oiga sus voces fuera de este lugar, WXR-404 necesitará esta lista.';
  choices.replaceChildren();
  const options:ReadonlyArray<{id:TownDecision;label:string}>=[
   {id:'transmit',label:'TRANSMITIR LOS NOMBRES POR RADIO · +12 L'},
@@ -527,7 +553,7 @@ function showTownDecision(){
    state=concludeTown(state,option.id);saveQuietly();hud();
    world.setTownStage(state.chapterThree.stage,true,state.chapterThree.cacheTaken);
    $('encounter-title').textContent='CAPÍTULO III COMPLETADO · EL PUEBLO SIN NOMBRE';
-   $('encounter-text').textContent=state.message+' Más allá de la niebla una nueva señal indica: FRECUENCIA MUERTA. De momento, la carretera sigue.';
+   $('encounter-text').textContent=state.message+' '+storyLink(state,3);
    choices.replaceChildren();
    const leave=document.createElement('button');leave.type='button';leave.textContent='REGRESAR AL FIREBIRD';
    leave.addEventListener('click',()=>{
@@ -633,7 +659,7 @@ function showRadioDecision(){
  encounterOpen=true;input.reset();document.exitPointerLock?.();
  const dialog=$('encounter'),choices=$('encounter-choices');
  $('encounter-title').textContent='PROYECTO UMBRAL · ÚLTIMO CANAL';
- $('encounter-text').textContent='Los nombres del pueblo están grabados en una cinta de 1992, pero las voces aparecen en tiempo real. «Emitirlos es recordarlos», susurra Nora. «Desconectar es dejarnos morir», responde el Operador.';
+ $('encounter-text').textContent='«Abrimos Umbral a las 02:17. A las 03:13, el Operador dejó el canal abierto y el pueblo desapareció», dice la cinta de Nora. La lista del pueblo permite distinguir las voces. Si dejas la antena emitiendo, alguien podrá oírlas fuera.';
  choices.replaceChildren();
  const options:ReadonlyArray<{id:RadioDecision;label:string}>=[
   {id:'broadcast',label:'EMITIR LOS NOMBRES · +14 L DE GASOLINA'},
@@ -644,7 +670,7 @@ function showRadioDecision(){
   button.addEventListener('click',()=>{
    state=concludeRadio(state,o.id);saveQuietly();syncRadioView();notify(state.message);
    $('encounter-title').textContent='CAPÍTULO IV COMPLETADO · FRECUENCIA MUERTA';
-   $('encounter-text').textContent=state.message+' El cartel de la carretera apunta hacia el desierto: KM 96, el kilómetro imposible.';
+   $('encounter-text').textContent=state.message+' '+storyLink(state,4);
    choices.replaceChildren();
    const leave=document.createElement('button');leave.type='button';leave.textContent='REBOBINAR LA CINTA Y REGRESAR AL FIREBIRD';
    leave.addEventListener('click',()=>{
@@ -775,7 +801,7 @@ function showMileDecision(){
  encounterOpen=true;input.reset();document.exitPointerLock?.();
  const dialog=$('encounter'),choices=$('encounter-choices');
  $('encounter-title').textContent='KM 96 · EL MAPA QUE NO EXISTE';
- $('encounter-text').textContent='El Agrimensor dibujaba nombres en lugar de carreteras. Vera reconoce el suyo al otro lado del mapa. Puedes conservar el recuerdo — y atraer la señal — o enterrarlo para siempre.';
+ $('encounter-text').textContent='El Agrimensor dibujaba nombres en lugar de carreteras. El nombre de Vera figura en el margen. Si conservas el mapa, podrás distinguir las voces que fueron grabadas de sus copias cuando llegues al peaje.';
  choices.replaceChildren();
  const options:ReadonlyArray<{id:MileDecision;label:string}>=[
   {id:'remember',label:'GUARDAR EL MAPA Y SUS NOMBRES · +12 L DE GASOLINA'},
@@ -786,7 +812,7 @@ function showMileDecision(){
   button.addEventListener('click',()=>{
    state=concludeMile(state,option.id);saveQuietly();syncMileView();notify(state.message);
    $('encounter-title').textContent='CAPÍTULO V COMPLETADO · EL KILÓMETRO IMPOSIBLE';
-   $('encounter-text').textContent=state.message+' El cartel señala KM 120, donde termina la carretera. El último capítulo aún está precintado.';
+   $('encounter-text').textContent=state.message+' '+storyLink(state,5);
    choices.replaceChildren();
    const leave=document.createElement('button');leave.type='button';leave.textContent='REGRESAR AL FIREBIRD · ARCHIVAR CINTA V';
    leave.addEventListener('click',()=>{
@@ -893,7 +919,7 @@ function roadEndPrompt(x:number,z:number):string{
 function save(){if(writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('Partida guardada. La carretera no olvidará.');else notify('No se pudo guardar. Revisa permisos o almacenamiento.');}
 function saveQuietly(){if(!writeSave(store,SAVE_KEY,{...state,mode:'map'}))notify('El evento se ha registrado en memoria, pero no se pudo guardar en disco.');}
 function load(){try{const s=readLatestValidSave(store,[SAVE_KEY,PHASE18_SAVE_KEY,PHASE17_SAVE_KEY,PHASE16_SAVE_KEY,LEGACY_SAVE_KEY,PRIOR_SAVE_KEY,OLDER_SAVE_KEY,ORIGINAL_SAVE_KEY],normalizeSave);if(!s){notify('No hay partida válida.');return;}cancelSceneChange();state=s;enemy={...createEnemy(),health:state.enemyHealth,alive:state.enemyHealth>0};warden=freshWarden(state.chapterOne.wardenHealth);dinerThreat=freshDinerThreat(state.chapterTwo.stalkerHealth);townGuardian=freshGuardian(state.chapterThree.guardianHealth);radioOperator=freshRadioOperator(state.chapterFour.operatorHealth);mileHunter=freshMileHunter(state.chapterFive.hunterHealth);roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);switchMode('map',()=>{notify('Partida recuperada.');if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();});}catch{notify('El guardado está dañado o no es accesible.');}}
-$('drive').addEventListener('click',()=>{try{soundscape.start();}catch{}if(state.ending){notify('Historia concluida · Empieza una nueva partida para volver a la carretera.');return;}if(state.carCondition<=0){notify('Repara el Firebird antes de conducir.');return;}if(state.fuel<2){notify('Te falta gasolina. Explora la gasolinera.');return;}switchMode('drive');notify('Gira la llave. El V8 ruge bajo un cielo sin estrellas.');});
+$('drive').addEventListener('click',()=>{try{soundscape.start();}catch{}if(state.ending){notify('Historia concluida · Empieza una nueva partida para volver a la carretera.');return;}if(state.carCondition<=0){notify('Repara el Firebird antes de conducir.');return;}if(state.health===0||state.fuel<MIN_TRIP_FUEL){notify('Usa AUXILIO DEL FIREBIRD antes de salir.');return;}switchMode('drive');notify('Gira la llave. El V8 ruge bajo un cielo sin estrellas.');});
 $('explore').addEventListener('click',()=>{try{soundscape.start();}catch{}inDiner=false;inTown=false;inRadio=false;inMile=false;inRoadEnd=false;radioUnderground=false;state.visited=true;state.campaign=recordMilestone(state.campaign,'station');switchMode('explore');notify('La puerta de la estación golpea tres veces. No hay viento.');});
 $('diner').addEventListener('click',()=>{
  try{soundscape.start();}catch{}
@@ -933,7 +959,8 @@ $('road-end').addEventListener('click',()=>{
  roadDouble=freshRoadDouble(state.chapterSix.doubleHealth);
  switchMode('explore',()=>{saveQuietly();notify(state.message);});
 });
-$('repair').addEventListener('click',()=>{state=repairVehicle(state);notify(state.message);hud();});
+$('repair').addEventListener('click',()=>{state=repairVehicle(state);saveQuietly();notify(state.message);hud();});
+$('recovery').addEventListener('click',()=>{state=recoverAtFirebird(state);saveQuietly();notify(state.message);hud();if(shouldOfferFinale(state))showFinale();});
 $('save').addEventListener('click',save);$('load').addEventListener('click',load);/** New-game confirmation preserves the existing save until the player commits. */
 function startNewGame(){
  enemy=createEnemy();state=fresh();warden=freshWarden();dinerThreat=freshDinerThreat();
@@ -1002,10 +1029,22 @@ window.addEventListener('keydown',e=>{
  if(k==='h'&&!e.repeat){toggleHelp();return;}
  if(e.repeat)return;
  if(mode!=='map'||!['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))input.press(k);
-if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen){toggleJournal();return;}if(journalOpen){if(k==='escape')toggleJournal();return;}if(encounterOpen)return;if(k==='m'&&mode!=='map'){state.carX=clamp(world.car.position.x,-3.7,3.7);state.carZ=clamp(world.car.position.z,-150,24);switchMode('map');}if(k==='p')save();if(k==='f3'){showPerformance=!showPerformance;$('perf-panel').classList.toggle('hidden',!showPerformance);notify(showPerformance?'Diagnóstico de rendimiento activado.':'Diagnóstico de rendimiento oculto.');}if(k==='v'){filmLook=toggleFilmLook(filmLook);writePreference(store,'dead-road-404-film-look',filmLook);pulpUi?.setGrain(filmLook==='suave');applyFilmLook();notify(filmLook==='suave'?'Filtro VHS suave activado.':'Filtro VHS desactivado.');return;}if(k==='g'){adaptiveQuality.defer(performance.now());graphics=nextGraphicsPreset(graphics);world.setGraphics(graphics);applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('Calidad visual: '+GRAPHICS[graphics].label);hud();}if(k==='c'&&mode==='drive'){cameraMode=nextCamera(cameraMode);writePreference(store,'dead-road-404-camera',cameraMode);notify('Cámara: '+CAMERA_LABELS[cameraMode]);}if(k==='t'&&mode==='explore'){flashlightOn=!flashlightOn;notify(flashlightOn?'Linterna encendida. La oscuridad retrocede.':'Linterna apagada.');}if(k==='l'&&mode==='drive'){headlights=!headlights;world.firebird.setHeadlights(headlights);notify(headlights?'Faros encendidos':'Faros apagados');}if(k==='r'&&mode==='explore'&&!inDiner&&!inTown&&!inRadio){if(world.player.distanceTo(radioPosition)<4){state.mission=advanceMission(state.mission,'radio');state.campaign=recordMilestone(state.campaign,'radio');saveQuietly();notify('RADIO 404: «Vera está en el motel. La llave está tras las neveras». Una voz idéntica a la tuya.');hud();}else notify('Solo escuchas estática. La radio está detrás del mostrador.');}if(k==='e'&&mode==='explore'){
+if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen){toggleJournal();return;}if(journalOpen){if(k==='escape')toggleJournal();return;}if(encounterOpen)return;if(k==='m'&&mode!=='map'){state.carX=clamp(world.car.position.x,-3.7,3.7);state.carZ=clamp(world.car.position.z,-150,24);switchMode('map');}if(k==='p')save();if(k==='f3'){showPerformance=!showPerformance;$('perf-panel').classList.toggle('hidden',!showPerformance);notify(showPerformance?'Diagnóstico de rendimiento activado.':'Diagnóstico de rendimiento oculto.');}if(k==='v'){filmLook=toggleFilmLook(filmLook);writePreference(store,'dead-road-404-film-look',filmLook);pulpUi?.setGrain(filmLook==='suave');applyFilmLook();notify(filmLook==='suave'?'Filtro VHS suave activado.':'Filtro VHS desactivado.');return;}if(k==='g'){adaptiveQuality.defer(performance.now());graphics=nextGraphicsPreset(graphics);world.setGraphics(graphics);applyFilmLook();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('Calidad visual: '+GRAPHICS[graphics].label);hud();}if(k==='c'&&mode==='drive'){cameraMode=nextCamera(cameraMode);writePreference(store,'dead-road-404-camera',cameraMode);notify('Cámara: '+CAMERA_LABELS[cameraMode]);}if(k==='t'&&mode==='explore'){flashlightOn=!flashlightOn;notify(flashlightOn?'Linterna encendida. La oscuridad retrocede.':'Linterna apagada.');}if(k==='l'&&mode==='drive'){headlights=!headlights;world.firebird.setHeadlights(headlights);notify(headlights?'Faros encendidos':'Faros apagados');}const stationRadio=mode==='explore'&&!inDiner&&!inTown&&!inRadio&&!inMile&&!inRoadEnd;
+ if(stationRadio&&(k==='r'||(k==='e'&&state.mission.stage==='arrival'&&world.player.distanceTo(radioPosition)<4))){
+  if(world.player.distanceTo(radioPosition)<4){
+   state.mission=advanceMission(state.mission,'radio');
+   state.campaign=recordMilestone(state.campaign,'radio');
+   saveQuietly();
+   notify('RADIO 404: «Vera está en el motel. La llave está tras las neveras». Una voz idéntica a la tuya.');
+   hud();
+  }else notify('Solo escuchas estática. La radio está detrás del mostrador.');
+  return;
+ }
+ if(k==='e'&&mode==='explore'){
  if(inRoadEnd){interactRoadEnd();}else if(inMile){interactMile();}else if(inRadio){interactRadio();}else if(inTown){interactTown();}else if(inDiner){interactDiner();}else{
  const px=world.player.x,pz=world.player.z;
- if(state.chapterOne.stage==='fuse'&&nearChapterProp(px,pz,FUSE_POSITION)){
+ if(state.chapterOne.stage==='choice'){showChapterOneDecision();
+ }else if(state.chapterOne.stage==='fuse'&&nearChapterProp(px,pz,FUSE_POSITION)){
   state=collectChapterFuse(state);saveQuietly();world.setChapterOneStage(state.chapterOne.stage);
   notify(state.message);hud();
  }else if(state.chapterOne.stage==='panel'&&nearChapterProp(px,pz,CONSOLE_POSITION)){
@@ -1021,7 +1060,7 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
  const cache=openSupplyCache(state);state=cache.state;
  state.campaign=recordMilestone(state.campaign,'cache');
  world.setCacheVisible(false);saveQuietly();notify(cache.message);hud();
- }else if(isAtPhone(world.player.x,world.player.z)){const result=answerPhone(state.mission.stage,state.phoneHeard);if(canAnswerPhone(state.mission.stage,state.phoneHeard)){state.phoneHeard=true;state.campaign=recordMilestone(state.campaign,'phone');saveQuietly();beep(450,.12);}notify(result.message);hud();}else if(!state.motelTape&&isNearTape(world.player.x,world.player.z)){const result=collectTape(state);state={...state,motelTape:result.motelTape,parts:result.parts,food:result.food,inventory:addItem(state.inventory,'motelTape')};state.campaign=recordMilestone(state.campaign,'tape');world.setTapeVisible(false);saveQuietly();notify('CINTA MAGNÉTICA: «Las habitaciones no tienen número. Tienen fecha». +2 comida y +1 pieza.');hud();}else if(world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'){showMissionDialogue();}else if(world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'){state.mission=advanceMission(state.mission,'key');state.inventory=addItem(state.inventory,'key404');state.campaign=recordMilestone(state.campaign,'key');saveQuietly();notify('Obtienes la LLAVE 404. En su etiqueta pone: «NO ABRIR DESDE DENTRO».');hud();}else if(world.player.distanceTo(FUEL_CAN_CHECK_POSITION)<3){const old=state.hasCan;state=pickFuel(state);if(!old)notify(state.message);else notify('Ya recogiste el bidón.');hud();}else notify('No hay nada a tu alcance.');}}if((k===' '||k==='f')&&mode==='explore'&&attackCooldown===0&&state.health>0){
+ }else if(isAtPhone(world.player.x,world.player.z)){const result=answerPhone(state.mission.stage,state.phoneHeard);if(canAnswerPhone(state.mission.stage,state.phoneHeard)){state.phoneHeard=true;state.campaign=recordMilestone(state.campaign,'phone');saveQuietly();beep(450,.12);}notify(result.message);hud();}else if(!state.motelTape&&isNearTape(world.player.x,world.player.z)){const result=collectTape(state);state={...state,motelTape:result.motelTape,parts:result.parts,food:result.food,inventory:addItem(state.inventory,'motelTape')};state.campaign=recordMilestone(state.campaign,'tape');world.setTapeVisible(false);saveQuietly();notify('CINTA MAGNÉTICA: «Las habitaciones no tienen número. Tienen fecha». +2 comida y +1 pieza.');hud();}else if(world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'){showMissionDialogue();}else if(world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'){state.mission=advanceMission(state.mission,'key');state.inventory=addItem(state.inventory,'key404');state.campaign=recordMilestone(state.campaign,'key');saveQuietly();notify('Obtienes la LLAVE 404. En su etiqueta pone: «NO ABRIR DESDE DENTRO».');hud();}else if(world.player.distanceTo(FUEL_CAN_CHECK_POSITION)<3){const old=state.hasCan;state=pickFuel(state);if(!old){saveQuietly();notify(state.message);}else notify('Ya recogiste el bidón.');hud();}else notify('No hay nada a tu alcance.');}}if((k===' '||k==='f')&&mode==='explore'&&attackCooldown===0&&state.health>0){
  attackCooldown=.48;
  if(inRoadEnd){
   if(state.chapterSix.stage==='double'){
@@ -1109,7 +1148,7 @@ if(k==='i'&&!encounterOpen){toggleInventory();return;}if(k==='j'&&!encounterOpen
 }if(k==='escape'&&mode==='drive')switchMode('map');});
 window.addEventListener('keyup',e=>input.release(e.key));window.addEventListener('blur',()=>{input.reset();metrics.reset();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){input.reset();padInput=readPad(null);previousPadButtons.clear();}});canvas.addEventListener('click',()=>{try{soundscape.start();}catch{}if(!sceneTransition.covered&&mode==='explore'&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});document.addEventListener('mousemove',e=>{if(!sceneTransition.covered&&document.pointerLockElement===canvas&&mode==='explore'){const prefs=pulpUi?.preferences;const mouseScale=(prefs?.mouseSensitivity??100)/100;const invert=prefs?.invertY?-1:1;yaw+=e.movementX*.0022*mouseScale;pitch=clamp(pitch-e.movementY*.0018*mouseScale*invert,-1.1,1.1);}});
-function update(dt:number){elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-dt);if(encounterOpen||journalOpen||helpOpen||inventoryOpen)return;if(mode==='drive'){const keyboardAccel=input.axis(['w','arrowup'],['s','arrowdown']);const accel=chooseAxis(keyboardAccel,padInput.forward);
+function update(dt:number){const priorHealth=state.health;elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-dt);if(encounterOpen||journalOpen||helpOpen||inventoryOpen)return;if(mode==='drive'){const keyboardAccel=input.axis(['w','arrowup'],['s','arrowdown']);const accel=chooseAxis(keyboardAccel,padInput.forward);
  const keyboardTurn=input.axis(['a','arrowleft'],['d','arrowright']);const turn=chooseAxis(keyboardTurn,-padInput.strafe);
  const handbrake=keys.has(' ');
  const drive=stepArcadeDrive({speed,heading:carYaw,steering},{throttle:state.fuel>0&&state.carCondition>0?accel:0,steer:turn,handbrake},dt);
@@ -1120,8 +1159,10 @@ function update(dt:number){elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-
  world.car.position.z=clamp(oldZ-Math.cos(carYaw)*speed*dt,-150,24);
  const impact=roadEdgeImpact({condition:state.carCondition,cooldown:impactCooldown},speed,desiredX<-3.7||desiredX>3.7,dt);
  impactCooldown=impact.cooldown;state.carCondition=impact.condition;if(impact.hit){speed=impact.speed;notify('¡Golpe contra el arcén! Firebird: '+Math.round(state.carCondition)+'%');}
- if(state.carCondition<=0){speed=0;switchMode('map');notify('Firebird averiado · Repara con piezas antes de continuar.');return;}
- world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(world.car.position.z<=-125){state=travel(state,24);state.carZ=20;switchMode('map',()=>{saveQuietly();notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();});return;}}
+ if(state.carCondition<=0){speed=0;switchMode('map',()=>{saveQuietly();notify('Firebird averiado. Repara con piezas o usa el auxilio del mapa.');});return;}
+ world.car.rotation.y=carYaw;state.carX=world.car.position.x;state.carZ=world.car.position.z;const moved=Math.hypot(world.car.position.z-oldZ,world.car.position.x-oldX);state.fuel=clamp(state.fuel-moved*.00028,0,80);world.updateCarVisual(dt,speed,steering,state.fuel,input.down('s','arrowdown',' '));updateDrivingCamera(world.camera,world.car,cameraMode,dt);const kmh=Math.abs(speed)*3.6;$('speed-number').textContent=String(Math.round(kmh));$('fuel-number').textContent=state.fuel.toFixed(0);$('speed-needle').style.transform=`rotate(${Math.min(130,kmh/150*260-130)}deg)`;$('fuel-needle').style.transform=`rotate(${(state.fuel/80)*200-100}deg)`;if(world.car.position.z<=-125){const hold=roadHold(state);
+ state=hold?{...state,message:hold}:travel(state,24);state.carX=0;state.carZ=20;switchMode('map',()=>{saveQuietly();notify(state.message);if(shouldOfferEncounter(state))showEncounter();else if(shouldOfferFinale(state))showFinale();});return;}
+ if(state.fuel<=0){switchMode('map',()=>{saveQuietly();notify('El Firebird se queda sin gasolina. Usa el auxilio del mapa.');});return;}}
  if(mode==='explore'){world.setFlashlight(flashlightOn,yaw,pitch);world.setMissionStage(state.mission.stage);
  if(inRoadEnd){
   world.setEnemy(enemy.x,enemy.z,false,elapsed);
@@ -1211,12 +1252,13 @@ function update(dt:number){elapsed+=dt;attackCooldown=Math.max(0,attackCooldown-
   world.setWarden(warden.x,warden.z,true,warden.phase==='telegraph',elapsed);
  }else world.setWarden(warden.x,warden.z,false,false,elapsed);}
  const keyboardForward=Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));const keyboardStrafe=Number(keys.has('d'))-Number(keys.has('a'));const forward=chooseAxis(keyboardForward,padInput.forward);const strafe=chooseAxis(keyboardStrafe,padInput.strafe);if(document.pointerLockElement!==canvas){if(keys.has('arrowleft'))yaw-=dt*1.6;if(keys.has('arrowright'))yaw+=dt*1.6;}const prefs=pulpUi?.preferences;const padScale=(prefs?.gamepadSensitivity??100)/100;const invert=prefs?.invertY?-1:1;yaw+=padInput.lookX*dt*2.35*padScale;pitch=clamp(pitch-padInput.lookY*dt*1.75*padScale*invert,-1.1,1.1);const dir=new THREE.Vector3(Math.sin(yaw)*forward+Math.cos(yaw)*strafe,0,-Math.cos(yaw)*forward+Math.sin(yaw)*strafe);const moving=dir.lengthSq()>0;const sprinting=canSprint(stamina,moving,(keys.has('shift')||padInput.sprint));stamina=stepStamina(stamina,sprinting,dt);$('stamina-bar').style.width=stamina.toFixed(1)+'%';$('stamina-value').textContent=Math.round(stamina)+'%';if(moving)dir.normalize().multiplyScalar(dt*movementSpeed(sprinting));const position=walkWithSlide(world.player.x,world.player.z,dir.x,dir.z,inRoadEnd?roadEndCollision:inMile?mileCollision:inRadio?radioCollision:inTown?townCollision:inDiner?dinerCollision:motelCollision,inRoadEnd||inMile||inRadio||inTown||inDiner?[]:STATION_COLLIDERS);
- world.player.x=position.x;world.player.z=position.z;world.camera.position.copy(world.player);world.camera.rotation.order='YXZ';world.camera.rotation.set(pitch,cameraYawForMovement(yaw),0);$('exploration-tip').textContent=explorationHint(state.mission.stage,flashlightOn);prompt.textContent=inRoadEnd?roadEndPrompt(world.player.x,world.player.z):inMile?milePrompt(world.player.x,world.player.z):inRadio?radioPrompt(world.player.x,world.player.z):inTown?townPrompt(world.player.x,world.player.z):inDiner?dinerPrompt(world.player.x,world.player.z):state.chapterOne.stage==='fuse'&&nearChapterProp(world.player.x,world.player.z,FUSE_POSITION)?'[E] RECOGER FUSIBLE DEL GENERADOR':
+ world.player.x=position.x;world.player.z=position.z;world.camera.position.copy(world.player);world.camera.rotation.order='YXZ';world.camera.rotation.set(pitch,cameraYawForMovement(yaw),0);$('exploration-tip').textContent=(flashlightOn?'Linterna encendida [T]':'Linterna apagada [T]')+' · Diario [J] · Firebird [M]';prompt.textContent=inRoadEnd?roadEndPrompt(world.player.x,world.player.z):inMile?milePrompt(world.player.x,world.player.z):inRadio?radioPrompt(world.player.x,world.player.z):inTown?townPrompt(world.player.x,world.player.z):inDiner?dinerPrompt(world.player.x,world.player.z):state.chapterOne.stage==='choice'?'[E] DECIDIR EL DESTINO DE LA TRANSMISIÓN':state.chapterOne.stage==='fuse'&&nearChapterProp(world.player.x,world.player.z,FUSE_POSITION)?'[E] RECOGER FUSIBLE DEL GENERADOR':
  state.chapterOne.stage==='panel'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] INSERTAR FUSIBLE EN CUADRO 404':
  state.chapterOne.stage==='tuning'&&nearChapterProp(world.player.x,world.player.z,CONSOLE_POSITION)?'[E] SINTONIZAR RADIO 02:17':
  state.chapterOne.stage==='hatch'&&nearChapterProp(world.player.x,world.player.z,HATCH_POSITION,2.7)?'[E] ABRIR ESCOTILLA DEL MOTEL':
  state.chapterOne.stage==='fight'&&Math.hypot(world.player.x-warden.x,world.player.z-warden.z)<5?'EL CELADOR · '+warden.health+'/120 · [F] ATACA · [SHIFT] ESQUIVA':
- !state.supplyCacheTaken&&Math.hypot(world.player.x-CACHE_POSITION.x,world.player.z-CACHE_POSITION.z)<2.2?'[E] REGISTRAR CAJA DE SUMINISTROS SUNSPUR':isAtPhone(world.player.x,world.player.z)?'[E] CABINA TELEFÓNICA · 1992':!state.motelTape&&isNearTape(world.player.x,world.player.z)?'[E] RECOGER CINTA DEL MOTEL':world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'?'[E] HABLAR CON VERA':world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'?'[E] RECOGER LLAVE 404':world.player.distanceTo(radioPosition)<4&&state.mission.stage==='arrival'?'[R] ESCUCHAR TRANSMISIÓN':world.player.distanceTo(FUEL_CAN_CHECK_POSITION)<3&&!state.hasCan?'[E] RECOGER BIDÓN DE GASOLINA':state.hasCan?'Bidón recogido · [ESPACIO] ATACAR · [M] FIREBIRD':'[CLICK] MIRAR · [ESPACIO] GOLPEAR · [R] RADIO · [M] FIREBIRD';}
+ !state.supplyCacheTaken&&Math.hypot(world.player.x-CACHE_POSITION.x,world.player.z-CACHE_POSITION.z)<2.2?'[E] REGISTRAR CAJA DE SUMINISTROS SUNSPUR':isAtPhone(world.player.x,world.player.z)?'[E] CABINA TELEFÓNICA · 1992':!state.motelTape&&isNearTape(world.player.x,world.player.z)?'[E] RECOGER CINTA DEL MOTEL':world.player.distanceTo(veraPosition)<4&&state.mission.stage==='key'?'[E] HABLAR CON VERA':world.player.distanceTo(keyPosition)<3&&state.mission.stage==='signal'?'[E] RECOGER LLAVE 404':world.player.distanceTo(radioPosition)<4&&state.mission.stage==='arrival'?'[E/R] ESCUCHAR TRANSMISIÓN':world.player.distanceTo(FUEL_CAN_CHECK_POSITION)<3&&!state.hasCan?'[E] RECOGER BIDÓN DE GASOLINA':state.hasCan?'Bidón recogido · [ESPACIO] ATACAR · [M] FIREBIRD':'[CLICK] MIRAR · [ESPACIO] GOLPEAR · [R] RADIO · [M] FIREBIRD';}
+ if(priorHealth>0&&state.health===0){saveQuietly();hud();}
  if(mode!=='drive')world.updateIdleEffects(dt);if(mode!=='explore')world.setFlashlight(false,yaw,pitch);if(mode==='map'){world.setRadioOperator(radioOperator.x,radioOperator.z,false,false,elapsed);world.setTownGuardian(townGuardian.x,townGuardian.z,false,false,elapsed);world.setDinerThreat(dinerThreat.x,dinerThreat.z,false,false,elapsed);world.setEnemy(enemy.x,enemy.z,enemy.alive,elapsed);world.setWarden(warden.x,warden.z,false,false,elapsed);if(world.camera.fov!==73){world.camera.fov=73;world.camera.updateProjectionMatrix();}world.camera.position.lerp(MAP_CAMERA_POSITION,Math.min(1,dt*2));world.camera.lookAt(8,0,0);}}
 function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(frameMs/1000,.05));last=now;
  const visible=!document.hidden;
@@ -1243,7 +1285,10 @@ function frame(now:number){const frameMs=now-last;const dt=Math.max(0,Math.min(f
  if(draw){world.setAtmosphere(now/1000);world.render();}
  if(interactive&&!transitioning)metrics.add(frameMs);
  else metrics.reset();
-const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!transitioning&&interactive&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&mode==='explore'){const debug=$('perf-panel');debug.dataset.playerX=world.player.x.toFixed(3);debug.dataset.playerZ=world.player.z.toFixed(3);}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
+const lower=adaptiveQuality.observe(now,metrics.fps(),metrics.count(),!transitioning&&interactive&&world.artStatus==='psx',graphics);if(lower){graphics=lower;world.setGraphics(graphics);metrics.reset();writePreference(store,'dead-road-404-psx-graphics',graphics);notify('FPS bajos: gráficos ajustados automáticamente a '+GRAPHICS[graphics].label+' · [G] cambiar');hud();}if(showPerformance&&mode==='explore'){const debug=$('perf-panel');debug.dataset.playerX=world.player.x.toFixed(3);debug.dataset.playerZ=world.player.z.toFixed(3);debug.dataset.yaw=yaw.toFixed(3);
+ const opponent=inRoadEnd?roadDouble:inMile?mileHunter:inRadio?radioOperator:inTown?townGuardian:inDiner?dinerThreat:warden;
+ debug.dataset.opponentX=opponent.x.toFixed(3);
+ debug.dataset.opponentZ=opponent.z.toFixed(3);}if(showPerformance&&now-lastMetrics>1000){lastMetrics=now;const info=world.renderer.info.render;$('perf-panel').textContent=`${metrics.fps().toFixed(1)} FPS (media móvil) · ${metrics.lowFps().toFixed(1)} FPS (1% bajo)  ·  ${info.calls} draw calls  ·  ${info.triangles} triángulos · DPR ${world.renderer.getPixelRatio().toFixed(2)} · LOTES ${world.sceneryBatch.merged+(world.artReport?.batchedMeshes??0)} · ${GRAPHICS[graphics].label}`;}if(Math.floor(now/250)!==Math.floor((now-dt*1000)/250))hud();requestAnimationFrame(frame);}pulpUi=new PulpUI({
  storage:store,
  onSave:()=>save(),
  onLoad:()=>load(),

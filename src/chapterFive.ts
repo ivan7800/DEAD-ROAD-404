@@ -123,5 +123,5 @@ export function concludeMile(s:GameState,decision:MileDecision):GameState {
   parts:decision==='forget'?Math.min(999,s.parts+3):s.parts,
   message:decision==='remember'?
    'CAPÍTULO V COMPLETADO · CONSERVAS LOS NOMBRES. +12 L. El siguiente cartel anuncia el último desvío, pero reconoces la voz que lo lee.':
-   'CAPÍTULO V COMPLETADO · ENTERRASTE EL MAPA. +3 PIEZAS. Algo esencial ha desaparecido de los recuerdos de Vera.'};
+   'CAPÍTULO V COMPLETADO · ENTERRASTE EL MAPA. +3 PIEZAS. Ya no recuerdas a quién pertenecían los nombres.'};
 }

@@ -1,6 +1,7 @@
+import type {EncounterChoice} from './encounters.ts';
 import {INITIAL_MISSION,normalizeMission,type MissionProgress} from './mission.ts';
 import {roadMessage,type EndingId} from './roadStory.ts';
-import {freshCampaign,normalizeCampaign,recordMilestone,completeChapter,type CampaignProgress} from './campaign.ts';
+import {CHAPTERS,freshCampaign,normalizeCampaign,recordMilestone,type CampaignProgress} from './campaign.ts';
 import {freshInventory,normalizeInventory,type Inventory} from './inventory.ts';
 import {freshChapterOne,normalizeChapterOne,type ChapterOneProgress} from './chapterOne.ts';
 import {freshChapterTwo,normalizeChapterTwo,type ChapterTwoProgress} from './chapterTwo.ts';
@@ -9,7 +10,7 @@ import {freshChapterFour,normalizeChapterFour,type ChapterFourProgress} from './
 import {freshChapterFive,normalizeChapterFive,type ChapterFiveProgress} from './chapterFive.ts';
 import {freshChapterSix,normalizeChapterSix,type ChapterSixProgress} from './chapterSix.ts';
 export type Mode = 'map' | 'drive' | 'explore';
-export interface GameState { version:2; mode:Mode; km:number; fuel:number; food:number; health:number; parts:number; hasCan:boolean; visited:boolean; carX:number; carZ:number; carCondition:number; message:string; encounterResolved:boolean; enemyHealth:number; motelTape:boolean; phoneHeard:boolean; mission:MissionProgress; ending:EndingId|null; inventory:Inventory; campaign:CampaignProgress; supplyCacheTaken:boolean; chapterOne:ChapterOneProgress; chapterTwo:ChapterTwoProgress; chapterThree:ChapterThreeProgress; chapterFour:ChapterFourProgress; chapterFive:ChapterFiveProgress; chapterSix:ChapterSixProgress; }
+export interface GameState { version:2; mode:Mode; km:number; fuel:number; food:number; health:number; parts:number; hasCan:boolean; visited:boolean; carX:number; carZ:number; carCondition:number; message:string; encounterResolved:boolean; encounterChoice?:EncounterChoice; enemyHealth:number; motelTape:boolean; phoneHeard:boolean; mission:MissionProgress; ending:EndingId|null; inventory:Inventory; campaign:CampaignProgress; supplyCacheTaken:boolean; chapterOne:ChapterOneProgress; chapterTwo:ChapterTwoProgress; chapterThree:ChapterThreeProgress; chapterFour:ChapterFourProgress; chapterFive:ChapterFiveProgress; chapterSix:ChapterSixProgress; }
 export const INITIAL:GameState = {version:2,mode:'map',km:0,fuel:44,food:14,health:100,parts:1,hasCan:false,visited:false,carX:0,carZ:19,carCondition:100,message:'La radio repite: «No recojas a nadie en el kilómetro 404».',encounterResolved:false,enemyHealth:75,motelTape:false,phoneHeard:false,mission:{...INITIAL_MISSION},ending:null,inventory:freshInventory(),campaign:freshCampaign(),supplyCacheTaken:false,chapterOne:freshChapterOne(),chapterTwo:freshChapterTwo(),chapterThree:freshChapterThree(),chapterFour:freshChapterFour(),chapterFive:freshChapterFive(),chapterSix:freshChapterSix()};
 export const MAX_FUEL=80;
 export const clamp=(n:number,a:number,b:number):number=>Math.min(b,Math.max(a,n));
@@ -39,7 +40,8 @@ export function normalizeSave(data:unknown):GameState|null {
  const mission=normalizeMission(v.mission),motelTape=v.motelTape??false,phoneHeard=v.phoneHeard??false;
  const supplyCacheTaken=v.supplyCacheTaken??false;
  const inventory=normalizeInventory(v.inventory,{mission,motelTape});
- const chapterOne=normalizeChapterOne(v.chapterOne,mission.stage==='resolved');
+ let chapterOne=normalizeChapterOne(v.chapterOne,mission.stage==='resolved');
+ if(mission.stage==='resolved'&&chapterOne.stage==='sealed')chapterOne={...chapterOne,stage:'fuse'};
  const chapterTwo=normalizeChapterTwo(v.chapterTwo,mission.stage==='resolved'&&chapterOne.stage==='complete');
  const chapterThree=normalizeChapterThree(v.chapterThree,chapterTwo.stage==='complete'||chapterTwo.legacyFinaleAllowed);
  const chapterFour=normalizeChapterFour(v.chapterFour,chapterThree.stage==='complete'||chapterThree.legacyFinaleAllowed);
@@ -52,8 +54,18 @@ export function normalizeSave(data:unknown):GameState|null {
   mission,ending:v.ending??null,visited:v.visited!,phoneHeard,motelTape,
   encounterResolved:v.encounterResolved??false,km:v.km!,supplyCacheTaken
  });
- // Pre-F21 saves with Vera already resolved bypassed the new Celador encounter.
- // Treat their original chapter as finished without marking chapter II completed.
- if(v.chapterOne===undefined&&mission.stage==='resolved')campaign=completeChapter(campaign,'last-stop');
- return {...fresh(),...v,inventory,campaign,supplyCacheTaken,chapterOne,chapterTwo,chapterThree,chapterFour,chapterFive,chapterSix,km:clamp(v.km!,0,100000),fuel:clamp(v.fuel!,0,MAX_FUEL),food:clamp(v.food!,0,999),health:clamp(v.health!,0,100),parts:clamp(v.parts!,0,999),carX:clamp(v.carX!,-3.7,3.7),carZ:clamp(v.carZ!,-150,24),carCondition:clamp(v.carCondition??100,0,100),enemyHealth:clamp(v.enemyHealth??75,0,75),motelTape,phoneHeard,mission,ending:v.ending??null};
+ // Chapter state is the evidence for completion. Repair the duplicated index
+ // only when the preceding chapters and the resolved mission support it.
+ const stages=[chapterOne,chapterTwo,chapterThree,chapterFour,chapterFive,chapterSix];
+ if(mission.stage==='resolved'){
+  const completed:CampaignProgress['completed']=[];
+  for(const [i, chapter] of stages.entries()){
+   if(chapter.stage!=='complete')break;
+   completed.push(CHAPTERS[i].id);
+  }
+  campaign={...campaign,completed};
+ }
+ const encounterChoice=v.encounterResolved&&
+  (v.encounterChoice==='help'||v.encounterChoice==='trade'||v.encounterChoice==='leave')?v.encounterChoice:undefined;
+ return {...fresh(),...v,encounterChoice,inventory,campaign,supplyCacheTaken,chapterOne,chapterTwo,chapterThree,chapterFour,chapterFive,chapterSix,km:clamp(v.km!,0,100000),fuel:clamp(v.fuel!,0,MAX_FUEL),food:clamp(v.food!,0,999),health:clamp(v.health!,0,100),parts:clamp(v.parts!,0,999),carX:clamp(v.carX!,-3.7,3.7),carZ:clamp(v.carZ!,-150,24),carCondition:clamp(v.carCondition??100,0,100),enemyHealth:clamp(v.enemyHealth??75,0,75),motelTape,phoneHeard,mission,ending:v.ending??null};
 }

@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {fresh,travel,pickFuel,normalizeSave,clamp} from '../src/state.ts';
+import {recoverAtFirebird} from '../src/campaignFlow.ts';
 import {SceneTransition, SCENE_TRANSITIONS} from '../src/sceneTransition.ts';
 test('partida inicial independiente',()=>{const a=fresh(),b=fresh();a.food=0;assert.equal(b.food,14);assert.equal(b.version,2)});
 test('viajar consume comida y combustible',()=>{let s=travel(fresh());assert.equal(s.km,24);assert.equal(s.food,13);assert.ok(s.fuel<44)});
@@ -33,4 +34,28 @@ test('movimiento reducido aplica el destino inmediatamente',()=>{
  assert.equal(destination,'map');
  assert.equal(transition.active,false);
  assert.equal(transition.advance(500),0);
+});
+
+test('guardado reconcilia el índice de capítulos con la misión resuelta y los cierres',()=>{
+ const s=fresh();
+ s.mission={stage:'resolved',choice:'rescue'};
+ s.chapterOne.stage='complete';
+ s.chapterTwo.stage='complete';
+ s.chapterTwo.ending='broadcast';
+ s.campaign.completed=['last-stop'];
+ const restored=normalizeSave(s);
+ assert.deepEqual(restored.campaign.completed,['last-stop','missing']);
+ assert.equal(restored.chapterTwo.ending,'broadcast');
+ assert.equal(restored.chapterThree.legacyFinaleAllowed,false);
+});
+
+test('auxilio rescata una partida agotada sin reiniciar etapas ni regalar piezas',()=>{
+ const s={...fresh(),health:0,fuel:0,carCondition:0,food:0,parts:0};
+ const recovered=recoverAtFirebird(normalizeSave(s));
+ assert.ok(recovered.health>0&&recovered.carCondition>0);
+ assert.equal(recovered.food,0);
+ assert.equal(recovered.parts,0);
+ assert.deepEqual(recovered.chapterOne,s.chapterOne);
+ assert.equal(travel(recovered).km,24);
+ assert.equal(recoverAtFirebird(recovered),recovered);
 });
