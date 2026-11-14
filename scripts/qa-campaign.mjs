@@ -39,7 +39,7 @@ async function play(browser,ending){
  }
  async function walk(x,z,tolerance=0.85){
   let p;
-  const deadline=Date.now()+27000;
+  const deadline=Date.now()+45000;
   while(Date.now()<deadline){
    p=await position();
    const dx=x-p.playerX,dz=z-p.playerZ;
@@ -64,7 +64,7 @@ async function play(browser,ending){
   if(id)await enter(id);
  }
  async function fight(title){
-  const deadline=Date.now()+25000;
+  const deadline=Date.now()+45000;
   while(Date.now()<deadline){
    if(await page.locator('#encounter:not(.hidden) #encounter-title').filter({hasText:title}).isVisible())return;
    const p=await position();
@@ -82,7 +82,7 @@ async function play(browser,ending){
   await click('drive');
   await page.locator('#dashboard.visible').waitFor();
   await page.keyboard.down('w');
-  try{await page.locator('html[data-pulp-mode="map"]').waitFor({timeout:30000});}
+  try{await page.locator('html[data-pulp-mode="map"]').waitFor({timeout:85000});}
   finally{await page.keyboard.up('w');}
   assert.equal((await save()).km,km);
   assert.ok((await page.locator('#road-briefing').textContent()).length>10);

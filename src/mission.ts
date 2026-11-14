@@ -11,7 +11,7 @@ export function normalizeMission(value:unknown):MissionProgress {
  return {stage:m.stage!,choice:m.stage==='resolved'?m.choice!:null};
 }
 export function missionObjective(m:MissionProgress):string {
- switch(m.stage){case 'arrival':return 'Investiga la radio de la tienda [R]';case 'signal':return 'Encuentra la llave en la trastienda [E]';case 'key':return 'Habla con Vera junto al motel [E]';default:return 'Misión completada · Regresa al Firebird [M]';}
+ switch(m.stage){case 'arrival':return 'Investiga la radio de la tienda [E/R]';case 'signal':return 'Encuentra la llave en la trastienda [E]';case 'key':return 'Habla con Vera junto al motel [E]';default:return 'Misión completada · Regresa al Firebird [M]';}
 }
 export function advanceMission(m:MissionProgress,action:'radio'|'key'|'talk',choice?:MissionChoice):MissionProgress {
  if(m.stage==='arrival'&&action==='radio')return {stage:'signal',choice:null};
