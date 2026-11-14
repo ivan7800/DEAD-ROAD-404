@@ -114,6 +114,11 @@ function pollGamepad(){
  for(const key of padInput.buttons)if(!previousPadButtons.has(key)&&!document.hidden){
   window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
   window.dispatchEvent(new KeyboardEvent('keyup',{key,bubbles:true}));
+  if(pulpUi?.isPaused||encounterOpen||inventoryOpen||journalOpen||helpOpen||sceneTransition.covered){
+   padInput=readPad(null);
+   suppressPadUntilRelease=true;
+   break;
+  }
  }
  previousPadButtons=new Set(padInput.buttons);
 }
